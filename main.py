@@ -34,8 +34,6 @@ def run():
     if os.path.exists(music_dir):
         if not os.path.exists(playlist_dir):
             os.mkdir(playlist_dir)
-
-        get_user_playlists()
         
         my_reccommendations()
 
@@ -49,6 +47,7 @@ def run():
         for artist_name in artist_names:
             show_recommendations_for_artist(artist_name)
 
+        get_user_playlists()
 
         logging.info('Process Done!')
 
@@ -83,13 +82,13 @@ def my_reccommendations():
     try:
         top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
         logging.info('Loaded your custom top tracks')
-        time.sleep(1)
+        time.sleep(2)
         liked_tracks = sp.current_user_saved_tracks(limit=50)
         logging.info('Loaded your top liked tracks')
-        time.sleep(1)
+        time.sleep(2)
         history = sp.current_user_recently_played(limit=50)
         logging.info('Loaded your played tracks')
-        time.sleep(1)
+        time.sleep(2)
         for i in range(int(os.environ.get("NUM_USER_PLAYLISTS"))):
             logging.info('Searching your reccomendations (playlist %s)', str(i+1))
             top_track_ids = [track['id'] for track in top_tracks['items']]
