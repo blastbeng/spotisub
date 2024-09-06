@@ -8,7 +8,7 @@ Simple playlist generator based on spotify user reccomendations with Navidrome s
 
 ### Dependencies
 
-* python3 with pip enabled
+* python3.5 with pip enabled
 * spotipy
 * pysqlite3
 * python-dotenv
@@ -25,6 +25,9 @@ Simple playlist generator based on spotify user reccomendations with Navidrome s
 
 
 
+* !!It is important that you have all the artists folder at the root of your library!!
+* An acceptable folder structure is /music_dir/artist/album/cd1/song.mp3, /music_dir/artist/song.mp3 or /music_dir/artist/album/song.mp3
+* A non acceptable folder structure is /music_dir/song.mp3
 * !!Make sure you modify the parameters inside .env, you'll need a spotify dev account on https://developer.spotify.com/dashboard!!
 ```
 cd /opt/projects/spotify-playlist-generator
