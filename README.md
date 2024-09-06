@@ -37,6 +37,10 @@ python main.py
 
 ## Help
 
+NOTE. Depending on your library size and your playlists number and size on Spotify, the script execution may take a very long time.
+To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
+
+
 For any help contact me on Discord blastbong#9151
 
 ## Authors
