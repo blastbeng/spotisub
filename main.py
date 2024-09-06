@@ -5,6 +5,7 @@ import os
 import sys
 import sqlite3
 import glob
+import time
 from spotipy import SpotifyOAuth
 from os.path import join, dirname
 from dotenv import load_dotenv
@@ -33,6 +34,8 @@ def run():
     if os.path.exists(music_dir):
         if not os.path.exists(playlist_dir):
             os.mkdir(playlist_dir)
+
+        get_user_playlists()
         
         my_reccommendations()
 
@@ -54,7 +57,7 @@ def run():
         logging.info('Process Failed!')
 
 
-def delete_playlist_by_name(playlist_name):
+def navidrome_delete_playlist_by_name(playlist_name):
     dbfile =  os.environ.get("NAVIDROME_DB_FILE")
     if os.path.exists(dbfile):
         con = sqlite3.connect(dbfile)
@@ -80,10 +83,13 @@ def my_reccommendations():
     try:
         top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
         logging.info('Loaded your custom top tracks')
+        time.sleep(1)
         liked_tracks = sp.current_user_saved_tracks(limit=50)
         logging.info('Loaded your top liked tracks')
+        time.sleep(1)
         history = sp.current_user_recently_played(limit=50)
         logging.info('Loaded your played tracks')
+        time.sleep(1)
         for i in range(int(os.environ.get("NUM_USER_PLAYLISTS"))):
             logging.info('Searching your reccomendations (playlist %s)', str(i+1))
             top_track_ids = [track['id'] for track in top_tracks['items']]
@@ -93,8 +99,9 @@ def my_reccommendations():
             random.shuffle(seed_track_ids)
             results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
             playlist_name = "My Reccomendations - " + str(i+1)
-            delete_playlist_by_name(playlist_name)
-            write_reccomandation_file(playlist_dir + "/" + playlist_name + ".m3u", results)
+            write_reccomendation_file(playlist_dir + "/" + playlist_name + ".m3u", results)
+            navidrome_delete_playlist_by_name(playlist_name)
+            time.sleep(10)
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -108,7 +115,7 @@ def get_artist(name):
     else:
         return None
 
-def write_reccomandation_file(playlist_path_file, results):
+def write_reccomendation_file(playlist_path_file, results):
     try:
         reccomendations_array = []
         for track in results['tracks']:
@@ -124,16 +131,45 @@ def write_reccomandation_file(playlist_path_file, results):
                     if not "live" in song_title.lower() and not "acoustic" in song_title.lower():
                         no_extension_title = os.path.splitext(song_title)[0]
                         parsed_song_title = no_extension_title.split("-")[len(no_extension_title.split("-"))-1].strip()
-                        if parsed_song_title.lower() in track['name'].lower() or track['name'].lower() in song_title:
+                        if parsed_song_title.strip() != '' and (track['name'].lower() == parsed_song_title.lower() or parsed_song_title.lower() in track['name'].lower() or track['name'].lower() in parsed_song_title.lower()):
                             song_path_file = os.path.join(artist_path_dir, song_title)
                             reccomendations_array.append(song_path_file)
+                            break
         if os.path.exists(playlist_path_file):
             os.remove(playlist_path_file)
         if len(reccomendations_array) > 0:
             with open(playlist_path_file, 'a') as opened_playlist_file:
                 for reccomendation in reccomendations_array:
                     opened_playlist_file.write(reccomendation + '\n')
-                    logging.debug('Writing reccomendation %s to playlist (%s)', reccomendation, playlist_path_file)
+                    logging.info('Writing reccomendation %s to playlist (%s)', reccomendation, playlist_path_file)
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+
+
+
+def write_playlist_file(playlist_path_file, track):
+    try:
+        logging.debug('Searching %s - %s in your music library (%s)', track['name'], track['artists'][0]['name'], music_dir)
+        artist_path_dir = None
+        song_path_file = None
+        for artist_name in os.listdir(music_dir):
+            if artist_name.lower() ==  track['artists'][0]['name'].lower() or artist_name.lower() in track['artists'][0]['name'].lower() or track['artists'][0]['name'].lower() in artist_name.lower():
+                artist_path_dir = os.path.join(music_dir, artist_name)
+                break
+        if artist_path_dir is not None:
+            for song_paths in glob.iglob(artist_path_dir + '**/**', recursive=True):
+                if not "live" in song_paths.lower() and not "acoustic" in song_paths.lower():
+                    no_extension_title = os.path.splitext(os.path.basename(song_paths))[0]
+                    parsed_song_title = no_extension_title.split("-")[len(no_extension_title.split("-"))-1].strip()
+                    if parsed_song_title.strip() != '' and (track['name'].lower() == parsed_song_title.lower() or parsed_song_title.lower() in track['name'].lower() or track['name'].lower() in parsed_song_title.lower()):
+                        song_path_file = song_paths
+                        break
+        if song_path_file is not None:
+            with open(playlist_path_file, 'a') as opened_playlist_file:
+                opened_playlist_file.write(song_path_file + '\n')
+                logging.info('Writing track %s to playlist (%s)', song_path_file, playlist_path_file)
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -144,7 +180,42 @@ def show_recommendations_for_artist(name):
     artist = get_artist(name)
     results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
     playlist_name = name + " - Reccomendations"
-    delete_playlist_by_name(playlist_name)
-    write_reccomandation_file(playlist_dir + "/" + playlist_name + ".m3u", results)
+    write_reccomendation_file(playlist_dir + "/" + playlist_name + ".m3u", results)
+    navidrome_delete_playlist_by_name(playlist_name)
+    time.sleep(10)
+
+def get_playlist_tracks(item, playlist_path_file, offset_tracks = 0):
+    response_tracks = sp.playlist_items(item['id'],
+        offset=offset_tracks,
+        fields='items.track.id,total',
+        additional_types=['track'])
+    time.sleep(2)
+    for track_id in response_tracks['items']:
+        track = sp.track(track_id['track']['id'])
+        logging.debug('Found %s - %s inside playlist %s', track['name'], track['artists'][0]['name'], item['name'])
+        with open(playlist_path_file, 'a') as opened_playlist_file:
+            write_playlist_file(playlist_path_file, track)
+
+    if len(response_tracks['items']) != 0:
+        get_playlist_tracks(item, playlist_path_file, offset_tracks = len(response_tracks['items']) + 50)
+
+def get_user_playlists(offset = 0):
+    playlist_result = sp.current_user_playlists(limit=50, offset = offset)
+    for item in playlist_result['items']:
+        if item['name'] is not None and item['name'].strip() != '':
+            logging.debug('Found playlist: %s', item['name'])
+            
+            navidrome_delete_playlist_by_name(item['name'])
+            playlist_path_file = playlist_dir + "/" + item['name'] + ".m3u"
+
+            if os.path.exists(playlist_path_file):
+                os.remove(playlist_path_file)
+            
+            time.sleep(10)
+            get_playlist_tracks(item, playlist_path_file)
+        
+    if len(playlist_result['items']) != 0:
+        get_user_playlists(len(playlist_result['items']) + 50)
+
 
 run()
