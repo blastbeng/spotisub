@@ -195,6 +195,7 @@ def get_playlist_tracks(item, playlist_path_file, offset_tracks = 0):
         logging.debug('Found %s - %s inside playlist %s', track['name'], track['artists'][0]['name'], item['name'])
         with open(playlist_path_file, 'a') as opened_playlist_file:
             write_playlist_file(playlist_path_file, track)
+        time.sleep(5)
 
     time.sleep(10)
     if len(response_tracks['items']) != 0:
