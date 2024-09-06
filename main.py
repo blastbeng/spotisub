@@ -34,15 +34,23 @@ if not os.path.exists(music_dir):
 if not os.path.exists(playlist_dir):
   os.mkdir(playlist_dir)
 
-def delete_old_playlists_from_navidrome():
+def delete_playlist_by_name(playlist_name):
     dbfile =  os.environ.get("NAVIDROME_DB_FILE")
     if os.path.exists(dbfile):
         con = sqlite3.connect(dbfile)
         cur = con.cursor()
-        cur.execute("DELETE FROM playlist")
-        cur.execute("DELETE FROM playlist_fields")
-        con.commit()
+        for result in cur.execute("SELECT id FROM playlist where name = '" + playlist_name + "'"):
+            cur_delete_tracks = con.cursor()
+            cur_delete_tracks.execute("DELETE FROM playlist_tracks where playlist_id = '" + result[0] + "'")
+            cur_delete_tracks.close()
+            cur_delete_fields = con.cursor()
+            cur_delete_fields.execute("DELETE FROM playlist_fields where playlist_id = '" + result[0] + "'")
+            cur_delete_fields.close()
+            cur_delete_playlist = con.cursor()
+            cur_delete_playlist.execute("DELETE FROM playlist where id = '" + result[0] + "'")
+            cur_delete_playlist.close()
         cur.close()
+        con.commit()
         con.close()
 
 def my_reccommendations():
@@ -61,7 +69,9 @@ def my_reccommendations():
             seed_track_ids = top_track_ids + liked_track_ids + history_track_ids
             random.shuffle(seed_track_ids)
             results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
-            write_reccomandation_file(playlist_dir + "/" + "My Reccomendations - " + str(i+1) + ".m3u", results)
+            playlist_name = "My Reccomendations - " + str(i+1)
+            delete_playlist_by_name(playlist_name)
+            write_reccomandation_file(playlist_dir + "/" + playlist_name + ".m3u", results)
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -111,13 +121,20 @@ def show_recommendations_for_artist(name):
     logging.info('Searching reccomendations for: %s', name)
     artist = get_artist(name)
     results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
-    write_reccomandation_file(playlist_dir + "/" + name + " - Reccomendations.m3u", results)
+    playlist_name = name + " - Reccomendations"
+    delete_playlist_by_name(playlist_name)
+    write_reccomandation_file(playlist_dir + "/" + playlist_name + ".m3u", results)
 
-delete_old_playlists_from_navidrome()
+#my_reccommendations()
 
-my_reccommendations()
+artist_names = []
 
-for artist_name in os.listdir(music_dir):
+for dir_name_artist in os.listdir(music_dir):
+  artist_names.append(dir_name_artist)
+
+random.shuffle(artist_names)
+
+for artist_name in artist_names:
   show_recommendations_for_artist(artist_name)
 
 
