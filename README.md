@@ -40,7 +40,7 @@ For any help contact me on Discord blastbong#9151
 
 Contributors names and contact info
 
-ex. Fabio Valentino - blastbeng  
+Fabio Valentino - [blastbeng](https://github.com/blastbeng)  
 
 ## Version History
 
