@@ -50,8 +50,8 @@ def run():
         logging.info('Process Done!')
 
     else:
-        logging.info('Process Failed!')
         logging.error('Music dir not found! Please check your MUSIC_DIR variable inside the .env file')
+        logging.info('Process Failed!')
 
 
 def delete_playlist_by_name(playlist_name):
@@ -138,7 +138,7 @@ def write_reccomandation_file(playlist_path_file, results):
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
-        
+
 def show_recommendations_for_artist(name):
     logging.info('Searching reccomendations for: %s', name)
     artist = get_artist(name)
