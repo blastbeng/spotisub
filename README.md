@@ -4,12 +4,15 @@
 
 Simple playlist generator based on spotify user and artists reccomendations with Navidrome support
 
-This script will also try to match all yours Spotify playlist to your music library
+This script will also try to match all your Spotify playlists to your music library
 
 SCRIPT STEPS:
 * Generate 5 playlist based on your history, top tracks and saved tracks
 * Generate artist reccomendation playlists for every artist in your library
 * Generate playlists based on your created and followed playlists on Spotify
+
+For every playlist created if a navidrome.db file has been specified, it will try to delete the playlist by name from the Navidrome database.
+This because I noted that Navidrome doesn't automatically update modified playlists, but deleting and letting it reimporting everything solved this problem.
 
 ## Getting Started
 
