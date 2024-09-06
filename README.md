@@ -38,8 +38,6 @@ For any help contact me on Discord blastbong#9151
 
 ## Authors
 
-Contributors names and contact info
-
 Fabio Valentino - [blastbeng](https://github.com/blastbeng)  
 
 ## Version History
