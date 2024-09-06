@@ -206,13 +206,14 @@ def get_user_playlists(offset = 0):
         if item['name'] is not None and item['name'].strip() != '':
             logging.debug('Found playlist: %s', item['name'])
             
-            navidrome_delete_playlist_by_name(item['name'])
             playlist_path_file = playlist_dir + "/" + item['name'] + ".m3u"
 
             if os.path.exists(playlist_path_file):
                 os.remove(playlist_path_file)
             
             get_playlist_tracks(item, playlist_path_file)
+            
+            navidrome_delete_playlist_by_name(item['name'])
     
     time.sleep(10)
         
