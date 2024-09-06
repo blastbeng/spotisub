@@ -188,14 +188,15 @@ def get_playlist_tracks(item, playlist_path_file, offset_tracks = 0):
     response_tracks = sp.playlist_items(item['id'],
         offset=offset_tracks,
         fields='items.track.id,total',
+        limit=50,
         additional_types=['track'])
-    time.sleep(2)
     for track_id in response_tracks['items']:
         track = sp.track(track_id['track']['id'])
         logging.debug('Found %s - %s inside playlist %s', track['name'], track['artists'][0]['name'], item['name'])
         with open(playlist_path_file, 'a') as opened_playlist_file:
             write_playlist_file(playlist_path_file, track)
 
+    time.sleep(10)
     if len(response_tracks['items']) != 0:
         get_playlist_tracks(item, playlist_path_file, offset_tracks = len(response_tracks['items']) + 50)
 
@@ -211,8 +212,9 @@ def get_user_playlists(offset = 0):
             if os.path.exists(playlist_path_file):
                 os.remove(playlist_path_file)
             
-            time.sleep(10)
             get_playlist_tracks(item, playlist_path_file)
+    
+    time.sleep(10)
         
     if len(playlist_result['items']) != 0:
         get_user_playlists(len(playlist_result['items']) + 50)
