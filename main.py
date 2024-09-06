@@ -124,8 +124,8 @@ def show_recommendations_for_artist(name):
     playlist_name = name + " - Reccomendations"
     delete_playlist_by_name(playlist_name)
     write_reccomandation_file(playlist_dir + "/" + playlist_name + ".m3u", results)
-
-#my_reccommendations()
+  
+my_reccommendations()
 
 artist_names = []
 
