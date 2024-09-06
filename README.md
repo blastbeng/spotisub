@@ -2,7 +2,14 @@
 
 ## Description
 
-Simple playlist generator based on spotify user reccomendations with Navidrome support
+Simple playlist generator based on spotify user and artists reccomendations with Navidrome support
+
+This script will also try to match all yours Spotify playlist to your music library
+
+SCRIPT STEPS:
+* Generate 5 playlist based on your history, top tracks and saved tracks
+* Generate artist reccomendation playlists for every artist in your library
+* Generate playlists based on your created and followed playlists on Spotify
 
 ## Getting Started
 
