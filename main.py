@@ -75,6 +75,7 @@ def delete_playlist_by_name(playlist_name):
         con.close()
     else:
         logging.warning('Navidrome db file not found. If you are using navidrome make sure to set up the variable NAVIDROME_DB_FILE inside the .env file')
+
 def my_reccommendations():
     try:
         top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
@@ -98,6 +99,7 @@ def my_reccommendations():
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+
 def get_artist(name):
     results = sp.search(q='artist:' + name, type='artist')
     items = results['artists']['items']
@@ -105,6 +107,7 @@ def get_artist(name):
         return items[0]
     else:
         return None
+
 def write_reccomandation_file(playlist_path_file, results):
     try:
         reccomendations_array = []
@@ -135,6 +138,7 @@ def write_reccomandation_file(playlist_path_file, results):
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+        
 def show_recommendations_for_artist(name):
     logging.info('Searching reccomendations for: %s', name)
     artist = get_artist(name)
