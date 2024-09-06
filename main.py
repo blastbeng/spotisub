@@ -115,9 +115,16 @@ def show_recommendations_for_artist(name):
 
 delete_old_playlists_from_navidrome()
 
-my_reccommendations()
+#my_reccommendations()
 
-for artist_name in os.listdir(music_dir):
+artist_names = []
+
+for dir_name_artist in os.listdir(music_dir):
+  artist_names.append(dir_name_artist)
+
+random.shuffle(artist_names)
+
+for artist_name in artist_names:
   show_recommendations_for_artist(artist_name)
 
 
