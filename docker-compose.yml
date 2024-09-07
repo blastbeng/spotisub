@@ -1,0 +1,31 @@
+name: spotify-playlist-generator
+services:
+  spotify-playlist-generator-api:
+    tty: true
+    stdin_open: true
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+      shm_size: "16gb"
+    container_name: spotify-playlist-generator-api
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Rome
+    image: "blastbeng/spotify-playlist-generator-api:1.0.0"
+    restart: always
+    volumes:
+      - ".env:/home/user/spotify-playlist-downloader/.env"
+      - ".cache:/home/user/spotify-playlist-downloader/.cache"
+      - "/var/media/musica:/var/media/musica"
+      - "/opt/docker/compose/media/navidrome/data/navidrome.db:/opt/docker/compose/media/navidrome/data/navidrome.db"
+    entrypoint: ./entrypoint.sh
+    ports:
+      - 50811:50811
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:50811/utils/healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 12

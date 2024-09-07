@@ -6,7 +6,7 @@ Simple playlist generator based on spotify user and artists reccomendations with
 
 This script will also try to match all your Spotify playlists to your music library
 
-SCRIPT STEPS:
+SCRIPT FEATURES:
 * Generate 5 playlist based on your history, top tracks and saved tracks
 * Generate artist reccomendation playlists for every artist in your library
 * Generate playlists based on your created and followed playlists on Spotify
@@ -25,24 +25,42 @@ This because I noted that Navidrome doesn't automatically update modified playli
 
 ### Installing
 
+As Script:
 * cd /opt/projects
 * git clone https://github.com/blastbeng/spotify-playlist-generator
 * cd spotify-playlist-generator
-* ./installdeps.sh
-* cp .env.sample .env 
+* ./installdeps_script.sh
+* cp .env.sample .env and modify it with your keys from spotify dev dashboard
+
+As Flask App with docker compose:
+* cd /opt/projects
+* git clone https://github.com/blastbeng/spotify-playlist-generator
+* cd spotify-playlist-generator
+* ./installdeps_script.sh
+* cp .env.sample .env and modify it with your keys from spotify dev dashboard
+* python run.py => To generate the .cache file, used by the docker compose file
+* docker compose build
+
+NOTE: The first 
 
 ### Executing program
-
-
 
 * !!It is important that you have all the artists folder at the root of your library!!
 * An acceptable folder structure is /music_dir/artist/album/cd1/song.mp3, /music_dir/artist/song.mp3 or /music_dir/artist/album/song.mp3
 * A non acceptable folder structure is /music_dir/song.mp3
 * !!Make sure you modify the parameters inside .env, you'll need a spotify dev account on https://developer.spotify.com/dashboard!!
+
+As Script:
 ```
 cd /opt/projects/spotify-playlist-generator
 source .venv/bin/activate
-python main.py
+python run.py
+```
+
+As Flask App with docker compose:
+```
+cd /opt/projects/spotify-playlist-generator
+docker compose up
 ```
 
 ## Help
@@ -61,6 +79,8 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 * 0.1
     * Initial Release
+* 0.2
+    * Implemented flask APIs and Scheduler
 
 ## Acknowledgments
 
