@@ -41,8 +41,6 @@ As Flask App with docker compose:
 * python run.py => To generate the .cache file, used by the docker compose file
 * docker compose build
 
-NOTE: The first 
-
 ### Executing program
 
 * !!It is important that you have all the artists folder at the root of your library!!
@@ -67,6 +65,8 @@ docker compose up
 
 NOTE. Depending on your library size and your playlists number and size on Spotify, the script execution may take a very long time.
 To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
+
+Using the Flask App is the reccomended way.
 
 
 For any help contact me on Discord blastbong#9151
