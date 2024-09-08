@@ -81,6 +81,9 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
     * Initial Release
 * 0.2
     * Implemented flask APIs and Scheduler
+ 
+## TODO:
+* Implement Subsonic APIs Mode instead of using file system paths and sqlite
 
 ## Acknowledgments
 
