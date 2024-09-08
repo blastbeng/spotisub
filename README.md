@@ -83,6 +83,8 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
     * Implemented flask APIs and Scheduler
  
 ## TODO:
+
+* Better Playlist Naming and Sorting
 * Implement Subsonic APIs Mode instead of using file system paths and sqlite
 
 ## Acknowledgments
