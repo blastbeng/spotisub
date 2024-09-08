@@ -75,12 +75,10 @@ For any help contact me on Discord blastbong#9151
 
 Fabio Valentino - [blastbeng](https://github.com/blastbeng)  
 
-## Version History
+## Changelog
 
-* 0.1
-    * Initial Release
-* 0.2
-    * Implemented flask APIs and Scheduler
+* Initial Release
+* Implemented flask APIs and Scheduler
  
 ## TODO:
 
