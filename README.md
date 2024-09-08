@@ -1,5 +1,7 @@
 # Spotify Playlist Generator
 
+This is a work in progress, some features may not work and expect bugs
+
 ## Description
 
 Simple playlist generator based on spotify user and artists reccomendations with Navidrome support
