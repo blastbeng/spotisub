@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/69fb759b-9e60-4ebb-aee6-348ed8fdc9b7)# SpotToSubsonic
+# SpotToSubsonic
 
 Spotify Subsonic Playlist Generator
 
