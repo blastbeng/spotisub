@@ -143,7 +143,9 @@ def get_user_playlists(offset = 0, single_execution = False):
             playlist_name = item['name']
             result = dict({'tracks': []})     
             result = get_playlist_tracks(item, playlist_name, result)    
-            write_playlist(playlist_name, result)      
+            write_playlist(playlist_name, result)
+            if single_execution:
+                break    
     
         
     if not single_execution and len(playlist_result['items']) != 0:
