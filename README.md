@@ -176,12 +176,12 @@ services:
 | SUBSONIC_API_PORT  | Subsonic API port. Mandatory | None | Yes |
 | SUBSONIC_API_USER  | Subsonic API user. Mandatory | None | Yes |
 | SUBSONIC_API_PASS  | Subsonic API password. Mandatory | None | Yes |
-| ITEMS_PER_PLAYLIST  | How many items per playlists, take care to not set this too high | Default: 100 | No |
-| NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | Default: 5 | No |
-| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation | Default: 1 | No |
-| RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation | Default: 4 | No |
-| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import | Default: 2 | No |
-| LOG_LEVEL  | Log level | Default: 40 | No |
+| ITEMS_PER_PLAYLIST  | How many items per playlists, take care to not set this too high | 100 | No |
+| NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | 5 | No |
+| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation | 1 | No |
+| RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation | 4 | No |
+| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import | 2 | No |
+| LOG_LEVEL  | Log level | 40 | No |
 
 ## Help
 
