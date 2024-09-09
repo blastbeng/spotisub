@@ -39,13 +39,6 @@ SCRIPT FEATURES:
 
 ### Installing
 
-As Script:
-* cd /opt/projects
-* git clone https://github.com/blastbeng/SpotToSubsonic
-* cd SpotToSubsonic
-* ./installdeps_script.sh
-* cp .env.sample .env and modify it with your keys from spotify dev dashboard
-
 As Flask App with docker compose:
 * cd /opt/projects
 * git clone https://github.com/blastbeng/SpotToSubsonic
@@ -54,6 +47,13 @@ As Flask App with docker compose:
 * cp .env.sample .env and modify it with your keys from spotify dev dashboard
 * python run.py => To generate the .cache file, used by the docker compose file
 * docker compose build
+
+As Script:
+* cd /opt/projects
+* git clone https://github.com/blastbeng/SpotToSubsonic
+* cd SpotToSubsonic
+* ./installdeps_script.sh
+* cp .env.sample .env and modify it with your keys from spotify dev dashboard
 
 ### Executing program
 
@@ -67,17 +67,17 @@ python init.py
 ```
 This is necessary, to generate the .cache file for spotify authentication
 
+As Flask App with docker compose:
+```
+cd /opt/projects/spotify-playlist-generator
+docker compose up
+```
+
 As Script:
 ```
 cd /opt/projects/spotify-playlist-generator
 source .venv/bin/activate
 python run.py
-```
-
-As Flask App with docker compose:
-```
-cd /opt/projects/spotify-playlist-generator
-docker compose up
 ```
 
 ## Help
