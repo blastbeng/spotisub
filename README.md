@@ -1,4 +1,6 @@
-# Spotify Subsonic Playlist Generator
+# SpotToSubsonic
+
+Spotify Subsonic Playlist Generator
 
 ## Description
 
