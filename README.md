@@ -45,7 +45,7 @@ As Flask App with docker compose:
 cd /opt/projects
 git clone https://github.com/blastbeng/SpotToSubsonic
 cd SpotToSubsonic
-cp .env.sample .env and modify it with your keys from spotify dev dashboard
+cp .env.sample .env
 docker compose build
 ```
 
@@ -55,7 +55,7 @@ cd /opt/projects
 git clone https://github.com/blastbeng/SpotToSubsonic
 cd SpotToSubsonic
 ./installdeps_script.sh
-cp .env.sample .env and modify it with your keys from spotify dev dashboard
+cp .env.sample .env
 ```
 
 ### Executing program
