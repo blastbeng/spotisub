@@ -1,6 +1,6 @@
 # SpotToSubsonic
 
-Spotify Subsonic Playlist Generator
+Spotify to subsonic Playlist Generator and Importer
 
 ## Description
 
