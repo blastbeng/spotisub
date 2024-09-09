@@ -126,12 +126,12 @@ def get_playlist_tracks(item, playlist_path_file, result, offset_tracks = 0):
     for track_id in response_tracks['items']:
         track = sp.track(track_id['track']['id'])
         logging.debug('Found %s - %s inside playlist %s', track['artists'][0]['name'], track['name'], item['name'])
-        track_dict = dict({'name': track['name'], 'artist': [{"name": track['artists'][0]['name']}]})
+        track_dict = dict({'name': track['name'], 'artists': [{"name": track['artists'][0]['name']}]})
         result["tracks"].append(track_dict)
         time.sleep(2)
     if len(response_tracks['items']) != 0:
         result = get_playlist_tracks(item, playlist_path_file, result, offset_tracks = len(response_tracks['items']) + 50)
-    return results
+    return result
 
 def get_user_playlists(offset = 0, single_execution = False):
 
