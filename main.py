@@ -46,7 +46,8 @@ nsvoice = api.namespace('generate', 'Generate APIs')
 class ArtistReccomendationsClass(Resource):
   def post (self, artist_name = None):
     try:
-        artist_name = random.choice(generate_playlists.get_artists_array_names())
+        if artist_name is None:
+          artist_name = random.choice(generate_playlists.get_artists_array_names())
         threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
         return get_response_str("Generating playlist for artist " + artist_name, 200)  
     except Exception as e:
