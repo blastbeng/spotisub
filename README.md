@@ -45,7 +45,6 @@ As Flask App with docker compose:
 * cd /opt/projects
 * git clone https://github.com/blastbeng/SpotToSubsonic
 * cd SpotToSubsonic
-* ./installdeps_script.sh
 * cp .env.sample .env and modify it with your keys from spotify dev dashboard
 * docker compose build
 
@@ -64,6 +63,7 @@ As Script:
 First run:
 ```
 cd /opt/projects/spotify-playlist-generator
+./installdeps_script.sh
 source .venv/bin/activate
 python init.py
 ```
