@@ -1,23 +1,20 @@
-name: spotify-to-subsonic
+name: subtify
 services:
-  spotify-to-subsonic-api:
-    tty: true
-    stdin_open: true
-    pull_policy: build
+  subtify:
     build:
       context: .
       dockerfile: Dockerfile
       network: host
-    container_name: spotify-to-subsonic-api
+    container_name: subtify
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Rome
-    image: "blastbeng/spotify-to-subsonic-api:1.0.0"
+    image: "blastbeng/subtify:latest"
     restart: always
     volumes:
-      - ".env:/home/user/spotify-to-subsonic/.env"
-      - ".cache:/home/user/spotify-to-subsonic/.cache"
+      - ".env:/home/user/subtify/.env"
+      - ".cache:/home/user/subtify/.cache"
     entrypoint: ./entrypoint.sh
     ports:
       - 50811:50811

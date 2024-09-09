@@ -1,4 +1,4 @@
-# SpotToSubsonic
+# Subtify
 
 Spotify to subsonic Playlist Generator and Importer
 
@@ -40,20 +40,33 @@ SCRIPT FEATURES:
 
 ### Installing
 
-As Flask App with docker compose:
+Using the pushed docker image:
 ```
+mkdir -p /opt/projects/subtify
+cd /opt/projects/subtify
+wget https://raw.githubusercontent.com/blastbeng/subtify/main/docker-compose.yml
+wget https://raw.githubusercontent.com/blastbeng/subtify/main/.env.sample
+mv .env.sample .env
+docker compose pull
+```
+
+
+Building the FlaskApp:
+```
+mkdir -p /opt/projects
 cd /opt/projects
-git clone https://github.com/blastbeng/SpotToSubsonic
-cd SpotToSubsonic
+git clone https://github.com/blastbeng/subtify
+cd subtify
 cp .env.sample .env
 docker compose build
 ```
 
 As Script:
 ```
+mkdir -p /opt/projects
 cd /opt/projects
-git clone https://github.com/blastbeng/SpotToSubsonic
-cd SpotToSubsonic
+git clone https://github.com/blastbeng/subtify
+cd subtify
 ./installdeps_script.sh
 cp .env.sample .env
 ```
@@ -63,24 +76,22 @@ cp .env.sample .env
 * Make sure you modify the parameters inside .env file
 * You'll need a spotify dev account on https://developer.spotify.com/dashboard
 
-First run:
+First run using the docker image:
 ```
-cd /opt/projects/SpotToSubsonic
-./installdeps_script.sh
-source .venv/bin/activate
-python init.py
+cd /opt/projects/subtify
+docker compose exec -it subtify /home/user/subtify/first_run.sh
 ```
 This is necessary, to generate the .cache file for spotify authentication
 
-As Flask App with docker compose:
+Run as Flask App with docker compose:
 ```
-cd /opt/projects/SpotToSubsonic
+cd /opt/projects/subtify
 docker compose up
 ```
 
-As Script:
+Run as Script:
 ```
-cd /opt/projects/SpotToSubsonic
+cd /opt/projects/subtify
 source .venv/bin/activate
 python run.py
 ```
