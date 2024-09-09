@@ -102,6 +102,54 @@ source .venv/bin/activate
 python run.py
 ```
 
+## Navidrome
+
+```
+Sample docker-compose file using Navidrome
+version: "3.7"
+services:
+    navidrome:
+        container_name: navidrome
+        image: deluan/navidrome:latest
+        user: 1000:1000
+        ports:
+            - "4533:4533"
+        environment:
+            ND_SCANSCHEDULE: "@every 1m"
+            ND_LOGLEVEL: "info"
+            ND_SESSIONTIMEOUT: "24h"
+            ND_BASEURL: ""
+        volumes:
+            - "./data:/data"
+            - "/music:/music:ro"
+        deploy:
+            restart_policy:
+                condition: on-failure
+                delay: 5s
+                max_attempts: 3
+                window: 120s
+        labels:
+            - "com.centurylinklabs.watchtower.enable=true"
+    subtify:
+        container_name: subtify
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Europe/Rome
+        image: "blastbeng/subtify:latest"
+        restart: always
+        volumes:
+            - ".env:/home/user/subtify/.env"
+            - ".cache:/home/user/subtify/cache"
+        ports:
+            - 50811:50811
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://127.0.0.1:50811/utils/healthcheck"]
+            interval: 15s
+            timeout: 5s
+            retries: 12
+```
+
 ## Help
 
 NOTE. Depending on your library size and your playlists number and size on Spotify, the script execution may take a very long time.
