@@ -10,8 +10,7 @@ RUN echo 'vm.overcommit_memory=1' >> /etc/sysctl.conf
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         gcc \
-        locales \
-        libsqlite3-dev
+        locales
 
 
 RUN sed -i '/it_IT.UTF-8/s/^# //g' /etc/locale.gen && \
