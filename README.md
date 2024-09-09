@@ -171,7 +171,7 @@ services:
 | ------------- | ------------- | ------------- | ------------- |
 | SPOTIPY_CLIENT_ID      | Get this from https://developer.spotify.com/dashboard  | None | Yes |
 | SPOTIPY_CLIENT_SECRET  | Get this from https://developer.spotify.com/dashboard  | None | Yes |
-| SPOTIPY_REDIRECT_URI  | Default http://127.0.0.1:8080/  | None | Yes |
+| SPOTIPY_REDIRECT_URI  | Get this from https://developer.spotify.com/dashboard | None | Yes |
 | SUBSONIC_API_HOST  | Subsonic API host, with http:// or https:// | None | Yes |
 | SUBSONIC_API_PORT  | Subsonic API port | None | Yes |
 | SUBSONIC_API_USER  | Subsonic API user | None | Yes |
