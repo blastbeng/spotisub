@@ -1,4 +1,4 @@
-# SpotToSubsonic
+![image](https://github.com/user-attachments/assets/69fb759b-9e60-4ebb-aee6-348ed8fdc9b7)# SpotToSubsonic
 
 Spotify Subsonic Playlist Generator
 
@@ -9,6 +9,17 @@ Simple playlist generator based on spotify user and artists reccomendations with
 This script will try to match all your Spotify playlists to your music library using Subsonic APIs
 
 This generator works with Navidrome and every Subsonic API enabled media center 
+
+This is an example about what it generates using Navidrome:
+
+![image](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
+
+Also there are three endpoints available for manually importing playlists.
+
+FLASK APP ENDPOINTS:
+* /generate/artist_reccomendations/<artist_name>/ => Generate artist reccomendation playlists, if no artist is provided it will keep a random one
+* /generate/reccomendations => Generate a random reccomendation playlist
+* /generate/user_playlists => import a random playlist from your spotify account
 
 SCRIPT FEATURES:
 * Generate 5 playlist based on your history, top tracks and saved tracks
