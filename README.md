@@ -100,6 +100,12 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 * Implemented flask APIs and Scheduler
 * Implemented via subsonic api calls instead of file system
 
+## Next steps and improvements
+
+* Better reccomendation generation (generate non existent playlists instead of doing it randomly)
+* Better playlist importing (import non existent playlists instead of doing it randomly)
+* Import specific playlist by name
+
 ## Acknowledgments
 
 A big thanks to the Spotipy library
