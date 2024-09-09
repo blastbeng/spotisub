@@ -1,4 +1,5 @@
 # Subtify
+![subtify-high-resolution-logo](https://github.com/user-attachments/assets/8e5d50d9-8aec-4864-b2d6-78f8d01d25b1)
 
 Spotify to subsonic Playlist Generator and Importer
 
