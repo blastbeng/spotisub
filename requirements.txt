@@ -1,6 +1,4 @@
 spotipy
-pysqlite3
-python-dotenv==1.0.0
 python-dotenv==1.0.0
 werkzeug==2.1.2
 Flask~=2.1.2
@@ -8,3 +6,4 @@ flask-restx==0.5.1
 click<8.1.0
 uWSGI==2.0.21
 Flask-APScheduler==1.12.4
+py-sonic
