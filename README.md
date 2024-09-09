@@ -45,7 +45,6 @@ As Flask App with docker compose:
 * cd SpotToSubsonic
 * ./installdeps_script.sh
 * cp .env.sample .env and modify it with your keys from spotify dev dashboard
-* python run.py => To generate the .cache file, used by the docker compose file
 * docker compose build
 
 As Script:
@@ -57,7 +56,8 @@ As Script:
 
 ### Executing program
 
-* !!Make sure you modify the parameters inside .env, you'll need a spotify dev account on https://developer.spotify.com/dashboard!!
+* Make sure you modify the parameters inside .env file
+* You'll need a spotify dev account on https://developer.spotify.com/dashboard
 
 First run:
 ```
