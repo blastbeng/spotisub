@@ -20,7 +20,6 @@ services:
       - ".env:/home/user/spotify-to-subsonic/.env"
       - ".cache:/home/user/spotify-to-subsonic/.cache"
       - "/var/media/musica:/var/media/musica"
-      - "/opt/docker/compose/media/navidrome/data/navidrome.db:/opt/docker/compose/media/navidrome/data/navidrome.db"
     entrypoint: ./entrypoint.sh
     ports:
       - 50811:50811
