@@ -33,6 +33,10 @@ SCRIPT FEATURES:
 * python3.5 with pip enabled
 * rust compiler (not needed if using python with pyenv)
 
+### Prerequisite
+
+* Create an APP on https://developer.spotify.com/dashboard and put this as redirect URI http://127.0.0.1:8080/
+
 ### Installing
 
 As Script:
