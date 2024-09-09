@@ -11,11 +11,24 @@ from time import strftime
 from flask_restx import Api, Resource
 from flask_apscheduler import APScheduler
 
-scheduler = APScheduler()
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 
+
+if os.environ.get("LOG_LEVEL") is None:
+  os.environ["LOG_LEVEL"] = "40"
+if os.environ.get("NUM_USER_PLAYLISTS") is None:
+  os.environ["NUM_USER_PLAYLISTS"] = "5"
+if os.environ.get("ARTIST_GEN_SCHED") is None:
+  os.environ["ARTIST_GEN_SCHED"] = "1"
+if os.environ.get("RECCOMEND_GEN_SCHED") is None:
+  os.environ["RECCOMEND_GEN_SCHED"] = "4"
+if os.environ.get("PLAYLIST_GEN_SCHED") is None:
+  os.environ["PLAYLIST_GEN_SCHED"] = "2"
+
+
+scheduler = APScheduler()
 generate_playlists.print_logo()
 
 logging.basicConfig(
@@ -66,7 +79,7 @@ class ArtistReccomendationsClass(Resource):
   def post (self, artist_name = None):
     try:
         threading.Thread(target=lambda: generate_playlists.all_artists_recommendations()).start()
-        return get_response_str("Generating reccomendations playlist for all artist " + artist_name, 200)  
+        return get_response_str("Generating reccomendations playlist for all artists", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -116,13 +129,13 @@ class Healthcheck(Resource):
   def get (self):
     return "Ok!"
 
-@scheduler.task('interval', id='artist_reccomendations', hours=2)
+@scheduler.task('interval', id='artist_reccomendations', hours=int(os.environ.get("ARTIST_GEN_SCHED")))
 def artist_reccomendations():
     generate_playlists.show_recommendations_for_artist(random.choice(generate_playlists.get_artists_array_names()))
 
-@scheduler.task('interval', id='my_reccommendations', hours=6)
+@scheduler.task('interval', id='my_reccommendations', hours=int(os.environ.get("RECCOMEND_GEN_SCHED")))
 def my_reccommendations():
-    generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS"))))
+    generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("PLAYLIST_GEN_SCHED"))))
 
 @scheduler.task('interval', id='user_playlists', hours=6)
 def user_playlists():

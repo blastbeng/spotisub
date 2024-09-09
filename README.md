@@ -149,9 +149,6 @@ services:
             - SUBSONIC_API_PORT=4533
             - SUBSONIC_API_USER=user
             - SUBSONIC_API_PASS=pass
-            - ITEMS_PER_PLAYLIST=100
-            - NUM_USER_PLAYLISTS=5
-            - LOG_LEVEL=20
         image: "blastbeng/subtify:latest"
         restart: always
         volumes:
@@ -167,6 +164,22 @@ services:
         labels:
             - "com.centurylinklabs.watchtower.enable=true"
 ```
+
+## Environment Variables:
+
+* SPOTIPY_CLIENT_ID      => Get this from https://developer.spotify.com/dashboard. Mandatory
+* SPOTIPY_CLIENT_SECRET  => Get this from https://developer.spotify.com/dashboard. Mandatory
+* SPOTIPY_REDIRECT_URI   => Default http://127.0.0.1:8080/. Mandatory
+* SUBSONIC_API_HOST      => Subsonic API host, included http:// or https://. Mandatory
+* SUBSONIC_API_PORT      => Subsonic API port. Mandatory
+* SUBSONIC_API_USER      => Subsonic API user. Mandatory
+* SUBSONIC_API_PASS      => Subsonic API password. Mandatory
+* ITEMS_PER_PLAYLIST     => How many items per playlists, take care to not set this too high. Default: 100
+* NUM_USER_PLAYLISTS     => How many custom reccomendations playlist to generate. Default: 5
+* ARTIST_GEN_SCHED       => Interval in hours to schedule the artists reccomendations generation. Default: 1
+* RECCOMEND_GEN_SCHED    => Interval in hours to schedule the custom reccomendations generation. Default: 4
+* PLAYLIST_GEN_SCHED     => Interval in hours to schedule the custom playlist import. Default: 2
+* LOG_LEVEL              => Log level. Default: 40 (Error)
 
 ## Help
 
