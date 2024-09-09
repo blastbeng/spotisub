@@ -1,4 +1,5 @@
 import generate_playlists
+import random
 generate_playlists.logging.info('Process Start!')
 artist_names = generate_playlists.get_artists_array_names()
 if len(artist_names) > 0:
@@ -11,4 +12,4 @@ if len(artist_names) > 0:
     generate_playlists.logging.info('Process Done!')
 
 else:
-    logging.error('No artists found! Your library looks empty!')
+    generate_playlists.logging.error('No artists found! Your library looks empty!')
