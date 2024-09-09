@@ -25,8 +25,6 @@ log.setLevel(int(os.environ.get("LOG_LEVEL")))
 
 app = Flask(__name__)
 
-music_dir = os.environ.get("MUSIC_DIR")
-
 @app.after_request
 def after_request(response):
   if not request.path.startswith('/utils/healthcheck'):
@@ -48,15 +46,8 @@ nsvoice = api.namespace('generate', 'Generate APIs')
 class ArtistReccomendationsClass(Resource):
   def post (self, artist_name = None):
     try:
-        if not os.path.isdir(music_dir):
-            return get_response_str(music_dir + ": Music path not found!", 404)
-        elif len(os.listdir(music_dir)) == 0:
-            return get_response_str(music_dir + ": Music path is empty!", 404)
-        else:
-            if artist_name is None:
-                artist_name = random.choice(os.listdir(music_dir))
-            threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
-            return get_response_str("Generating playlist for artist " + artist_name, 200)  
+        threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(random.choice(get_artists_array_names()))).start()
+        return get_response_str("Generating playlist for artist " + artist_name, 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -67,13 +58,8 @@ class ArtistReccomendationsClass(Resource):
 class ReccomendationsClass(Resource):
   def post (self):
     try:
-        if not os.path.isdir(music_dir):
-            return get_response_str(music_dir + ": Music path not found!", 404)
-        elif len(os.listdir(music_dir)) == 0:
-            return get_response_str(music_dir + ": Music path is empty!", 404)
-        else:
-            threading.Thread(target=lambda: generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS"))))).start()
-            return get_response_str("Generating a reccomendation playlist", 200)  
+        threading.Thread(target=lambda: generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS"))))).start()
+        return get_response_str("Generating a reccomendation playlist", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -84,13 +70,8 @@ class ReccomendationsClass(Resource):
 class UserPlaylistsClass(Resource):
   def post (self):
     try:
-        if not os.path.isdir(music_dir):
-            return get_response_str(music_dir + ": Music path not found!", 404)
-        elif len(os.listdir(music_dir)) == 0:
-            return get_response_str(music_dir + ": Music path is empty!", 404)
-        else:
-            threading.Thread(target=lambda: generate_playlists.get_user_playlists(random.randrange(100), single_execution = True)).start()
-            return get_response_str("Importing a random playlist", 200)  
+        threading.Thread(target=lambda: generate_playlists.get_user_playlists(random.randrange(100), single_execution = True)).start()
+        return get_response_str("Importing a random playlist", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]

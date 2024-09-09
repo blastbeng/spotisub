@@ -1,29 +1,24 @@
-# Spotify Playlist Generator
-
-This is a work in progress, some features may not work and expect bugs
+# Spotify Subsonic Playlist Generator
 
 ## Description
 
 Simple playlist generator based on spotify user and artists reccomendations with Navidrome support
 
-This script will also try to match all your Spotify playlists to your music library
+This script will try to match all your Spotify playlists to your music library using Subsonic APIs
+
+This generator works with Navidrome and every Subsonic API enabled media center 
 
 SCRIPT FEATURES:
 * Generate 5 playlist based on your history, top tracks and saved tracks
 * Generate artist reccomendation playlists for every artist in your library
 * Generate playlists based on your created and followed playlists on Spotify
 
-For every playlist created if a navidrome.db file has been specified, it will try to delete the playlist by name from the Navidrome database.
-This because I noted that Navidrome doesn't automatically update modified playlists, but deleting and letting it reimporting everything solved this problem.
-
 ## Getting Started
 
 ### Dependencies
 
 * python3.5 with pip enabled
-* spotipy
-* pysqlite3
-* python-dotenv
+* rust compiler (not needed if using python with pyenv)
 
 ### Installing
 
@@ -45,9 +40,6 @@ As Flask App with docker compose:
 
 ### Executing program
 
-* !!It is important that you have all the artists folder at the root of your library!!
-* An acceptable folder structure is /music_dir/artist/album/cd1/song.mp3, /music_dir/artist/song.mp3 or /music_dir/artist/album/song.mp3
-* A non acceptable folder structure is /music_dir/song.mp3
 * !!Make sure you modify the parameters inside .env, you'll need a spotify dev account on https://developer.spotify.com/dashboard!!
 
 As Script:
@@ -79,13 +71,9 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 ## Changelog
 
-* Initial Release
+* Implemented script
 * Implemented flask APIs and Scheduler
- 
-## TODO:
-
-* Better Playlist Naming and Sorting
-* Implement Subsonic APIs Mode instead of using file system paths and sqlite
+* Implemented via subsonic api calls instead of file system
 
 ## Acknowledgments
 
