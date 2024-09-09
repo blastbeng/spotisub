@@ -30,8 +30,10 @@ SCRIPT FEATURES:
 
 ### Dependencies
 
+If you want to run the app without docker you'll need:
 * python3.5 with pip enabled
 * rust compiler (not needed if using python with pyenv)
+
 
 ### Prerequisite
 
