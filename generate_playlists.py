@@ -23,9 +23,10 @@ client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET")
 redirect_uri=os.environ.get("SPOTIPY_REDIRECT_URI")
 scope="user-top-read,user-library-read,user-read-recently-played"
 
+creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, open_browser=False)
+
 pysonic = libsonic.Connection(os.environ.get("SUBSONIC_API_HOST"), os.environ.get("SUBSONIC_API_USER"),  os.environ.get("SUBSONIC_API_PASS"), appName="spotify-playlist-generator", port=int(os.environ.get("SUBSONIC_API_PORT")))
 
-creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, open_browser=False)
 sp = spotipy.Spotify(auth_manager=creds)
 
 

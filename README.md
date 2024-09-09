@@ -55,6 +55,14 @@ As Flask App with docker compose:
 
 * !!Make sure you modify the parameters inside .env, you'll need a spotify dev account on https://developer.spotify.com/dashboard!!
 
+First run:
+```
+cd /opt/projects/spotify-playlist-generator
+source .venv/bin/activate
+python init.py
+```
+This is necessary, to generate the .cache file for spotify authentication
+
 As Script:
 ```
 cd /opt/projects/spotify-playlist-generator
