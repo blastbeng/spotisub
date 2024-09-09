@@ -96,7 +96,7 @@ def my_reccommendations():
         generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS"))))
 
 @scheduler.task('interval', id='user_playlists', hours=6)
-def my_reccommendations():
+def user_playlists():
     if os.path.isdir(music_dir) and len(os.listdir(music_dir)) > 0:
         generate_playlists.get_user_playlists(random.randrange(100), single_execution = True)
 
