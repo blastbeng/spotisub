@@ -4,7 +4,7 @@ Spotify to subsonic Playlist Generator and Importer
 
 ## Description
 
-Simple playlist generator based on spotify user and artists reccomendations with Navidrome support
+Simple playlist generator based on spotify user and artists reccomendations with Subsonic API support
 
 This script will try to match all your Spotify playlists to your music library using Subsonic APIs
 
