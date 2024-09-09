@@ -83,7 +83,7 @@ First run using the docker image:
 cd /opt/projects/subtify
 touch .cache
 docker compose up -d
-docker compose exec -it subtify /home/user/subtify/first_run.sh
+docker compose exec -it subtify /home/user/subtify/first_run.sh --interactive --tty
 docker compose down
 ```
 This is necessary, to generate the cache file used by spotify authentication
