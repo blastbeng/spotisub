@@ -15,6 +15,9 @@ scheduler = APScheduler()
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
+
+generate_playlists.print_logo()
+
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=int(os.environ.get("LOG_LEVEL")),

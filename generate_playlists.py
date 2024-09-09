@@ -10,6 +10,8 @@ from spotipy import SpotifyOAuth
 from os.path import join, dirname
 from dotenv import load_dotenv
 
+os.environ["VERSION"] = "0.0.1"
+
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
@@ -28,7 +30,6 @@ creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secr
 sp = spotipy.Spotify(auth_manager=creds)
 
 pysonic = libsonic.Connection(os.environ.get("SUBSONIC_API_HOST"), os.environ.get("SUBSONIC_API_USER"),  os.environ.get("SUBSONIC_API_PASS"), appName="spotify-playlist-generator", port=int(os.environ.get("SUBSONIC_API_PORT")))
-
 
 def get_artists_array_names():
     artists = pysonic.getArtists()
@@ -153,3 +154,22 @@ def get_user_playlists(offset = 0, single_execution = False):
         
     if not single_execution and len(playlist_result['items']) != 0:
         get_user_playlists(len(playlist_result['items']) + 50)
+
+
+def print_logo():
+        version_len = len(os.environ.get("VERSION"))
+        print(
+            """
+
+░██████╗██╗░░░██╗██████╗░████████╗██╗███████╗██╗░░░██╗
+██╔════╝██║░░░██║██╔══██╗╚══██╔══╝██║██╔════╝╚██╗░██╔╝
+╚█████╗░██║░░░██║██████╦╝░░░██║░░░██║█████╗░░░╚████╔╝░
+░╚═══██╗██║░░░██║██╔══██╗░░░██║░░░██║██╔══╝░░░░╚██╔╝░░
+██████╔╝╚██████╔╝██████╦╝░░░██║░░░██║██║░░░░░░░░██║░░░
+╚═════╝░░╚═════╝░╚═════╝░░░░╚═╝░░░╚═╝╚═╝░░░░░░░░╚═╝░░░
+
+"""
+            + "\n"
+            + "                                     "[: -(version_len + 2)]
+            + "v{} ".format(os.environ.get("VERSION"))
+        )
