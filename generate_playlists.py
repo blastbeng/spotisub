@@ -143,7 +143,7 @@ def get_user_playlists(offset = 0, single_execution = False):
 
     for item in playlist_result['items']:
         if item['name'] is not None and item['name'].strip() != '':
-            logging.debug('Found playlist: %s', item['name'])
+            logging.info('Importing playlist: %s', item['name'])
             result = dict({'tracks': []})     
             result = get_playlist_tracks(item, result)    
             write_playlist(item['name'].strip(), result)
