@@ -155,6 +155,12 @@ def get_user_playlists(offset = 0, single_execution = False):
     if not single_execution and len(playlist_result['items']) != 0:
         get_user_playlists(len(playlist_result['items']) + 50)
 
+def all_artists_recommendations():
+    artist_names = get_artists_array_names()
+    if len(artist_names) > 0:
+        random.shuffle(artist_names)
+        for artist_name in artist_names:
+            show_recommendations_for_artist(artist_name)
 
 def print_logo():
         version_len = len(os.environ.get("VERSION"))

@@ -42,24 +42,38 @@ def get_response_str(text: str, status):
   r.headers["Content-Type"] = "text/xml; charset=utf-8"
   return r
 
-nsvoice = api.namespace('generate', 'Generate APIs')
+nsgenerate = api.namespace('generate', 'Generate APIs')
 
-@nsvoice.route('/artist_reccomendations/')
-@nsvoice.route('/artist_reccomendations/<string:artist_name>/')
+@nsgenerate.route('/artist_reccomendations/')
+@nsgenerate.route('/artist_reccomendations/<string:artist_name>/')
 class ArtistReccomendationsClass(Resource):
   def post (self, artist_name = None):
     try:
         if artist_name is None:
           artist_name = random.choice(generate_playlists.get_artists_array_names())
         threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
-        return get_response_str("Generating playlist for artist " + artist_name, 200)  
+        return get_response_str("Generating reccomendations playlist for artist " + artist_name, 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsvoice.route('/reccomendations')
+
+
+@nsgenerate.route('/all_artists_reccomendations')
+class ArtistReccomendationsClass(Resource):
+  def post (self, artist_name = None):
+    try:
+        threading.Thread(target=lambda: generate_playlists.all_artists_recommendations()).start()
+        return get_response_str("Generating reccomendations playlist for all artist " + artist_name, 200)  
+    except Exception as e:
+      exc_type, exc_obj, exc_tb = sys.exc_info()
+      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      g.request_error = str(e)
+
+@nsgenerate.route('/reccomendations')
 class ReccomendationsClass(Resource):
   def post (self):
     try:
@@ -71,12 +85,24 @@ class ReccomendationsClass(Resource):
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsvoice.route('/user_playlists')
+@nsgenerate.route('/user_playlist')
 class UserPlaylistsClass(Resource):
   def post (self):
     try:
         threading.Thread(target=lambda: generate_playlists.get_user_playlists(random.randrange(100), single_execution = True)).start()
         return get_response_str("Importing a random playlist", 200)  
+    except Exception as e:
+      exc_type, exc_obj, exc_tb = sys.exc_info()
+      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      g.request_error = str(e)
+
+@nsgenerate.route('/all_user_playlists')
+class AllPlaylistsClass(Resource):
+  def post (self):
+    try:
+        threading.Thread(target=lambda: generate_playlists.get_user_playlists(0)).start()
+        return get_response_str("Importing a all your spotify playlists", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
