@@ -41,18 +41,22 @@ SCRIPT FEATURES:
 ### Installing
 
 As Flask App with docker compose:
-* cd /opt/projects
-* git clone https://github.com/blastbeng/SpotToSubsonic
-* cd SpotToSubsonic
-* cp .env.sample .env and modify it with your keys from spotify dev dashboard
-* docker compose build
+```
+cd /opt/projects
+git clone https://github.com/blastbeng/SpotToSubsonic
+cd SpotToSubsonic
+cp .env.sample .env and modify it with your keys from spotify dev dashboard
+docker compose build
+```
 
 As Script:
-* cd /opt/projects
-* git clone https://github.com/blastbeng/SpotToSubsonic
-* cd SpotToSubsonic
-* ./installdeps_script.sh
-* cp .env.sample .env and modify it with your keys from spotify dev dashboard
+```
+cd /opt/projects
+git clone https://github.com/blastbeng/SpotToSubsonic
+cd SpotToSubsonic
+./installdeps_script.sh
+cp .env.sample .env and modify it with your keys from spotify dev dashboard
+```
 
 ### Executing program
 
