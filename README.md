@@ -181,5 +181,7 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 ## Acknowledgments
 
-A big thanks to the Spotipy library
-* [spotipy](https://github.com/spotipy-dev/spotipy)
+A big thanks to the Spotipy, py-sonic libraries and Navidrome team
+* [Spotipy](https://github.com/spotipy-dev/spotipy)
+* [py-sonic](https://github.com/crustymonkey/py-sonic)
+* [Navidrome](https://github.com/navidrome/navidrome)
