@@ -167,6 +167,7 @@ services:
 
 ## Environment Variables:
 
+```
 * SPOTIPY_CLIENT_ID      => Get this from https://developer.spotify.com/dashboard. Mandatory
 * SPOTIPY_CLIENT_SECRET  => Get this from https://developer.spotify.com/dashboard. Mandatory
 * SPOTIPY_REDIRECT_URI   => Default http://127.0.0.1:8080/. Mandatory
@@ -180,6 +181,7 @@ services:
 * RECCOMEND_GEN_SCHED    => Interval in hours to schedule the custom reccomendations generation. Default: 4
 * PLAYLIST_GEN_SCHED     => Interval in hours to schedule the custom playlist import. Default: 2
 * LOG_LEVEL              => Log level. Default: 40 (Error)
+```
 
 ## Help
 
