@@ -171,20 +171,17 @@ services:
 | ------------- | ------------- | ------------- | ------------- |
 | SPOTIPY_CLIENT_ID      | Get this from https://developer.spotify.com/dashboard  | None | Yes |
 | SPOTIPY_CLIENT_SECRET  | Get this from https://developer.spotify.com/dashboard  | None | Yes |
-
-SPOTIPY_CLIENT_ID      => Get this from https://developer.spotify.com/dashboard. Mandatory
-SPOTIPY_CLIENT_SECRET  => Get this from https://developer.spotify.com/dashboard. Mandatory
-SPOTIPY_REDIRECT_URI   => Default http://127.0.0.1:8080/. Mandatory
-SUBSONIC_API_HOST      => Subsonic API host, included http:// or https://. Mandatory
-SUBSONIC_API_PORT      => Subsonic API port. Mandatory
-SUBSONIC_API_USER      => Subsonic API user. Mandatory
-SUBSONIC_API_PASS      => Subsonic API password. Mandatory
-ITEMS_PER_PLAYLIST     => How many items per playlists, take care to not set this too high. Default: 100
-NUM_USER_PLAYLISTS     => How many custom reccomendations playlist to generate. Default: 5
-ARTIST_GEN_SCHED       => Interval in hours to schedule the artists reccomendations generation. Default: 1
-RECCOMEND_GEN_SCHED    => Interval in hours to schedule the custom reccomendations generation. Default: 4
-PLAYLIST_GEN_SCHED     => Interval in hours to schedule the custom playlist import. Default: 2
-LOG_LEVEL              => Log level. Default: 40 (Error)
+| SPOTIPY_REDIRECT_URI  | Default http://127.0.0.1:8080/  | None | Yes |
+| SUBSONIC_API_HOST  | Subsonic API host, with http:// or https:// | None | Yes |
+| SUBSONIC_API_PORT  | Subsonic API port. Mandatory | None | Yes |
+| SUBSONIC_API_USER  | Subsonic API user. Mandatory | None | Yes |
+| SUBSONIC_API_PASS  | Subsonic API password. Mandatory | None | Yes |
+| ITEMS_PER_PLAYLIST  | How many items per playlists, take care to not set this too high | Default: 100 | No |
+| NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | Default: 5 | No |
+| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation | Default: 1 | No |
+| RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation | Default: 4 | No |
+| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import | Default: 2 | No |
+| LOG_LEVEL  | Log level | Default: 40 | No |
 
 ## Help
 
