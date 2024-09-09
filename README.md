@@ -103,6 +103,7 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 ## Next steps and improvements
 
+* Integrate init.py inside the Dockerfile to simplify the init process
 * Better reccomendation generation (generate non existent playlists instead of doing it randomly)
 * Better playlist importing (import non existent playlists instead of doing it randomly)
 * Import specific playlist by name
