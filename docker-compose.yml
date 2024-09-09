@@ -14,7 +14,7 @@ services:
     restart: always
     volumes:
       - ".env:/home/user/subtify/.env"
-      - ".cache:/home/user/subtify/.cache"
+      - ".cache:/home/user/subtify/cache"
     entrypoint: ./entrypoint.sh
     ports:
       - 50811:50811
