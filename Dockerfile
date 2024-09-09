@@ -28,7 +28,7 @@ WORKDIR $HOME
 RUN mkdir $HOME/.cache $HOME/.config && chmod -R 777 $HOME
 ENV PATH="$HOME/.local/bin:$PATH"
         
-WORKDIR $HOME/spotify-playlist-downloader
+WORKDIR $HOME/spotify-to-subsonic
 ENV PATH="/home/uwsgi/.local/bin:${PATH}"
 
 COPY requirements.txt .
