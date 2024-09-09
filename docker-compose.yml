@@ -1,6 +1,6 @@
-name: spotify-playlist-generator
+name: spotify-to-subsonic
 services:
-  spotify-playlist-generator-api:
+  spotify-to-subsonic-api:
     tty: true
     stdin_open: true
     pull_policy: build
@@ -9,16 +9,16 @@ services:
       dockerfile: Dockerfile
       network: host
       shm_size: "16gb"
-    container_name: spotify-playlist-generator-api
+    container_name: spotify-to-subsonic-api
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Rome
-    image: "blastbeng/spotify-playlist-generator-api:1.0.0"
+    image: "blastbeng/spotify-to-subsonic-api:1.0.0"
     restart: always
     volumes:
-      - ".env:/home/user/spotify-playlist-downloader/.env"
-      - ".cache:/home/user/spotify-playlist-downloader/.cache"
+      - ".env:/home/user/spotify-to-subsonic/.env"
+      - ".cache:/home/user/spotify-to-subsonic/.cache"
       - "/var/media/musica:/var/media/musica"
       - "/opt/docker/compose/media/navidrome/data/navidrome.db:/opt/docker/compose/media/navidrome/data/navidrome.db"
     entrypoint: ./entrypoint.sh
