@@ -15,7 +15,7 @@ This is an example about what it generates using Navidrome:
 
 ![image](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
 
-Also there are three endpoints available for manually importing playlists.
+Also there are five endpoints available for manually importing playlists.
 
 FLASK APP ENDPOINTS:
 * /generate/artist_reccomendations/<artist_name>/ => Generate artist reccomendations playlists, if no artist is provided it will choose a random one from your library
