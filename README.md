@@ -82,7 +82,6 @@ cp .env.sample .env
 First run using the docker image:
 ```
 cd /opt/projects/subtify
-touch .cache
 docker compose up -d
 docker compose exec -it subtify /home/user/subtify/first_run.sh --interactive --tty
 docker compose down
@@ -102,10 +101,14 @@ source .venv/bin/activate
 python run.py
 ```
 
-## Navidrome
+## Using with Navidrome
+
+Sample docker-compose file using Navidrome
+
+Remember to always configure the .env file and then run as described before:
+* docker compose exec -it subtify /home/user/subtify/first_run.sh --interactive --tty
 
 ```
-Sample docker-compose file using Navidrome
 version: "3.7"
 services:
     navidrome:
