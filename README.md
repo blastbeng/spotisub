@@ -37,15 +37,15 @@ SCRIPT FEATURES:
 
 As Script:
 * cd /opt/projects
-* git clone https://github.com/blastbeng/spotify-playlist-generator
-* cd spotify-playlist-generator
+* git clone https://github.com/blastbeng/SpotToSubsonic
+* cd SpotToSubsonic
 * ./installdeps_script.sh
 * cp .env.sample .env and modify it with your keys from spotify dev dashboard
 
 As Flask App with docker compose:
 * cd /opt/projects
-* git clone https://github.com/blastbeng/spotify-playlist-generator
-* cd spotify-playlist-generator
+* git clone https://github.com/blastbeng/SpotToSubsonic
+* cd SpotToSubsonic
 * ./installdeps_script.sh
 * cp .env.sample .env and modify it with your keys from spotify dev dashboard
 * python run.py => To generate the .cache file, used by the docker compose file
