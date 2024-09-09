@@ -61,7 +61,7 @@ As Script:
 
 First run:
 ```
-cd /opt/projects/spotify-playlist-generator
+cd /opt/projects/SpotToSubsonic
 ./installdeps_script.sh
 source .venv/bin/activate
 python init.py
@@ -70,13 +70,13 @@ This is necessary, to generate the .cache file for spotify authentication
 
 As Flask App with docker compose:
 ```
-cd /opt/projects/spotify-playlist-generator
+cd /opt/projects/SpotToSubsonic
 docker compose up
 ```
 
 As Script:
 ```
-cd /opt/projects/spotify-playlist-generator
+cd /opt/projects/SpotToSubsonic
 source .venv/bin/activate
 python run.py
 ```
