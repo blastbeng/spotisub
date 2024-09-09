@@ -83,16 +83,19 @@ def write_playlist(playlist_name, results):
     try:
         song_ids = []
         for track in results['tracks']:
-            logging.debug('Searching %s - %s in your music library', track['artists'][0]['name'], track['name'])
-            artist_path_dir = None
-            navidrome_search = pysonic.search2(track['artists'][0]['name'] + " " + track['name'])
-            if len(navidrome_search["searchResult2"]) and "song" in navidrome_search["searchResult2"]:
-                for song in navidrome_search["searchResult2"]["song"]:
-                    song_title = song["title"].strip().lower()
-                    if not "live" in song_title and not "acoustic" in song_title:
-                        if song_title != '' and (track['name'].lower() == song_title or song_title in track['name'].lower() or track['name'].lower() in song_title):
-                            song_ids.append(song["id"])
-                            break
+            for artist_spotify in track['artists']:
+                artist_name_spotify = artist_spotify["name"]
+                logging.debug('Searching %s - %s in your music library', artist_name_spotify, track['name'])
+                navidrome_search = pysonic.search2(artist_name_spotify + " " + track['name'])
+                if len(navidrome_search["searchResult2"]) and "song" in navidrome_search["searchResult2"]:
+                    for song in navidrome_search["searchResult2"]["song"]:
+                        song_title  = song["title"].strip().lower()
+                        song_artist = song["artist"].strip().lower()
+                        song_album  = song["album"].strip().lower()
+                        if ((song_artist != '' and (artist_name_spotify.lower() == song_artist or song_artist in artist_name_spotify.lower() or artist_name_spotify.lower() in song_artist))
+                            and (not "live" in song_title and not "acoustic" in song_title and not "live" in song_album and not "acoustic" in song_album)
+                            and (song_title != '' and (track['name'].lower() == song_title or song_title in track['name'].lower() or track['name'].lower() in song_title))):
+                                song_ids.append(song["id"])
         if len(song_ids) > 0:
             playlist_id = None
             for playlist in pysonic.getPlaylists()["playlists"]["playlist"]:
@@ -117,7 +120,7 @@ def show_recommendations_for_artist(name):
     playlist_name = name + " - Reccomendations"
     write_playlist(playlist_name, results)
 
-def get_playlist_tracks(item, playlist_path_file, result, offset_tracks = 0):
+def get_playlist_tracks(item, result, offset_tracks = 0):
     response_tracks = sp.playlist_items(item['id'],
         offset=offset_tracks,
         fields='items.track.id,total',
@@ -130,7 +133,7 @@ def get_playlist_tracks(item, playlist_path_file, result, offset_tracks = 0):
         result["tracks"].append(track_dict)
         time.sleep(2)
     if len(response_tracks['items']) != 0:
-        result = get_playlist_tracks(item, playlist_path_file, result, offset_tracks = len(response_tracks['items']) + 50)
+        result = get_playlist_tracks(item, result, offset_tracks = len(response_tracks['items']) + 50)
     return result
 
 def get_user_playlists(offset = 0, single_execution = False):
@@ -140,10 +143,9 @@ def get_user_playlists(offset = 0, single_execution = False):
     for item in playlist_result['items']:
         if item['name'] is not None and item['name'].strip() != '':
             logging.debug('Found playlist: %s', item['name'])
-            playlist_name = item['name']
             result = dict({'tracks': []})     
-            result = get_playlist_tracks(item, playlist_name, result)    
-            write_playlist(playlist_name, result)
+            result = get_playlist_tracks(item, result)    
+            write_playlist(item['name'].strip(), result)
             if single_execution:
                 break    
     
