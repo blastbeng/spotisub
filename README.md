@@ -47,9 +47,10 @@ mkdir -p /opt/projects/subtify
 cd /opt/projects/subtify
 wget https://raw.githubusercontent.com/blastbeng/subtify/main/docker-compose.yml
 wget https://raw.githubusercontent.com/blastbeng/subtify/main/.env.sample
-mv .env.sample .env
 docker compose pull
 ```
+
+Remember to modifiy the Environment variables inside docker-compose.yml.
 
 The docker image is available at https://hub.docker.com/r/blastbeng/subtify/tags
 
@@ -105,7 +106,7 @@ python run.py
 
 Sample docker-compose file using Navidrome
 
-Remember to always configure the .env file and then run as described before:
+Remember to always run the init sh as described before:
 * docker compose exec -it subtify /home/user/subtify/first_run.sh --interactive --tty
 
 ```
@@ -139,6 +140,16 @@ services:
             - PUID=1000
             - PGID=1000
             - TZ=Europe/Rome
+            - SPOTIPY_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXX
+            - SPOTIPY_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXX
+            - SPOTIPY_REDIRECT_URI=http://127.0.0.1:8080/
+            - SUBSONIC_API_HOST=http://127.0.0.1
+            - SUBSONIC_API_PORT=4533
+            - SUBSONIC_API_USER=user
+            - SUBSONIC_API_PASS=pass
+            - ITEMS_PER_PLAYLIST=100
+            - NUM_USER_PLAYLISTS=5
+            - LOG_LEVEL=20
         image: "blastbeng/subtify:latest"
         restart: always
         volumes:
