@@ -1,5 +1,6 @@
 import generate_playlists
 import random
+generate_playlists.print_logo()
 generate_playlists.logging.info('Process Start!')
 artist_names = generate_playlists.get_artists_array_names()
 if len(artist_names) > 0:
