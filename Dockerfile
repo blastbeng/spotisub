@@ -24,7 +24,7 @@ RUN useradd --no-log-init --create-home --shell /bin/bash --uid $UID --gid $GID 
 USER user
 ENV HOME=/home/user
 WORKDIR $HOME
-RUN mkdir $HOME/.cache $HOME/.config && chmod -R 777 $HOME
+RUN mkdir $HOME/.config && chmod -R 777 $HOME
 ENV PATH="$HOME/.local/bin:$PATH"
         
 WORKDIR $HOME/subtify

@@ -50,6 +50,8 @@ mv .env.sample .env
 docker compose pull
 ```
 
+The docker image is available at https://hub.docker.com/r/blastbeng/subtify/tags
+
 
 Building the FlaskApp:
 ```
@@ -79,9 +81,12 @@ cp .env.sample .env
 First run using the docker image:
 ```
 cd /opt/projects/subtify
+touch .cache
+docker compose up -d
 docker compose exec -it subtify /home/user/subtify/first_run.sh
+docker compose down
 ```
-This is necessary, to generate the .cache file for spotify authentication
+This is necessary, to generate the cache file used by spotify authentication
 
 Run as Flask App with docker compose:
 ```
@@ -118,7 +123,6 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 ## Next steps and improvements
 
-* Integrate init.py inside the Dockerfile to simplify the init process
 * Better reccomendation generation (generate non existent playlists instead of doing it randomly)
 * Better playlist importing (import non existent playlists instead of doing it randomly)
 * Import specific playlist by name
