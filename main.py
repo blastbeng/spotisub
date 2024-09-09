@@ -46,7 +46,8 @@ nsvoice = api.namespace('generate', 'Generate APIs')
 class ArtistReccomendationsClass(Resource):
   def post (self, artist_name = None):
     try:
-        threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(random.choice(get_artists_array_names()))).start()
+        artist_name = random.choice(generate_playlists.get_artists_array_names())
+        threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
         return get_response_str("Generating playlist for artist " + artist_name, 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -87,18 +88,15 @@ class Healthcheck(Resource):
 
 @scheduler.task('interval', id='artist_reccomendations', hours=2)
 def artist_reccomendations():
-    if os.path.isdir(music_dir) and len(os.listdir(music_dir)) > 0:
-        generate_playlists.show_recommendations_for_artist(random.choice(os.listdir(music_dir)))
+    generate_playlists.show_recommendations_for_artist(random.choice(generate_playlists.get_artists_array_names()))
 
 @scheduler.task('interval', id='my_reccommendations', hours=6)
 def my_reccommendations():
-    if os.path.isdir(music_dir) and len(os.listdir(music_dir)) > 0:
-        generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS"))))
+    generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS"))))
 
 @scheduler.task('interval', id='user_playlists', hours=6)
 def user_playlists():
-    if os.path.isdir(music_dir) and len(os.listdir(music_dir)) > 0:
-        generate_playlists.get_user_playlists(random.randrange(100), single_execution = True)
+    generate_playlists.get_user_playlists(random.randrange(100), single_execution = True)
 
 
 scheduler.init_app(app)
