@@ -15,7 +15,7 @@ This is an example about what it generates using Navidrome:
 
 ![image](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
 
-Also there are three endpoints available for manually importing playlists.
+Also there are five endpoints available for manually importing playlists.
 
 FLASK APP ENDPOINTS:
 * /generate/artist_reccomendations/<artist_name>/ => Generate artist reccomendations playlists, if no artist is provided it will choose a random one from your library
@@ -171,11 +171,11 @@ services:
 | ------------- | ------------- | ------------- | ------------- |
 | SPOTIPY_CLIENT_ID      | Get this from https://developer.spotify.com/dashboard  | None | Yes |
 | SPOTIPY_CLIENT_SECRET  | Get this from https://developer.spotify.com/dashboard  | None | Yes |
-| SPOTIPY_REDIRECT_URI  | Default http://127.0.0.1:8080/  | None | Yes |
+| SPOTIPY_REDIRECT_URI  | Get this from https://developer.spotify.com/dashboard | None | Yes |
 | SUBSONIC_API_HOST  | Subsonic API host, with http:// or https:// | None | Yes |
-| SUBSONIC_API_PORT  | Subsonic API port. Mandatory | None | Yes |
-| SUBSONIC_API_USER  | Subsonic API user. Mandatory | None | Yes |
-| SUBSONIC_API_PASS  | Subsonic API password. Mandatory | None | Yes |
+| SUBSONIC_API_PORT  | Subsonic API port | None | Yes |
+| SUBSONIC_API_USER  | Subsonic API user | None | Yes |
+| SUBSONIC_API_PASS  | Subsonic API password | None | Yes |
 | ITEMS_PER_PLAYLIST  | How many items per playlists, take care to not set this too high | 100 | No |
 | NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | 5 | No |
 | ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation | 1 | No |
