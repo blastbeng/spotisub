@@ -153,7 +153,7 @@ services:
         restart: always
         volumes:
             - ".env:/home/user/subtify/.env"
-            - ".cache:/home/user/subtify/cache"
+            - "./cache:/home/user/subtify/cache"
         ports:
             - 50811:50811
         healthcheck:

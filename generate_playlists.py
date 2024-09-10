@@ -25,7 +25,7 @@ client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET")
 redirect_uri=os.environ.get("SPOTIPY_REDIRECT_URI")
 scope="user-top-read,user-library-read,user-read-recently-played"
 
-creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, open_browser=False, cache_path="./cache/spotipy_cache")
+creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, open_browser=False, cache_path=os.path.dirname(os.path.abspath(__file__)) + "/cache/spotipy_cache")
 
 sp = spotipy.Spotify(auth_manager=creds)
 
@@ -87,7 +87,7 @@ def write_playlist(playlist_name, results):
         for track in results['tracks']:
             for artist_spotify in track['artists']:
                 artist_name_spotify = artist_spotify["name"]
-                logging.debug('Searching %s - %s in your music library', artist_name_spotify, track['name'])
+                logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
                 navidrome_search = pysonic.search2(artist_name_spotify + " " + track['name'])
                 if len(navidrome_search["searchResult2"]) and "song" in navidrome_search["searchResult2"]:
                     for song in navidrome_search["searchResult2"]["song"]:
@@ -125,17 +125,17 @@ def show_recommendations_for_artist(name):
 def get_playlist_tracks(item, result, offset_tracks = 0):
     response_tracks = sp.playlist_items(item['id'],
         offset=offset_tracks,
-        fields='items.track.id,total',
+        fields='items.track.id,items.track.name,items.track.artists,total',
         limit=50,
         additional_types=['track'])
-    for track_id in response_tracks['items']:
-        track = sp.track(track_id['track']['id'])
-        logging.debug('Found %s - %s inside playlist %s', track['artists'][0]['name'], track['name'], item['name'])
+    for track_item in response_tracks['items']:
+        track = track_item['track']
+        logging.info('Found %s - %s inside playlist %s', track['artists'][0]['name'], track['name'], item['name'])
         track_dict = dict({'name': track['name'], 'artists': [{"name": track['artists'][0]['name']}]})
-        result["tracks"].append(track_dict)
-        time.sleep(2)
+        result["tracks"].append(track)
+    time.sleep(2)
     if len(response_tracks['items']) != 0:
-        result = get_playlist_tracks(item, result, offset_tracks = len(response_tracks['items']) + 50)
+        result = get_playlist_tracks(item, result, offset_tracks = offset_tracks + 50)
     return result
 
 def get_user_playlists(offset = 0, single_execution = False):
