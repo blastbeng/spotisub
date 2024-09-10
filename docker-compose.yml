@@ -17,7 +17,7 @@ services:
       - SUBSONIC_API_PORT=4533
       - SUBSONIC_API_USER=user
       - SUBSONIC_API_PASS=pass
-    image: "blastbeng/subtify:0.0.2"
+    image: "blastbeng/subtify:latest"
     restart: always
     volumes:
       - ".env:/home/user/subtify/.env"
