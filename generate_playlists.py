@@ -10,7 +10,7 @@ from spotipy import SpotifyOAuth
 from os.path import join, dirname
 from dotenv import load_dotenv
 
-os.environ["VERSION"] = "0.0.1"
+os.environ["VERSION"] = "0.0.2"
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -161,6 +161,25 @@ def all_artists_recommendations():
         random.shuffle(artist_names)
         for artist_name in artist_names:
             show_recommendations_for_artist(artist_name)
+
+def get_user_saved_tracks():
+    result = dict({'tracks': []})
+    result = get_user_saved_tracks_playlist(result)
+    write_playlist("000 - Saved Tracks", result)
+
+def get_user_saved_tracks_playlist(result, offset_tracks = 0):
+    response_tracks = sp.current_user_saved_tracks(
+        offset=offset_tracks,
+        limit=50)
+    for track_item in response_tracks['items']:
+        track = track_item['track']
+        logging.info('Found %s - %s inside your saved tracks', track['artists'][0]['name'], track['name'])
+        track_dict = dict({'name': track['name'], 'artists': [{"name": track['artists'][0]['name']}]})
+        result["tracks"].append(track)
+    time.sleep(2)
+    if len(response_tracks['items']) != 0:
+        result = get_user_saved_tracks_playlist(result, offset_tracks = offset_tracks + 50)
+    return result
 
 def print_logo():
         version_len = len(os.environ.get("VERSION"))

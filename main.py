@@ -25,7 +25,9 @@ if os.environ.get("ARTIST_GEN_SCHED") is None:
 if os.environ.get("RECCOMEND_GEN_SCHED") is None:
   os.environ["RECCOMEND_GEN_SCHED"] = "4"
 if os.environ.get("PLAYLIST_GEN_SCHED") is None:
-  os.environ["PLAYLIST_GEN_SCHED"] = "2"
+  os.environ["PLAYLIST_GEN_SCHED"] = "3"
+if os.environ.get("SAVED_GEN_SCHED") is None:
+  os.environ["SAVED_GEN_SCHED"] = "2"
 
 
 scheduler = APScheduler()
@@ -115,7 +117,19 @@ class AllPlaylistsClass(Resource):
   def post (self):
     try:
         threading.Thread(target=lambda: generate_playlists.get_user_playlists(0)).start()
-        return get_response_str("Importing a all your spotify playlists", 200)  
+        return get_response_str("Importing all your spotify playlists", 200)  
+    except Exception as e:
+      exc_type, exc_obj, exc_tb = sys.exc_info()
+      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      g.request_error = str(e)
+
+@nsgenerate.route('/saved_tracks')
+class SavedTracksClass(Resource):
+  def post (self):
+    try:
+        threading.Thread(target=lambda: generate_playlists.get_user_saved_tracks()).start()
+        return get_response_str("Importing your saved tracks", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -135,11 +149,15 @@ def artist_reccomendations():
 
 @scheduler.task('interval', id='my_reccommendations', hours=int(os.environ.get("RECCOMEND_GEN_SCHED")))
 def my_reccommendations():
-    generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("PLAYLIST_GEN_SCHED"))))
+    generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS"))))
 
-@scheduler.task('interval', id='user_playlists', hours=6)
+@scheduler.task('interval', id='user_playlists', hours=int(os.environ.get("PLAYLIST_GEN_SCHED")))
 def user_playlists():
     generate_playlists.get_user_playlists(random.randrange(100), single_execution = True)
+
+@scheduler.task('interval', id='saved_tracks', hours=int(os.environ.get("SAVED_GEN_SCHED")))
+def saved_tracks():
+    generate_playlists.get_user_saved_tracks()
 
 
 scheduler.init_app(app)

@@ -23,11 +23,13 @@ FLASK APP ENDPOINTS:
 * /generate/reccomendations => Generate a random reccomendations Playlist
 * /generate/user_playlists => import a random playlist from your spotify account
 * /generate/all_user_playlists => import all playlist from your spotify account
+* /generate/saved_tracks => import a playlist with all your saved tracks from your spotify account
 
 SCRIPT FEATURES:
 * Generate 5 playlist based on your history, top tracks and saved tracks
 * Generate artist reccomendation playlists for every artist in your library
 * Generate playlists based on your created and followed playlists on Spotify
+* Generate playlist with all your saved tracks on Spotify
 
 ## Getting Started
 
@@ -180,7 +182,8 @@ services:
 | NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | 5 | No |
 | ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation | 1 | No |
 | RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation | 4 | No |
-| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import | 2 | No |
+| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import | 3 | No |
+| SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import | 2 | No |
 | LOG_LEVEL  | Log level | 40 | No |
 
 ## Help
@@ -201,7 +204,12 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 * Implemented script
 * Implemented flask APIs and Scheduler
-* Implemented via subsonic api calls instead of file system
+* Implemented subsonic api calls instead of file system
+* Implemented custom reccomendations
+* Implemented artist reccomendations
+* Implemented saved playlists import
+* Implemented saved tracks playlist import
+
 
 ## Next steps and improvements
 
