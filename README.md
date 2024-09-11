@@ -17,13 +17,15 @@ This is an example about what it generates using Navidrome:
 
 Also there are five endpoints available for manually importing playlists.
 
+The default endpoint path is: http://127.0.0.1:50811
+
 FLASK APP ENDPOINTS:
 * /generate/artist_reccomendations/<artist_name>/ => Generate artist reccomendations playlists, if no artist is provided it will choose a random one from your library
-* /generate/all_artists_reccomendations => Generate reccomendations playlists for all the artists in your library
+* /generate/artist_reccomendations/all/ => Generate reccomendations playlists for all the artists in your library
 * /generate/reccomendations => Generate a random reccomendations Playlist
-* /generate/user_playlists => import a random playlist from your spotify account
-* /generate/all_user_playlists => import all playlist from your spotify account
-* /generate/saved_tracks => import a playlist with all your saved tracks from your spotify account
+* /import/user_playlists => import a random playlist from your spotify account
+* /import/user_playlists/all => import all playlist from your spotify account
+* /import/saved_tracks => import a playlist with all your saved tracks from your spotify account
 
 SCRIPT FEATURES:
 * Generate 5 playlist based on your history, top tracks and saved tracks
@@ -174,12 +176,13 @@ services:
 | SUBSONIC_API_PORT  | Subsonic API port | None | Yes |
 | SUBSONIC_API_USER  | Subsonic API user | None | Yes |
 | SUBSONIC_API_PASS  | Subsonic API password | None | Yes |
-| ITEMS_PER_PLAYLIST  | How many items per playlists, take care to not set this too high | 100 | No |
+| ITEMS_PER_PLAYLIST  | How many items per playlists for reccomendations playlists, take care to not set this too high | 100 | No |
 | NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | 5 | No |
-| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation | 1 | No |
-| RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation | 4 | No |
-| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import | 3 | No |
-| SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import | 2 | No |
+| SCHEDULER_ENABLED  | Set to 0 to disable the integrated scheduler, you will need to use the rest APIs if you disable this | 1 | No |
+| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation, set to 0 to disable this generator | 1 | No |
+| RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation, set to 0 to disable this generator | 4 | No |
+| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import, set to 0 to disable this generator | 3 | No |
+| SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import, set to 0 to disable this generator | 2 | No |
 | LOG_LEVEL  | Log level | 40 | No |
 
 ## Help
