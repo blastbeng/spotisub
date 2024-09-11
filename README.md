@@ -213,7 +213,7 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 ## Next steps and improvements
 
-* Implement Spotdl to have an option to download a track if it is missing from the subsonic database. Take a look at here: [spotdl](https://github.com/spotDL/spotify-downloader) 
+* Implement Spotdl to have an option to download a track if it is missing from the subsonic database. Take a look at spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
 
 ## Acknowledgments
 
