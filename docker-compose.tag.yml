@@ -1,0 +1,32 @@
+name: subtify
+services:
+  subtify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    container_name: subtify
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Rome
+      - SPOTIPY_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXX
+      - SPOTIPY_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXX
+      - SPOTIPY_REDIRECT_URI=http://127.0.0.1:8080/
+      - SUBSONIC_API_HOST=http://127.0.0.1
+      - SUBSONIC_API_PORT=4533
+      - SUBSONIC_API_USER=user
+      - SUBSONIC_API_PASS=pass
+    image: "blastbeng/subtify:${TAG}"
+    restart: always
+    volumes:
+      - ".env:/home/user/subtify/.env"
+      - "./cache:/home/user/subtify/cache"
+    entrypoint: ./entrypoint.sh
+    ports:
+      - 50811:50811
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:50811/utils/healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
