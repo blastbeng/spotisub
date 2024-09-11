@@ -13,7 +13,7 @@ logging.basicConfig(
         datefmt='%Y-%m-%d %H:%M:%S')
 
 downloader_options = DownloaderOptions()
-spotdl_client = Spotdl(client_id="9ec13a413da6462595ddaffceed18342", client_secret="8fa2ecbd00344cbd8914ca9ef5317440", no_cache=True)
+spotdl_client = Spotdl(client_id="xxxxxx", client_secret="xxxxx", no_cache=True)
 spotdl_client.downloader.settings["output"] = os.environ.get("MUSIC_DIR", "/music") + "/{artist}/{artists} - {album} ({year}) - {track-number} - {title}.{output-ext}"
 
 def download_track(track)
