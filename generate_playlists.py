@@ -14,7 +14,7 @@ dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 if os.environ.get("SPOTDL_ENABLED", "0") == "1":
-    import spotdl_integration
+    import spotdl_helper
 
 os.environ["VERSION"] = "0.0.3"
 
@@ -105,7 +105,7 @@ def write_playlist(playlist_name, results):
                                 song_ids.append(song["id"])
                                 found = True
                 if os.environ.get("SPOTDL_ENABLED", "0") == "1" and found is False:
-                    spotdl_integration.download_track(track_search)
+                    spotdl_helper.download_track(track_search)
         if len(song_ids) > 0:
             playlist_id = None
             for playlist in pysonic.getPlaylists()["playlists"]["playlist"]:
