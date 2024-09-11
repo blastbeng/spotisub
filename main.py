@@ -9,13 +9,10 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 from time import strftime
 from flask_restx import Api, Resource
-from flask_apscheduler import APScheduler
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-
-scheduler = APScheduler()
 generate_playlists.print_logo()
 
 logging.basicConfig(
@@ -49,29 +46,28 @@ nsgenerate = api.namespace('generate', 'Generate APIs')
 class ArtistReccomendationsClass(Resource):
   def get (self, artist_name = None):
     try:
-        if artist_name is None:
-          artist_name = random.choice(generate_playlists.get_artists_array_names())
-        threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
-        return get_response_str("Generating reccomendations playlist for artist " + artist_name, 200)  
+      if artist_name is None:
+        artist_name = random.choice(generate_playlists.get_artists_array_names())
+      threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
+      return get_response_str("Generating reccomendations playlist for artist " + artist_name, 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-
-
-@nsgenerate.route('/all_artists_reccomendations')
-class ArtistReccomendationsClass(Resource):
+@nsgenerate.route('/artist_reccomendations/all/')
+class ArtistReccomendationsAllClass(Resource):
   def get (self, artist_name = None):
     try:
-        threading.Thread(target=lambda: generate_playlists.all_artists_recommendations()).start()
-        return get_response_str("Generating reccomendations playlist for all artists", 200)  
+      threading.Thread(target=lambda: generate_playlists.all_artists_recommendations()).start()
+      return get_response_str("Generating reccomendations playlist for all artists", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
+
 
 @nsgenerate.route('/reccomendations')
 class ReccomendationsClass(Resource):
@@ -85,8 +81,11 @@ class ReccomendationsClass(Resource):
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsgenerate.route('/user_playlist/')
-@nsgenerate.route('/user_playlist/<string:playlist_name>/')
+
+nsimport = api.namespace('import', 'Generate APIs')
+
+@nsimport.route('/user_playlist/')
+@nsimport.route('/user_playlist/<string:playlist_name>/')
 class UserPlaylistsClass(Resource):
   def get (self, playlist_name = None):
     try:
@@ -103,19 +102,19 @@ class UserPlaylistsClass(Resource):
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsgenerate.route('/all_user_playlists')
-class AllPlaylistsClass(Resource):
-  def get (self):
+@nsimport.route('/user_playlist/all/')
+class UserPlaylistsAllClass(Resource):
+  def get (self, playlist_name = None):
     try:
-        threading.Thread(target=lambda: generate_playlists.get_user_playlists(0)).start()
-        return get_response_str("Importing all your spotify playlists", 200)  
+      threading.Thread(target=lambda: generate_playlists.get_user_playlists(0)).start()
+      return get_response_str("Importing all your spotify playlists", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsgenerate.route('/saved_tracks')
+@nsimport.route('/saved_tracks')
 class SavedTracksClass(Resource):
   def get (self):
     try:
@@ -134,26 +133,36 @@ class Healthcheck(Resource):
   def get (self):
     return "Ok!"
 
-@scheduler.task('interval', id='artist_reccomendations', hours=int(os.environ.get("ARTIST_GEN_SCHED", "1")))
-def artist_reccomendations():
-    generate_playlists.show_recommendations_for_artist(random.choice(generate_playlists.get_artists_array_names()))
+if os.environ.get("SCHEDULER_ENABLED", "1") == "1":
 
-@scheduler.task('interval', id='my_reccommendations', hours=int(os.environ.get("RECCOMEND_GEN_SCHED", "4")))
-def my_reccommendations():
-    generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS","5"))))
+  from flask_apscheduler import APScheduler
 
-@scheduler.task('interval', id='user_playlists', hours=int(os.environ.get("PLAYLIST_GEN_SCHED","3")))
-def user_playlists():
-    count = generate_playlists.count_user_playlists(0)
-    generate_playlists.get_user_playlists(random.randrange(count), single_execution = True)
+  scheduler = APScheduler()
 
-@scheduler.task('interval', id='saved_tracks', hours=int(os.environ.get("SAVED_GEN_SCHED","2")))
-def saved_tracks():
-    generate_playlists.get_user_saved_tracks()
+  if os.environ.get("ARTIST_GEN_SCHED", "1") != "0":
+    @scheduler.task('interval', id='artist_reccomendations', hours=int(os.environ.get("ARTIST_GEN_SCHED", "1")))
+    def artist_reccomendations():
+      generate_playlists.show_recommendations_for_artist(random.choice(generate_playlists.get_artists_array_names()))
+
+  if os.environ.get("RECCOMEND_GEN_SCHED", "1") != "0":
+    @scheduler.task('interval', id='my_reccommendations', hours=int(os.environ.get("RECCOMEND_GEN_SCHED", "4")))
+    def my_reccommendations():
+      generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS","5"))))
+
+  if os.environ.get("PLAYLIST_GEN_SCHED", "1") != "0":
+    @scheduler.task('interval', id='user_playlists', hours=int(os.environ.get("PLAYLIST_GEN_SCHED","3")))
+    def user_playlists():
+      count = generate_playlists.count_user_playlists(0)
+      generate_playlists.get_user_playlists(random.randrange(count), single_execution = True)
+
+  if os.environ.get("SAVED_GEN_SCHED", "1") != "0":
+    @scheduler.task('interval', id='saved_tracks', hours=int(os.environ.get("SAVED_GEN_SCHED","2")))
+    def saved_tracks():
+      generate_playlists.get_user_saved_tracks()
 
 
-scheduler.init_app(app)
-scheduler.start()
+  scheduler.init_app(app)
+  scheduler.start()
 
 if __name__ == '__main__':
   app.run()
