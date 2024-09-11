@@ -172,7 +172,11 @@ services:
 | PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import, set to 0 to disable this generator | 3 | No |
 | SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import, set to 0 to disable this generator | 2 | No |
 | SPOTDL_ENABLED  | Automate the missing track download process using spotdl, set to 1 to enable | 0 | No |
+| SPOTDL_OUT_FORMAT  | Spotdl output format, included the full absolute path to your music directory | "/music/{artist}/{artists} - {album} ({year}) - {track-number} - {title}.{output-ext}" | Yes if SPOTDL_ENABLED is 1 |
 | LOG_LEVEL  | Log level | 40 | No |
+
+
+For spotdl format examples please refer to: [https://spotdl.github.io/spotify-downloader/usage/](https://spotdl.github.io/spotify-downloader/usage/) 
 
 ## Help
 
