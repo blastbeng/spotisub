@@ -136,8 +136,6 @@ services:
                 delay: 5s
                 max_attempts: 3
                 window: 120s
-        labels:
-            - "com.centurylinklabs.watchtower.enable=true"
     subtify:
         container_name: subtify
         environment:
@@ -163,8 +161,6 @@ services:
             interval: 15s
             timeout: 5s
             retries: 12
-        labels:
-            - "com.centurylinklabs.watchtower.enable=true"
 ```
 
 ## Environment Variables:
