@@ -10,10 +10,13 @@ from spotipy import SpotifyOAuth
 from os.path import join, dirname
 from dotenv import load_dotenv
 
-os.environ["VERSION"] = "0.0.3"
-
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
+
+if os.environ.get("SPOTDL_ENABLED", "0") == "1":
+    import spotdl_integration
+
+os.environ["VERSION"] = "0.0.3"
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
@@ -88,7 +91,9 @@ def write_playlist(playlist_name, results):
             for artist_spotify in track['artists']:
                 artist_name_spotify = artist_spotify["name"]
                 logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
-                navidrome_search = pysonic.search2(artist_name_spotify + " " + track['name'])
+                track_search = artist_name_spotify + " " + track['name']
+                navidrome_search = pysonic.search2(track_search)
+                found = False
                 if len(navidrome_search["searchResult2"]) and "song" in navidrome_search["searchResult2"]:
                     for song in navidrome_search["searchResult2"]["song"]:
                         song_title  = song["title"].strip().lower()
@@ -98,6 +103,9 @@ def write_playlist(playlist_name, results):
                             and (not "live" in song_title and not "acoustic" in song_title and not "live" in song_album and not "acoustic" in song_album)
                             and (song_title != '' and (track['name'].lower() == song_title or song_title in track['name'].lower() or track['name'].lower() in song_title))):
                                 song_ids.append(song["id"])
+                                found = True
+                if os.environ.get("SPOTDL_ENABLED", "0") == "1" and found is False:
+                    spotdl_integration.download_track(track_search)
         if len(song_ids) > 0:
             playlist_id = None
             for playlist in pysonic.getPlaylists()["playlists"]["playlist"]:

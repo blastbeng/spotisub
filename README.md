@@ -7,7 +7,7 @@ Spotify to subsonic Playlist Generator and Importer
 
 Simple playlist generator based on spotify user and artists reccomendations with Subsonic API support
 
-This script will try to match all your Spotify playlists to your music library using Subsonic APIs
+This software will try to match all your Spotify playlists to your music library using Subsonic APIs
 
 This generator works with Navidrome and every Subsonic API enabled media center 
 
@@ -19,6 +19,17 @@ Also there are five endpoints available for manually importing playlists.
 
 The default endpoint path is: http://127.0.0.1:50811
 
+
+
+FEATURES:
+* Generate 5 playlist based on your history, top tracks and saved tracks
+* Generate artist reccomendation playlists for every artist in your library
+* Generate playlists based on your created and followed playlists on Spotify
+* Generate playlist with all your saved tracks on Spotify
+* Optional spotdl integration, to automate the dowload process of missing tracks from the subsonic database
+
+Take a look at spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
+
 FLASK APP ENDPOINTS:
 * /generate/artist_reccomendations/<artist_name>/ => Generate artist reccomendations playlists, if no artist is provided it will choose a random one from your library
 * /generate/artist_reccomendations/all/ => Generate reccomendations playlists for all the artists in your library
@@ -26,12 +37,6 @@ FLASK APP ENDPOINTS:
 * /import/user_playlists => import a random playlist from your spotify account
 * /import/user_playlists/all => import all playlist from your spotify account
 * /import/saved_tracks => import a playlist with all your saved tracks from your spotify account
-
-SCRIPT FEATURES:
-* Generate 5 playlist based on your history, top tracks and saved tracks
-* Generate artist reccomendation playlists for every artist in your library
-* Generate playlists based on your created and followed playlists on Spotify
-* Generate playlist with all your saved tracks on Spotify
 
 ## Getting Started
 
@@ -71,16 +76,6 @@ cp .env.sample .env
 docker compose build
 ```
 
-As Script:
-```
-mkdir -p /opt/projects
-cd /opt/projects
-git clone https://github.com/blastbeng/subtify
-cd subtify
-./installdeps_script.sh
-cp .env.sample .env
-```
-
 ### Executing program
 
 * Make sure you modify the parameters inside .env file
@@ -99,13 +94,6 @@ Run as Flask App with docker compose:
 ```
 cd /opt/projects/subtify
 docker compose up
-```
-
-Run as Script:
-```
-cd /opt/projects/subtify
-source .venv/bin/activate
-python run.py
 ```
 
 ## Using with Navidrome
@@ -183,11 +171,12 @@ services:
 | RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation, set to 0 to disable this generator | 4 | No |
 | PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import, set to 0 to disable this generator | 3 | No |
 | SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import, set to 0 to disable this generator | 2 | No |
+| SPOTDL_ENABLED  | Automate the missing track download process using spotdl, set to 1 to enable | 0 | No |
 | LOG_LEVEL  | Log level | 40 | No |
 
 ## Help
 
-NOTE. Depending on your library size and your playlists number and size on Spotify, the script execution may take a very long time.
+NOTE. Depending on your library size and your playlists number and size on Spotify, the execution may take a very long time.
 To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
 
 Using the Flask App is the reccomended way.
@@ -197,26 +186,13 @@ For any help contact me on Discord blastbong#9151
 
 ## Authors
 
-Fabio Valentino - [blastbeng](https://github.com/blastbeng)  
-
-## Changelog
-
-* Implemented script
-* Implemented flask APIs and Scheduler
-* Implemented subsonic api calls instead of file system
-* Implemented custom reccomendations
-* Implemented artist reccomendations
-* Implemented saved playlists import
-* Implemented saved tracks playlist import
-
-
-## Next steps and improvements
-
-* Implement Spotdl to have an option to download a track if it is missing from the subsonic database. Take a look at spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
+Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 ## Acknowledgments
 
-A big thanks to the Spotipy, py-sonic libraries and Navidrome team
+A big thanks to the developers and maintaners of these libraries\softwares:
 * [Spotipy](https://github.com/spotipy-dev/spotipy)
 * [py-sonic](https://github.com/crustymonkey/py-sonic)
 * [Navidrome](https://github.com/navidrome/navidrome)
+* [spotdl](https://github.com/spotDL/spotify-downloader) 
+
