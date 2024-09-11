@@ -118,9 +118,12 @@ def write_playlist(playlist_name, results):
 def show_recommendations_for_artist(name):
     logging.info('Searching reccomendations for: %s', name)
     artist = get_artist(name)
-    results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
-    playlist_name = name + " - Reccomendations"
-    write_playlist(playlist_name, results)
+    if artist is not None:
+        results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
+        playlist_name = name + " - Reccomendations"
+        write_playlist(playlist_name, results)
+    else:
+        logging.info('Artist: %s Not found!', name)
 
 def get_playlist_tracks(item, result, offset_tracks = 0):
     response_tracks = sp.playlist_items(item['id'],
