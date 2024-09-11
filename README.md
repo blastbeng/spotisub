@@ -183,8 +183,6 @@ For spotdl format examples please refer to: [https://spotdl.github.io/spotify-do
 NOTE. Depending on your library size and your playlists number and size on Spotify, the execution may take a very long time.
 To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
 
-Using the Flask App is the reccomended way.
-
 
 For any help contact me on Discord blastbong#9151
 
