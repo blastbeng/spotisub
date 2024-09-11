@@ -3,6 +3,10 @@
 
 Spotify to subsonic Playlist Generator and Importer
 
+!!! WORK IN PROGRESS !!!
+
+The current release has all the base features, but it is still a work in progress, so expect bugs.
+
 ## Description
 
 Simple playlist generator based on spotify user and artists reccomendations with Subsonic API support
