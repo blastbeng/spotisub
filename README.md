@@ -216,7 +216,7 @@ Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 * Better reccomendation generation (generate non existent playlists instead of doing it randomly)
 * Better playlist importing (import non existent playlists instead of doing it randomly)
 * Import specific playlist by name
-* Implement Spotdl to have an option to download a track if it is missing from the subsonic database. Take a look at [spotdl]https://github.com/spotDL/spotify-downloader here
+* Implement Spotdl to have an option to download a track if it is missing from the subsonic database. Take a look at here: [spotdl](https://github.com/spotDL/spotify-downloader) 
 
 ## Acknowledgments
 
