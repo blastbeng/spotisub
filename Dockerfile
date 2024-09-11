@@ -39,7 +39,7 @@ ENV HOME=/home/user
 COPY main.py .
 COPY init.py .
 COPY generate_playlists.py .
-COPY spotdl_integration.py .
+COPY spotdl_helper.py .
 COPY entrypoint.sh .
 COPY first_run.sh .
 COPY uwsgi.ini .
