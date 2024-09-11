@@ -10,14 +10,14 @@ from spotipy import SpotifyOAuth
 from os.path import join, dirname
 from dotenv import load_dotenv
 
-os.environ["VERSION"] = "0.0.2"
+os.environ["VERSION"] = "0.0.3"
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
-        level=int(os.environ.get("LOG_LEVEL")),
+        level=int(os.environ.get("LOG_LEVEL", "40")),
         datefmt='%Y-%m-%d %H:%M:%S')
 
 client_id=os.environ.get("SPOTIPY_CLIENT_ID")
@@ -54,7 +54,7 @@ def my_reccommendations(count = None):
         history = sp.current_user_recently_played(limit=50)
         logging.info('Loaded your played tracks')
         time.sleep(2)
-        for i in range(int(os.environ.get("NUM_USER_PLAYLISTS"))):
+        for i in range(int(os.environ.get("NUM_USER_PLAYLISTS","5"))):
             if count is None or (count is not None and count == i):
                 logging.info('Searching your reccomendations (playlist %s)', str(i+1))
                 top_track_ids = [track['id'] for track in top_tracks['items']]
@@ -138,12 +138,12 @@ def get_playlist_tracks(item, result, offset_tracks = 0):
         result = get_playlist_tracks(item, result, offset_tracks = offset_tracks + 50)
     return result
 
-def get_user_playlists(offset = 0, single_execution = False):
+def get_user_playlists(offset = 0, single_execution = False, playlist_name = None):
 
-    playlist_result = sp.current_user_playlists(limit=50, offset = offset)
+    playlist_result = sp.current_user_playlists(limit=(50 if single_execution is False else 1), offset = offset)
 
     for item in playlist_result['items']:
-        if item['name'] is not None and item['name'].strip() != '':
+        if item['name'] is not None and item['name'].strip() != '' and (playlist_name is None or (playlist_name is not None and item['name'].lower().strip() == playlist_name.lower().strip())):
             logging.info('Importing playlist: %s', item['name'])
             result = dict({'tracks': []})     
             result = get_playlist_tracks(item, result)    
@@ -153,7 +153,15 @@ def get_user_playlists(offset = 0, single_execution = False):
     
         
     if not single_execution and len(playlist_result['items']) != 0:
-        get_user_playlists(len(playlist_result['items']) + 50)
+        get_user_playlists(offset = offset + 50)
+
+def count_user_playlists(count, offset = 0):
+    playlist_result = sp.current_user_playlists(limit=50, offset = offset)
+    count = count + len(playlist_result['items'])
+
+    if len(playlist_result['items']) != 0:
+        count = count_user_playlists(count, offset = offset + 50)
+    return count
 
 def all_artists_recommendations():
     artist_names = get_artists_array_names()
