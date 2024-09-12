@@ -22,11 +22,10 @@ else:
 
 spotdl_client.downloader.settings["output"] = os.environ.get("SPOTDL_OUT_FORMAT")
 
-download_track(track):
+def download_track(track):
     songs = spotdl_client.search([track])
     if songs is not none and len(songs) > 0:
         for song in songs:
             if song.album_name is None or not song.album_name.lower().contains("live"):
                 spotdl_client.download(song[0])
-                break
 

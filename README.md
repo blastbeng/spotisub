@@ -142,7 +142,6 @@ services:
         image: "blastbeng/subtify:latest"
         restart: always
         volumes:
-            - ".env:/home/user/subtify/.env"
             - "./cache:/home/user/subtify/cache"
         ports:
             - 50811:50811
