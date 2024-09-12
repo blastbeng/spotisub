@@ -2,6 +2,7 @@ name: subtify
 services:
   subtify:
     container_name: subtify
+    user: "1000:1000"
     environment:
       - PUID=1000
       - PGID=1000
