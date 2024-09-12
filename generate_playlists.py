@@ -1,14 +1,16 @@
-import spotipy  
-import random
+import glob
+import libsonic
 import logging
 import os
+import random
+import spotipy  
 import sys
-import glob
 import time
-import libsonic
-from spotipy import SpotifyOAuth
-from os.path import join, dirname
+
 from dotenv import load_dotenv
+from os.path import dirname
+from os.path import join
+from spotipy import SpotifyOAuth
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)

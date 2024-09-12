@@ -1,8 +1,10 @@
-import spotipy  
 import os
-from spotipy import SpotifyOAuth
-from os.path import join, dirname
+import spotipy  
+
 from dotenv import load_dotenv
+from os.path import dirname
+from os.path import join
+from spotipy import SpotifyOAuth
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
