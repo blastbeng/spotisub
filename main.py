@@ -1,14 +1,23 @@
-import os
-import sys
-import logging
-import random
 import generate_playlists
+import logging
+import os
+import random
+import sys
 import threading
-from flask import Flask, request, Response, make_response, after_this_request, g
-from os.path import join, dirname
+
 from dotenv import load_dotenv
+from flask import Flask
+from flask import Response
+from flask import after_this_request
+from flask import g
+from flask import make_response
+from flask import request
+from flask import render_template
+from flask_restx import Api
+from flask_restx import Resource
+from os.path import dirname
+from os.path import join
 from time import strftime
-from flask_restx import Api, Resource
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -38,6 +47,12 @@ def get_response_str(text: str, status):
   r = Response(response=text, status=status, mimetype="text/xml")
   r.headers["Content-Type"] = "text/xml; charset=utf-8"
   return r
+
+
+
+@app.route('/dashboard')
+def dashboard():
+  return render_template('dashboard.html', data=[])
 
 nsgenerate = api.namespace('generate', 'Generate APIs')
 

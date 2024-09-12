@@ -1,7 +1,9 @@
 # loading in modules
 import os
-from os.path import join, dirname
+
 from dotenv import load_dotenv
+from os.path import dirname
+from os.path import join
 from spotdl import Spotdl
 from spotdl.types.options import DownloaderOptions
 from spotdl.types.song import Song

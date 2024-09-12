@@ -5,8 +5,6 @@ ARG TZ=Europe/Rome
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN echo 'vm.overcommit_memory=1' >> /etc/sysctl.conf
-
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         gcc \
@@ -40,6 +38,8 @@ COPY main.py .
 COPY init.py .
 COPY generate_playlists.py .
 COPY spotdl_helper.py .
+COPY database.py .
+COPY templates templates/
 COPY entrypoint.sh .
 COPY first_run.sh .
 COPY uwsgi.ini .
@@ -47,7 +47,6 @@ RUN chmod +x entrypoint.sh
 RUN chmod +x first_run.sh
 
 RUN chown -R user:user .
-RUN chmod 777 -R .
 
 
 USER user
