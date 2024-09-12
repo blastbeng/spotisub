@@ -7,3 +7,6 @@ click<8.1.0
 uWSGI==2.0.21
 Flask-APScheduler==1.12.4
 py-sonic
+ffmpeg
+spotdl
+sqlalchemy==2.0.7

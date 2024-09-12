@@ -10,15 +10,21 @@ from spotipy import SpotifyOAuth
 from os.path import join, dirname
 from dotenv import load_dotenv
 
-os.environ["VERSION"] = "0.0.3"
-
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
+
+os.environ["VERSION"] = "0.1.0"
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=int(os.environ.get("LOG_LEVEL", "40")),
         datefmt='%Y-%m-%d %H:%M:%S')
+
+
+
+if os.environ.get("SPOTDL_ENABLED", "0") == "1":
+    import spotdl_helper
+    logging.warning("You have enabled SPOTDL, make sure to configure the correct download path and check that you have enough disk space for music downloading.")
 
 client_id=os.environ.get("SPOTIPY_CLIENT_ID")
 client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET")
@@ -89,6 +95,7 @@ def write_playlist(playlist_name, results):
                 artist_name_spotify = artist_spotify["name"]
                 logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
                 navidrome_search = pysonic.search2(artist_name_spotify + " " + track['name'])
+                found = False
                 if len(navidrome_search["searchResult2"]) and "song" in navidrome_search["searchResult2"]:
                     for song in navidrome_search["searchResult2"]["song"]:
                         song_title  = song["title"].strip().lower()
@@ -98,6 +105,15 @@ def write_playlist(playlist_name, results):
                             and (not "live" in song_title and not "acoustic" in song_title and not "live" in song_album and not "acoustic" in song_album)
                             and (song_title != '' and (track['name'].lower() == song_title or song_title in track['name'].lower() or track['name'].lower() in song_title))):
                                 song_ids.append(song["id"])
+                                found = True
+                if os.environ.get("SPOTDL_ENABLED", "0") == "1" and found is False:
+                    logging.info('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
+                    logging.info('This track will be available after navidrome rescan your music dir')
+                    spotdl_helper.download_track(track["external_urls"]["spotify"])
+                else: 
+                    logging.info('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
+                    
+                
         if len(song_ids) > 0:
             playlist_id = None
             for playlist in pysonic.getPlaylists()["playlists"]["playlist"]:
@@ -118,9 +134,12 @@ def write_playlist(playlist_name, results):
 def show_recommendations_for_artist(name):
     logging.info('Searching reccomendations for: %s', name)
     artist = get_artist(name)
-    results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
-    playlist_name = name + " - Reccomendations"
-    write_playlist(playlist_name, results)
+    if artist is not None:
+        results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
+        playlist_name = name + " - Reccomendations"
+        write_playlist(playlist_name, results)
+    else:
+        logging.info('Artist: %s Not found!', name)
 
 def get_playlist_tracks(item, result, offset_tracks = 0):
     response_tracks = sp.playlist_items(item['id'],

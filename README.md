@@ -11,7 +11,7 @@ The current release has all the base features, but it is still a work in progres
 
 Simple playlist generator based on spotify user and artists reccomendations with Subsonic API support
 
-This script will try to match all your Spotify playlists to your music library using Subsonic APIs
+This software will try to match all your Spotify playlists to your music library using Subsonic APIs
 
 This generator works with Navidrome and every Subsonic API enabled media center 
 
@@ -21,19 +21,26 @@ This is an example about what it generates using Navidrome:
 
 Also there are five endpoints available for manually importing playlists.
 
-FLASK APP ENDPOINTS:
-* /generate/artist_reccomendations/<artist_name>/ => Generate artist reccomendations playlists, if no artist is provided it will choose a random one from your library
-* /generate/all_artists_reccomendations => Generate reccomendations playlists for all the artists in your library
-* /generate/reccomendations => Generate a random reccomendations Playlist
-* /generate/user_playlists => import a random playlist from your spotify account
-* /generate/all_user_playlists => import all playlist from your spotify account
-* /generate/saved_tracks => import a playlist with all your saved tracks from your spotify account
+The default endpoint path is: http://127.0.0.1:50811
 
-SCRIPT FEATURES:
+
+
+FEATURES:
 * Generate 5 playlist based on your history, top tracks and saved tracks
 * Generate artist reccomendation playlists for every artist in your library
 * Generate playlists based on your created and followed playlists on Spotify
 * Generate playlist with all your saved tracks on Spotify
+* Optional spotdl integration, to automate the dowload process of missing tracks from the subsonic database
+
+Take a look at spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
+
+FLASK APP ENDPOINTS:
+* /generate/artist_reccomendations/<artist_name>/ => Generate artist reccomendations playlists, if no artist is provided it will choose a random one from your library
+* /generate/artist_reccomendations/all/ => Generate reccomendations playlists for all the artists in your library
+* /generate/reccomendations => Generate a random reccomendations Playlist
+* /import/user_playlists => import a random playlist from your spotify account
+* /import/user_playlists/all => import all playlist from your spotify account
+* /import/saved_tracks => import a playlist with all your saved tracks from your spotify account
 
 ## Getting Started
 
@@ -73,16 +80,6 @@ cp .env.sample .env
 docker compose build
 ```
 
-As Script:
-```
-mkdir -p /opt/projects
-cd /opt/projects
-git clone https://github.com/blastbeng/subtify
-cd subtify
-./installdeps_script.sh
-cp .env.sample .env
-```
-
 ### Executing program
 
 * Make sure you modify the parameters inside .env file
@@ -101,13 +98,6 @@ Run as Flask App with docker compose:
 ```
 cd /opt/projects/subtify
 docker compose up
-```
-
-Run as Script:
-```
-cd /opt/projects/subtify
-source .venv/bin/activate
-python run.py
 ```
 
 ## Using with Navidrome
@@ -140,8 +130,6 @@ services:
                 delay: 5s
                 max_attempts: 3
                 window: 120s
-        labels:
-            - "com.centurylinklabs.watchtower.enable=true"
     subtify:
         container_name: subtify
         environment:
@@ -158,7 +146,6 @@ services:
         image: "blastbeng/subtify:latest"
         restart: always
         volumes:
-            - ".env:/home/user/subtify/.env"
             - "./cache:/home/user/subtify/cache"
         ports:
             - 50811:50811
@@ -167,8 +154,6 @@ services:
             interval: 15s
             timeout: 5s
             retries: 12
-        labels:
-            - "com.centurylinklabs.watchtower.enable=true"
 ```
 
 ## Environment Variables:
@@ -182,46 +167,37 @@ services:
 | SUBSONIC_API_PORT  | Subsonic API port | None | Yes |
 | SUBSONIC_API_USER  | Subsonic API user | None | Yes |
 | SUBSONIC_API_PASS  | Subsonic API password | None | Yes |
-| ITEMS_PER_PLAYLIST  | How many items per playlists, take care to not set this too high | 100 | No |
+| ITEMS_PER_PLAYLIST  | How many items per playlists for reccomendations playlists, take care to not set this too high | 100 | No |
 | NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | 5 | No |
-| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation | 1 | No |
-| RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation | 4 | No |
-| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import | 3 | No |
-| SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import | 2 | No |
+| SCHEDULER_ENABLED  | Set to 0 to disable the integrated scheduler, you will need to use the rest APIs if you disable this | 1 | No |
+| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation, set to 0 to disable this generator | 1 | No |
+| RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccomendations generation, set to 0 to disable this generator | 4 | No |
+| PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import, set to 0 to disable this generator | 3 | No |
+| SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import, set to 0 to disable this generator | 2 | No |
+| SPOTDL_ENABLED  | Automate the missing track download process using spotdl, set to 1 to enable | 0 | No |
+| SPOTDL_OUT_FORMAT  | Spotdl output format, included the full absolute path to your music directory | "/music/{artist}/{artists} - {album} ({year}) - {track-number} - {title}.{output-ext}" | Yes if SPOTDL_ENABLED is 1 |
 | LOG_LEVEL  | Log level | 40 | No |
+
+
+For spotdl format examples please refer to: [https://spotdl.github.io/spotify-downloader/usage/](https://spotdl.github.io/spotify-downloader/usage/) 
 
 ## Help
 
-NOTE. Depending on your library size and your playlists number and size on Spotify, the script execution may take a very long time.
+NOTE. Depending on your library size and your playlists number and size on Spotify, the execution may take a very long time.
 To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
-
-Using the Flask App is the reccomended way.
 
 
 For any help contact me on Discord blastbong#9151
 
 ## Authors
 
-Fabio Valentino - [blastbeng](https://github.com/blastbeng)  
-
-## Changelog
-
-* Implemented script
-* Implemented flask APIs and Scheduler
-* Implemented subsonic api calls instead of file system
-* Implemented custom reccomendations
-* Implemented artist reccomendations
-* Implemented saved playlists import
-* Implemented saved tracks playlist import
-
-
-## Next steps and improvements
-
-* Implement Spotdl to have an option to download a track if it is missing from the subsonic database. Take a look at here: [spotdl](https://github.com/spotDL/spotify-downloader) 
+Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
 ## Acknowledgments
 
-A big thanks to the Spotipy, py-sonic libraries and Navidrome team
+A big thanks to the developers and maintaners of these libraries\softwares:
 * [Spotipy](https://github.com/spotipy-dev/spotipy)
 * [py-sonic](https://github.com/crustymonkey/py-sonic)
 * [Navidrome](https://github.com/navidrome/navidrome)
+* [spotdl](https://github.com/spotDL/spotify-downloader) 
+
