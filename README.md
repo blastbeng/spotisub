@@ -3,6 +3,10 @@
 
 Spotify to subsonic Playlist Generator and Importer
 
+!!! WORK IN PROGRESS !!!
+
+The current release has all the base features, but it is still a work in progress, so expect bugs.
+
 ## Description
 
 Simple playlist generator based on spotify user and artists reccomendations with Subsonic API support
@@ -81,12 +85,27 @@ docker compose build
 * Make sure you modify the parameters inside .env file
 * You'll need a spotify dev account on https://developer.spotify.com/dashboard
 
+First run using python:
+```
+cd /opt/projects/subtify
+mkdir cache
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python init.py
+```
+
 First run using the docker image:
 ```
 cd /opt/projects/subtify
-docker compose up -d
-docker compose exec -it subtify /home/user/subtify/first_run.sh --interactive --tty
-docker compose down
+docker exec -it subtify bash
+./first_run.sh
+exit
+```
+or
+```
+cd /opt/projects/subtify
+docker exec -it subtify ./first_run.sh --interactive --tty
 ```
 This is necessary, to generate the cache file used by spotify authentication
 
