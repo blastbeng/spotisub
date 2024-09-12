@@ -26,6 +26,7 @@ The default endpoint path is: http://127.0.0.1:50811
 
 
 FEATURES:
+* Spotdl integration, used to optionally download tracks not found in your library
 * Generate 5 playlist based on your history, top tracks and saved tracks
 * Generate artist reccomendation playlists for every artist in your library
 * Generate playlists based on your created and followed playlists on Spotify
