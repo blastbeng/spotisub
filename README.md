@@ -159,6 +159,7 @@ services:
             - SUBSONIC_API_USER=user
             - SUBSONIC_API_PASS=pass
         image: "blastbeng/subtify:latest"
+        user: 1000:1000
         restart: always
         volumes:
             - "./cache:/home/user/subtify/cache"
