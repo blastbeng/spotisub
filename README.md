@@ -123,7 +123,6 @@ Remember to always run the init sh as described before:
 * docker compose exec -it subtify /home/user/subtify/first_run.sh --interactive --tty
 
 ```
-version: "3.7"
 services:
     navidrome:
         container_name: navidrome
@@ -135,7 +134,15 @@ services:
             ND_SCANSCHEDULE: "@every 1m"
             ND_LOGLEVEL: "info"
             ND_SESSIONTIMEOUT: "24h"
-            ND_BASEURL: ""
+            ND_BASEURL: "/music"
+            ND_MUSICFOLDER: /music
+            ND_PLAYLISTSPATH: playlist
+            ND_SPOTIFY_ID: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            ND_SPOTIFY_SECRET: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            ND_LASTFM_APIKEY: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            ND_LASTFM_SECRET: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            ND_ENABLETRANSCODINGCONFIG: true
+            ND_MAXSIDEBARPLAYLISTS: 50
         volumes:
             - "./data:/data"
             - "/music:/music:ro"
@@ -145,22 +152,43 @@ services:
                 delay: 5s
                 max_attempts: 3
                 window: 120s
+        networks:
+            - ndsubtifynet
+        labels:
+            - "com.centurylinklabs.watchtower.enable=true"
     subtify:
         container_name: subtify
+        user: 1000:1000
         environment:
             - PUID=1000
             - PGID=1000
             - TZ=Europe/Rome
-            - SPOTIPY_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXX
-            - SPOTIPY_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXX
+            - SPOTIPY_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            - SPOTIPY_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
             - SPOTIPY_REDIRECT_URI=http://127.0.0.1:8080/
-            - SUBSONIC_API_HOST=http://127.0.0.1
+            - SUBSONIC_API_BASE_URL=/music
+            - SUBSONIC_API_HOST=http://navidrome
             - SUBSONIC_API_PORT=4533
-            - SUBSONIC_API_USER=user
-            - SUBSONIC_API_PASS=pass
-        image: "blastbeng/subtify:latest"
-        user: 1000:1000
+            - SUBSONIC_API_USER=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            - SUBSONIC_API_PASS=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+            - ITEMS_PER_PLAYLIST=100
+            - NUM_USER_PLAYLISTS=5
+            - ARTIST_GEN_SCHED=2
+            - RECCOMEND_GEN_SCHED=8
+            - PLAYLIST_GEN_SCHED=6
+            - SAVED_GEN_SCHED=24
+            - SCHEDULER_ENABLED=1
+            - SPOTDL_ENABLED=0
+            - SPOTDL_FORMAT="/music/{artist}/{artists} - {album} ({year}) - {track-number} - {title}.{output-ext}"
+            - LOG_LEVEL=20
+        image: "blastbeng/subtify:development"
+        pull_policy: build
+        build:
+          context: ./subtify
+          dockerfile: Dockerfile
         restart: always
+        networks:
+            - ndsubtifynet
         volumes:
             - "./cache:/home/user/subtify/cache"
         ports:
@@ -170,6 +198,10 @@ services:
             interval: 15s
             timeout: 5s
             retries: 12
+        labels:
+            - "com.centurylinklabs.watchtower.enable=true"
+networks:
+  ndsubtifynet:
 ```
 
 ## Environment Variables:
@@ -183,6 +215,7 @@ services:
 | SUBSONIC_API_PORT  | Subsonic API port | None | Yes |
 | SUBSONIC_API_USER  | Subsonic API user | None | Yes |
 | SUBSONIC_API_PASS  | Subsonic API password | None | Yes |
+| SUBSONIC_API_BASE_URL  | Subsonic API Base Url, if your Navidrome ND_BASEURL param is "/music", set this to /music | Empty | No |
 | ITEMS_PER_PLAYLIST  | How many items per playlists for reccomendations playlists, take care to not set this too high | 100 | No |
 | NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | 5 | No |
 | SCHEDULER_ENABLED  | Set to 0 to disable the integrated scheduler, you will need to use the rest APIs if you disable this | 1 | No |

@@ -37,7 +37,9 @@ creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secr
 
 sp = spotipy.Spotify(auth_manager=creds)
 
-pysonic = libsonic.Connection(os.environ.get("SUBSONIC_API_HOST"), os.environ.get("SUBSONIC_API_USER"),  os.environ.get("SUBSONIC_API_PASS"), appName="spotify-playlist-generator", port=int(os.environ.get("SUBSONIC_API_PORT")))
+serverPath = os.environ.get("SUBSONIC_API_BASE_URL", "") + "/rest"
+
+pysonic = libsonic.Connection(os.environ.get("SUBSONIC_API_HOST"), os.environ.get("SUBSONIC_API_USER"),  os.environ.get("SUBSONIC_API_PASS"), appName="spotify-playlist-generator", serverPath=serverPath, port=int(os.environ.get("SUBSONIC_API_PORT")))
 
 def get_artists_array_names():
     artists = pysonic.getArtists()
@@ -109,11 +111,11 @@ def write_playlist(playlist_name, results):
                                 song_ids.append(song["id"])
                                 found = True
                 if os.environ.get("SPOTDL_ENABLED", "0") == "1" and found is False:
-                    logging.info('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
-                    logging.info('This track will be available after navidrome rescan your music dir')
+                    logging.warning('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
+                    logging.warning('This track will be available after navidrome rescan your music dir')
                     spotdl_helper.download_track(track["external_urls"]["spotify"])
                 else: 
-                    logging.info('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
+                    logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
                     
                 
         if len(song_ids) > 0:
