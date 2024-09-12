@@ -181,7 +181,7 @@ services:
             - SPOTDL_ENABLED=0
             - SPOTDL_FORMAT="/music/{artist}/{artists} - {album} ({year}) - {track-number} - {title}.{output-ext}"
             - LOG_LEVEL=20
-        image: "blastbeng/subtify:development"
+        image: "blastbeng/subtify:latest"
         pull_policy: build
         build:
           context: ./subtify
