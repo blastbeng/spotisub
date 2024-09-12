@@ -12,6 +12,7 @@ from flask import after_this_request
 from flask import g
 from flask import make_response
 from flask import request
+from flask import render_template
 from flask_restx import Api
 from flask_restx import Resource
 from os.path import dirname

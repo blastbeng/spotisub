@@ -39,7 +39,7 @@ COPY init.py .
 COPY generate_playlists.py .
 COPY spotdl_helper.py .
 COPY database.py .
-COPY template .
+COPY templates templates/
 COPY entrypoint.sh .
 COPY first_run.sh .
 COPY uwsgi.ini .
