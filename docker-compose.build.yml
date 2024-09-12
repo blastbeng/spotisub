@@ -1,6 +1,10 @@
 name: subtify
 services:
   subtify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
     container_name: subtify
     environment:
       - PUID=1000
