@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-os.environ["VERSION"] = "0.0.4"
+os.environ["VERSION"] = "0.1.0"
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
