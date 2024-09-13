@@ -109,7 +109,7 @@ def get_navidrome_search_results(text_to_search):
     count = 0
     while len(result) == 0 and count < len(set_searches):
         navidrome_search = pysonic.search2(set_searches[count])
-        if len(navidrome_search["searchResult2"]) > 0 and "song" in navidrome_search["searchResult2"]:
+        if "searchResult2" in navidrome_search and len(navidrome_search["searchResult2"]) > 0 and "song" in navidrome_search["searchResult2"]:
             result.append(navidrome_search)
         count = count + 1
 
@@ -172,15 +172,23 @@ def write_playlist(playlist_name, results):
                 
         if len(song_ids) > 0:
             playlist_id = None
-            for playlist in pysonic.getPlaylists()["playlists"]["playlist"]:
-                if playlist["name"].strip() == playlist_name.strip():
-                    playlist_id = playlist["id"]
-                    break
-            random.shuffle(song_ids)
+            playlists_search = pysonic.getPlaylists()
+            if "playlists" in playlists_search and len(playlists_search["playlists"]) > 0:
+                single_playlist_search = playlists_search["playlists"]
+                if "playlist" in single_playlist_search and len(single_playlist_search["playlist"]) > 0:
+                    for playlist in single_playlist_search["playlist"]:
+                        if playlist["name"].strip() == playlist_name.strip():
+                            playlist_id = playlist["id"]
+                            break
+                random.shuffle(song_ids)
             if playlist_id is not None:
                 pysonic.createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                logging.info('Success! Updating playlist %s', playlist_name)
             else:
                 pysonic.createPlaylist(name = playlist_name, songIds = song_ids)
+                logging.info('Success! Creating playlist %s', playlist_name)
+
+                
 
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
