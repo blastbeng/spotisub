@@ -231,6 +231,18 @@ networks:
 
 For spotdl format examples please refer to: [https://spotdl.github.io/spotify-downloader/usage/](https://spotdl.github.io/spotify-downloader/usage/) 
 
+## Planned Features
+
+Dashboard
+* View which tracks are missing and decide to download it trough spotdl or just ignore em
+* Configure some parameters of subtify trough the dashboard instead of docker env variables
+
+Lidarr Integration
+* Ability to choose to download songs from spotdl only if the artist name is found in a lidarr database
+
+Initial imports
+* Ability to enable initial imports at startup instead of just running em trough the scheduler
+
 ## Help
 
 NOTE. Depending on your library size and your playlists number and size on Spotify, the execution may take a very long time.

@@ -1,5 +1,13 @@
 .venv
+.venv/
+.venv/*
 .vscode
+.vscode/
+.vscode/*
 cache
+cache/
+cache/*
 __pycache__
+__pycache__/
+__pycache__/*
 test.py
