@@ -6,6 +6,7 @@ import random
 import spotipy  
 import sys
 import time
+import string
 
 from dotenv import load_dotenv
 from os.path import dirname
@@ -22,7 +23,9 @@ logging.basicConfig(
         level=int(os.environ.get("LOG_LEVEL", "40")),
         datefmt='%Y-%m-%d %H:%M:%S')
 
-
+EXCLUDED_WORDS = [ "acoustic" , "instrumental", "demo" ]
+if os.environ.get("EXCLUDED_WORDS") is not None and os.environ.get("EXCLUDED_WORDS").strip() != "":
+    EXCLUDED_WORDS = os.environ.get("EXCLUDED_WORDS").split(",")
 
 if os.environ.get("SPOTDL_ENABLED", "0") == "1":
     import spotdl_helper
@@ -91,6 +94,28 @@ def get_artist(name):
     else:
         return None
 
+def get_navidrome_search_results(text_to_search):
+
+    result = []
+    searches = []
+    searches.append(text_to_search)
+    searches.append(text_to_search.split("(", 1)[0].strip())
+    searches.append(text_to_search.split("(", 1)[0].translate(str.maketrans("", "", string.punctuation)).strip())
+    searches.append(text_to_search.split("-", 1)[0].strip())
+    searches.append(text_to_search.split("-", 1)[0].translate(str.maketrans("", "", string.punctuation)).strip())
+    searches.append(text_to_search.split("feat", 1)[0].strip())
+    searches.append(text_to_search.split("feat", 1)[0].translate(str.maketrans("", "", string.punctuation)).strip())
+    set_searches = list(set(searches))
+    count = 0
+    while len(result) == 0 and count < len(set_searches):
+        navidrome_search = pysonic.search2(set_searches[count])
+        if len(navidrome_search["searchResult2"]) > 0 and "song" in navidrome_search["searchResult2"]:
+            result.append(navidrome_search)
+        count = count + 1
+
+    return result
+
+
 def write_playlist(playlist_name, results):
     try:
         song_ids = []
@@ -98,15 +123,41 @@ def write_playlist(playlist_name, results):
             for artist_spotify in track['artists']:
                 artist_name_spotify = artist_spotify["name"]
                 logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
-                navidrome_search = pysonic.search2(artist_name_spotify + " " + track['name'])
+                navidrome_search_result = None
+                text_to_search = artist_name_spotify + " " + track['name']
+                navidrome_search_results = get_navidrome_search_results(text_to_search)
                 found = False
-                if len(navidrome_search["searchResult2"]) and "song" in navidrome_search["searchResult2"]:
+                excluded = False
+                for navidrome_search in navidrome_search_results:
                     for song in navidrome_search["searchResult2"]["song"]:
+                        excluded = False
                         song_title  = song["title"].strip().lower()
-                        song_artist = song["artist"].strip().lower()
                         song_album  = song["album"].strip().lower()
+
+                        if EXCLUDED_WORDS is not None and len(EXCLUDED_WORDS) > 0:
+                            song_title_no_punt = song_title.translate(str.maketrans("", "", string.punctuation))
+                            song_title_splitted = song_title_no_punt.split()
+                            song_album_no_punt = song_album.translate(str.maketrans("", "", string.punctuation))
+                            song_album_splitted = song_album_no_punt.split()
+                            countw = 0
+                            while excluded is not True and countw < len(EXCLUDED_WORDS):
+                                excluded_word = EXCLUDED_WORDS[countw]
+                                for song_title_sentence in song_title_splitted:
+                                    if excluded_word == song_title_sentence.strip().lower():
+                                        excluded = True
+                                        logging.warning('Excluding search result %s - %s - %s because it contains excluded words', song["artist"], song["title"].strip(), song["album"])
+                                        break
+                                for song_album_sentence in song_album_splitted:
+                                    if excluded_word == song_album_sentence.strip().lower():
+                                        excluded = True
+                                        logging.warning('Excluding search result %s - %s - %s because it contains excluded words', song["artist"], song["title"].strip(), song["album"])
+                                        break
+                                countw = countw + 1
+
+                        song_artist = song["artist"].strip().lower()
+
                         if ((song_artist != '' and (artist_name_spotify.lower() == song_artist or song_artist in artist_name_spotify.lower() or artist_name_spotify.lower() in song_artist))
-                            and (not "live" in song_title and not "acoustic" in song_title and not "live" in song_album and not "acoustic" in song_album)
+                            and excluded is not True
                             and (song_title != '' and (track['name'].lower() == song_title or song_title in track['name'].lower() or track['name'].lower() in song_title))):
                                 song_ids.append(song["id"])
                                 found = True
@@ -114,9 +165,10 @@ def write_playlist(playlist_name, results):
                     logging.warning('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
                     logging.warning('This track will be available after navidrome rescan your music dir')
                     spotdl_helper.download_track(track["external_urls"]["spotify"])
-                else: 
+                elif found is False: 
                     logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
-                    
+                elif found is True: 
+                    logging.info('Track %s - %s found in your music library', artist_name_spotify, track['name'])
                 
         if len(song_ids) > 0:
             playlist_id = None
@@ -216,16 +268,14 @@ def print_logo():
         version_len = len(os.environ.get("VERSION"))
         print(
             """
-
 ░██████╗██╗░░░██╗██████╗░████████╗██╗███████╗██╗░░░██╗
 ██╔════╝██║░░░██║██╔══██╗╚══██╔══╝██║██╔════╝╚██╗░██╔╝
 ╚█████╗░██║░░░██║██████╦╝░░░██║░░░██║█████╗░░░╚████╔╝░
 ░╚═══██╗██║░░░██║██╔══██╗░░░██║░░░██║██╔══╝░░░░╚██╔╝░░
 ██████╔╝╚██████╔╝██████╦╝░░░██║░░░██║██║░░░░░░░░██║░░░
 ╚═════╝░░╚═════╝░╚═════╝░░░░╚═╝░░░╚═╝╚═╝░░░░░░░░╚═╝░░░
-
 """
-            + "\n"
             + "                                     "[: -(version_len + 2)]
-            + "v{} ".format(os.environ.get("VERSION"))
+            + "v{} ".format(os.environ.get("VERSION")
+            + "\n")
         )
