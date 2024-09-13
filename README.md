@@ -30,9 +30,16 @@ FEATURES:
 * Generate artist reccomendation playlists for every artist in your library
 * Generate playlists based on your created and followed playlists on Spotify
 * Generate playlist with all your saved tracks on Spotify
-* Optional spotdl integration, to automate the dowload process of missing tracks from the subsonic database
+* Optional Spotdl integration, to automate the dowload process of missing tracks from the subsonic database
+* Optional Lidarr integration, used altogether with spotdl to make decision about download a matching song or not
 
-Take a look at spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
+Take a look at Spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
+Take a look at Lidarr here: [https://github.com/Lidarr/Lidarr](https://github.com/Lidarr/Lidarr)
+
+When both Spotdl and Lidarr integrations are enabled, if subtify doesn't find a song in subsonic database, it tries to search the artist returned from the spotify APIs inside the Lidarr database (via Lidarr APIs).
+If this artist isn't found inside the Lidarr database, the download process is skipped.
+
+So for example if you want to automate the download process, using this system you can skip the artists you don't like.
 
 FLASK APP ENDPOINTS:
 * /generate/artist_reccomendations/<artist_name>/ => Generate artist reccomendations playlists, if no artist is provided it will choose a random one from your library
@@ -226,6 +233,12 @@ networks:
 | SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import, set to 0 to disable this generator | 2 | No |
 | SPOTDL_ENABLED  | Automate the missing track download process using spotdl, set to 1 to enable | 0 | No |
 | SPOTDL_OUT_FORMAT  | Spotdl output format, included the full absolute path to your music directory | "/music/{artist}/{artists} - {album} ({year}) - {track-number} - {title}.{output-ext}" | Yes if SPOTDL_ENABLED is 1 |
+| LIDARR_ENABLED  | Set to 1 to enable Lidarr integration, used altogether with spotdl. If lidarr is enabled and an artist isn't found in lidarr library, the matching song won't be downloaded | 0 | no |
+| LIDARR_IP  | Lidarr IP | Empty | Yes if LIDARR_ENABLED is 1 |
+| LIDARR_PORT  | Lidarr port number | Empty | Yes if LIDARR_ENABLED is 1 |
+| LIDARR_BASE_API_PATH  | Lidarr base path, usually you don't need to edit this | Empty | Yes if LIDARR_ENABLED is 1 |
+| LIDARR_TOKEN  | Your Lidarr API Key. Get this in Lidarr > Settings > General > Security | Empty | Yes if LIDARR_ENABLED is 1 |
+| LIDARR_USE_SSL  | Set to 1 if you are using a SSL certificate | 0 | No |
 | LOG_LEVEL  | Log level | 40 | No |
 
 
@@ -236,9 +249,7 @@ For spotdl format examples please refer to: [https://spotdl.github.io/spotify-do
 Dashboard
 * View which tracks are missing and decide to download it trough spotdl or just ignore em
 * Configure some parameters of subtify trough the dashboard instead of docker env variables
-
-Lidarr Integration
-* Ability to choose to download songs from spotdl only if the artist name is found in a lidarr database
+* Ability to interact with spotdl and lidarr integrations from the dashboard
 
 Initial imports
 * Ability to enable initial imports at startup instead of just running em trough the scheduler
@@ -262,4 +273,6 @@ A big thanks to the developers and maintaners of these libraries\softwares:
 * [py-sonic](https://github.com/crustymonkey/py-sonic)
 * [Navidrome](https://github.com/navidrome/navidrome)
 * [spotdl](https://github.com/spotDL/spotify-downloader) 
+* [Lidarr](https://github.com/Lidarr/Lidarr) 
+* [pyarr](https://github.com/totaldebug/pyarr) 
 
