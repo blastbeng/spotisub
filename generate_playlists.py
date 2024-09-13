@@ -145,12 +145,12 @@ def write_playlist(playlist_name, results):
                                 for song_title_sentence in song_title_splitted:
                                     if excluded_word == song_title_sentence.strip().lower():
                                         excluded = True
-                                        logging.warning('Excluding search result %s - %s - %s because it contains excluded words', song["artist"], song["title"].strip(), song["album"])
+                                        logging.warning('Excluding search result %s - %s - %s because it contains the excluded word: %s', song["artist"], song["title"].strip(), song["album"], excluded_word)
                                         break
                                 for song_album_sentence in song_album_splitted:
                                     if excluded_word == song_album_sentence.strip().lower():
                                         excluded = True
-                                        logging.warning('Excluding search result %s - %s - %s because it contains excluded words', song["artist"], song["title"].strip(), song["album"])
+                                        logging.warning('Excluding search result %s - %s - %s because it contains the excluded word: %s', song["artist"], song["title"].strip(), song["album"], excluded_word)
                                         break
                                 countw = countw + 1
 
@@ -203,7 +203,7 @@ def show_recommendations_for_artist(name):
         playlist_name = name + " - Reccomendations"
         write_playlist(playlist_name, results)
     else:
-        logging.info('Artist: %s Not found!', name)
+        logging.warning('Artist: %s Not found!', name)
 
 def get_playlist_tracks(item, result, offset_tracks = 0):
     response_tracks = sp.playlist_items(item['id'],
