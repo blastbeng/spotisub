@@ -83,7 +83,6 @@ class ArtistReccomendationsAllClass(Resource):
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-
 @nsgenerate.route('/reccomendations')
 class ReccomendationsClass(Resource):
   def get (self):

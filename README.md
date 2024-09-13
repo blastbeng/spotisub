@@ -217,6 +217,7 @@ networks:
 | SUBSONIC_API_PASS  | Subsonic API password | None | Yes |
 | SUBSONIC_API_BASE_URL  | Subsonic API Base Url, if your Navidrome ND_BASEURL param is "/music", set this to /music | Empty | No |
 | ITEMS_PER_PLAYLIST  | How many items per playlists for reccomendations playlists, take care to not set this too high | 100 | No |
+| EXCLUDED_WORDS  | List of excluded words separated by comma used to filter search results from the subsonic library | acoustic,instrumental,demo | No |
 | NUM_USER_PLAYLISTS  | How many custom reccomendations playlist to generate | 5 | No |
 | SCHEDULER_ENABLED  | Set to 0 to disable the integrated scheduler, you will need to use the rest APIs if you disable this | 1 | No |
 | ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccomendations generation, set to 0 to disable this generator | 1 | No |
