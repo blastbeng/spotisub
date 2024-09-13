@@ -19,6 +19,8 @@ from os.path import dirname
 from os.path import join
 from time import strftime
 
+import lidarr_helper
+
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 

@@ -16,7 +16,7 @@ from spotipy import SpotifyOAuth
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-os.environ["VERSION"] = "0.1.2"
+os.environ["VERSION"] = "0.1.3"
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
@@ -29,7 +29,11 @@ if os.environ.get("EXCLUDED_WORDS") is not None and os.environ.get("EXCLUDED_WOR
 
 if os.environ.get("SPOTDL_ENABLED", "0") == "1":
     import spotdl_helper
-    logging.warning("You have enabled SPOTDL, make sure to configure the correct download path and check that you have enough disk space for music downloading.")
+    logging.warning("You have enabled SPOTDL integration, make sure to configure the correct download path and check that you have enough disk space for music downloading.")
+
+    if os.environ.get("LIDARR_ENABLED", "0") == "1":
+        import lidarr_helper
+        logging.warning("You have enabled LIDARR integration, if an artist won't be found inside the lidarr database, the download process will be skipped.")
 
 client_id=os.environ.get("SPOTIPY_CLIENT_ID")
 client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET")
@@ -107,8 +111,8 @@ def get_navidrome_search_results(text_to_search):
     searches.append(text_to_search.split("feat", 1)[0].translate(str.maketrans("", "", string.punctuation)).strip())
     set_searches = list(set(searches))
     count = 0
-    while len(result) == 0 and count < len(set_searches):
-        navidrome_search = pysonic.search2(set_searches[count])
+    for set_search in set_searches:
+        navidrome_search = pysonic.search2(set_search)
         if "searchResult2" in navidrome_search and len(navidrome_search["searchResult2"]) > 0 and "song" in navidrome_search["searchResult2"]:
             result.append(navidrome_search)
         count = count + 1
@@ -145,12 +149,12 @@ def write_playlist(playlist_name, results):
                                 for song_title_sentence in song_title_splitted:
                                     if excluded_word == song_title_sentence.strip().lower():
                                         excluded = True
-                                        logging.warning('Excluding search result %s - %s - %s because it contains excluded words', song["artist"], song["title"].strip(), song["album"])
+                                        logging.warning('Excluding search result %s - %s - %s because it contains the excluded word: %s', song["artist"], song["title"].strip(), song["album"], excluded_word)
                                         break
                                 for song_album_sentence in song_album_splitted:
                                     if excluded_word == song_album_sentence.strip().lower():
                                         excluded = True
-                                        logging.warning('Excluding search result %s - %s - %s because it contains excluded words', song["artist"], song["title"].strip(), song["album"])
+                                        logging.warning('Excluding search result %s - %s - %s because it contains the excluded word: %s', song["artist"], song["title"].strip(), song["album"], excluded_word)
                                         break
                                 countw = countw + 1
 
@@ -162,9 +166,16 @@ def write_playlist(playlist_name, results):
                                 song_ids.append(song["id"])
                                 found = True
                 if os.environ.get("SPOTDL_ENABLED", "0") == "1" and found is False:
-                    logging.warning('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
-                    logging.warning('This track will be available after navidrome rescan your music dir')
-                    spotdl_helper.download_track(track["external_urls"]["spotify"])
+                    is_monitored = True
+                    if os.environ.get("LIDARR_ENABLED", "0") == "1":
+                        is_monitored = lidarr_helper.is_artist_monitored(artist_name_spotify)
+                    if is_monitored:
+                        logging.warning('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
+                        logging.warning('This track will be available after navidrome rescan your music dir')
+                        spotdl_helper.download_track(track["external_urls"]["spotify"])
+                    else:
+                        logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
+                        logging.warning('This track hasn''t been found in your Lidarr database, skipping download process')
                 elif found is False: 
                     logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
                 elif found is True: 
@@ -203,7 +214,7 @@ def show_recommendations_for_artist(name):
         playlist_name = name + " - Reccomendations"
         write_playlist(playlist_name, results)
     else:
-        logging.info('Artist: %s Not found!', name)
+        logging.warning('Artist: %s Not found!', name)
 
 def get_playlist_tracks(item, result, offset_tracks = 0):
     response_tracks = sp.playlist_items(item['id'],

@@ -10,3 +10,5 @@ py-sonic
 ffmpeg
 spotdl
 sqlalchemy==2.0.7
+pyarr
+expiringdict
