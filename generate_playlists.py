@@ -107,8 +107,8 @@ def get_navidrome_search_results(text_to_search):
     searches.append(text_to_search.split("feat", 1)[0].translate(str.maketrans("", "", string.punctuation)).strip())
     set_searches = list(set(searches))
     count = 0
-    while len(result) == 0 and count < len(set_searches):
-        navidrome_search = pysonic.search2(set_searches[count])
+    for set_search in set_searches:
+        navidrome_search = pysonic.search2(set_search)
         if "searchResult2" in navidrome_search and len(navidrome_search["searchResult2"]) > 0 and "song" in navidrome_search["searchResult2"]:
             result.append(navidrome_search)
         count = count + 1
