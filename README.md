@@ -235,7 +235,7 @@ networks:
 | LIDARR_ENABLED  | Set to 1 to enable Lidarr integration, used altogether with spotdl. If lidarr is enabled and an artist isn't found in lidarr library, the matching song won't be downloaded | 0 | no |
 | LIDARR_IP  | Lidarr IP | Empty | Yes if LIDARR_ENABLED is 1 |
 | LIDARR_PORT  | Lidarr port number | Empty | Yes if LIDARR_ENABLED is 1 |
-| LIDARR_BASE_API_PATH  | Lidarr base path, usually you don't need to edit this | Empty | Yes if LIDARR_ENABLED is 1 |
+| LIDARR_BASE_API_PATH  | Lidarr base path, usually you don't need to edit this | Empty | No |
 | LIDARR_TOKEN  | Your Lidarr API Key. Get this in Lidarr > Settings > General > Security | Empty | Yes if LIDARR_ENABLED is 1 |
 | LIDARR_USE_SSL  | Set to 1 if you are using a SSL certificate | 0 | No |
 | LOG_LEVEL  | Log level | 40 | No |
