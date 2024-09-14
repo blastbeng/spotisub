@@ -3,6 +3,8 @@
 
 Spotify to subsonic Playlist Generator and Importer
 
+Since I haven't found an app to import my Spotify playlists, I started this project for myself, but then decided that this could be helpful for the community. 
+
 !!! WORK IN PROGRESS !!!
 
 The current release has all the base features, but it is still a work in progress, so expect bugs.
@@ -68,7 +70,6 @@ Using the pushed docker image:
 mkdir -p /opt/projects/subtify
 cd /opt/projects/subtify
 wget https://raw.githubusercontent.com/blastbeng/subtify/main/docker-compose.yml
-wget https://raw.githubusercontent.com/blastbeng/subtify/main/.env.sample
 docker compose pull
 ```
 
@@ -236,7 +237,7 @@ networks:
 | LIDARR_ENABLED  | Set to 1 to enable Lidarr integration, used altogether with spotdl. If lidarr is enabled and an artist isn't found in lidarr library, the matching song won't be downloaded | 0 | no |
 | LIDARR_IP  | Lidarr IP | Empty | Yes if LIDARR_ENABLED is 1 |
 | LIDARR_PORT  | Lidarr port number | Empty | Yes if LIDARR_ENABLED is 1 |
-| LIDARR_BASE_API_PATH  | Lidarr base path, usually you don't need to edit this | Empty | Yes if LIDARR_ENABLED is 1 |
+| LIDARR_BASE_API_PATH  | Lidarr base path, usually you don't need to edit this | Empty | No |
 | LIDARR_TOKEN  | Your Lidarr API Key. Get this in Lidarr > Settings > General > Security | Empty | Yes if LIDARR_ENABLED is 1 |
 | LIDARR_USE_SSL  | Set to 1 if you are using a SSL certificate | 0 | No |
 | LOG_LEVEL  | Log level | 40 | No |
