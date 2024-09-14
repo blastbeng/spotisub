@@ -255,6 +255,13 @@ Dashboard
 Initial imports
 * Ability to enable initial imports at startup instead of just running em trough the scheduler
 
+## TODO
+
+At the actual state the song comparison is made by just comparing song name and artist name, but I think that the comparison will be more accurate by using something like AcoustID.
+The problem is that the Spotify APIs doesn't return any AcoustID, it is needed to download the song with SpotDL, generate the AcoustID and compare it with the local track AcoustID.
+This can take very long time and can be a very cpu intensive process. 
+For now I decided not to implement it, but if I find a faster and less cpu intensive way of doing it I may choose to implement it. 
+
 ## Help
 
 NOTE. Depending on your library size and your playlists number and size on Spotify, the execution may take a very long time.
