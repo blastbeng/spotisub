@@ -68,7 +68,7 @@ Using the pushed docker image:
 mkdir -p /opt/projects/subtify
 cd /opt/projects/subtify
 wget https://raw.githubusercontent.com/blastbeng/subtify/main/docker-compose.yml
-wget https://raw.githubusercontent.com/blastbeng/subtify/main/.env.sample
+wget 
 docker compose pull
 ```
 
