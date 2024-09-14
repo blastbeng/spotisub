@@ -3,6 +3,8 @@
 
 Spotify to subsonic Playlist Generator and Importer
 
+Since I haven't found an app to import my Spotify playlists, I started this project for myself, but then decided that this could be helpful for the community. 
+
 !!! WORK IN PROGRESS !!!
 
 The current release has all the base features, but it is still a work in progress, so expect bugs.
