@@ -33,7 +33,7 @@ class Database:
 def create_db_tables(self):
   try:
     self.metadata.create_all(self.db_engine)
-  except Exception as e:
+  except Exception:
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
@@ -42,11 +42,11 @@ def create_db_tables(self):
 def insert_missing_songs(self, id: str, title: str, artist: str, album: str, tms_insert: str, tms_update: str):
   try:
     stmt = insert(self.missing_songs).values(id=id, title=title, artist=artist, album=album, tms_insert=tms_insert, tms_update=tms_update).prefix_with('OR IGNORE')
-    compiled = stmt.compile()
+    stmt.compile()
     with self.db_engine.connect() as conn:
-      result = conn.execute(stmt)
+      conn.execute(stmt)
       conn.commit()
-  except Exception as e:
+  except Exception:
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
@@ -54,11 +54,11 @@ def insert_missing_songs(self, id: str, title: str, artist: str, album: str, tms
 def delete_missing_songs(self, id: str, title: str, artist: str, album: str):
   try:
     stmt = delete(self.missing_songs).where(self.missing_songs.c.title==title, self.missing_songs.c.artist==artist,self.missing_songs.c.album==album)
-    compiled = stmt.compile()
+    stmt.compile()
     with self.db_engine.connect() as conn:
-      result = conn.execute(stmt)
+      conn.execute(stmt)
       conn.commit()
-  except Exception as e:
+  except Exception:
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
@@ -67,7 +67,7 @@ def select_missing_songs(self, id: str, title: str, artist: str, album: str):
   try:
     value = None
     stmt = select(self.subito.c.id).where(self.missing_songs.c.title==title, self.missing_songs.c.artist==artist,self.missing_songs.c.album==album)
-    compiled = stmt.compile()
+    stmt.compile()
     with self.db_engine.connect() as conn:
       cursor = conn.execute(stmt)
       records = cursor.fetchall()
@@ -77,7 +77,7 @@ def select_missing_songs(self, id: str, title: str, artist: str, album: str):
         cursor.close()
       
       return value
-  except Exception as e:
+  except Exception:
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
