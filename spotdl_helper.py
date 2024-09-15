@@ -11,18 +11,12 @@ from spotdl.types.song import Song
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-client_id=os.environ.get("SPOTIPY_CLIENT_ID")
-client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET")
+client_id=os.environ.get(constants.SPOTIPY_CLIENT_ID)
+client_secret=os.environ.get(constants.SPOTIPY_CLIENT_SECRET)
 
 spotdl_client = Spotdl(client_id=client_id, client_secret=client_secret, no_cache=True)
 
-spotdl_format = None
-if os.environ.get("SPOTDL_FORMAT") is None:
-    spotdl_format = "/music/{artist}/{artists} - {album} ({year}) - {track-number} - {title}.{output-ext}"
-else:
-    spotdl_format = os.environ.get("SPOTDL_FORMAT")
-
-spotdl_client.downloader.settings["output"] = spotdl_format
+spotdl_client.downloader.settings["output"] = os.environ.get(constants.SPOTDL_FORMAT, constants.SPOTDL_FORMAT_DEFAULT_VALUE)
 
 def download_track(url):
     song = Song.from_url(url)

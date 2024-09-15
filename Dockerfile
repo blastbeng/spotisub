@@ -36,7 +36,9 @@ USER root
 ENV HOME=/home/user
 COPY main.py .
 COPY init.py .
+COPY utils.py .
 COPY generate_playlists.py .
+COPY subsonic_helper.py .
 COPY spotdl_helper.py .
 COPY lidarr_helper.py .
 COPY constants.py .

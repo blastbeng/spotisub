@@ -1,5 +1,6 @@
 import os
-import spotipy  
+import spotipy
+import constants
 
 from dotenv import load_dotenv
 from os.path import dirname
@@ -9,9 +10,9 @@ from spotipy import SpotifyOAuth
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-client_id=os.environ.get("SPOTIPY_CLIENT_ID")
-client_secret=os.environ.get("SPOTIPY_CLIENT_SECRET")
-redirect_uri=os.environ.get("SPOTIPY_REDIRECT_URI")
+client_id=os.environ.get(constants.SPOTIPY_CLIENT_ID)
+client_secret=os.environ.get(constants.SPOTIPY_CLIENT_SECRET)
+redirect_uri=os.environ.get(constants.SPOTIPY_REDIRECT_URI)
 scope="user-top-read,user-library-read,user-read-recently-played"
 
 creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, open_browser=False, cache_path=os.path.dirname(os.path.abspath(__file__)) + "/cache/spotipy_cache")
