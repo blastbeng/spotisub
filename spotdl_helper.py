@@ -7,6 +7,7 @@ from os.path import join
 from spotdl import Spotdl
 from spotdl.types.options import DownloaderOptions
 from spotdl.types.song import Song
+import constants
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)

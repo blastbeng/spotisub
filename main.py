@@ -85,6 +85,33 @@ class ArtistReccommendationsAllClass(Resource):
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
+@nsgenerate.route('/artist_top_tracks/')
+@nsgenerate.route('/artist_top_tracks/<string:artist_name>/')
+class ArtistTopTracksClass(Resource):
+  def get (self, artist_name = None):
+    try:
+      if artist_name is None:
+        artist_name = random.choice(subsonic_helper.get_artists_array_names())
+      threading.Thread(target=lambda: generate_playlists.artist_top_tracks(artist_name)).start()
+      return get_response_str("Generating top tracks playlist for artist " + artist_name, 200)  
+    except Exception as e:
+      exc_type, exc_obj, exc_tb = sys.exc_info()
+      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      g.request_error = str(e)
+
+@nsgenerate.route('/artist_top_tracks/all/')
+class ArtistTopTracksAllClass(Resource):
+  def get (self, artist_name = None):
+    try:
+      threading.Thread(target=lambda: generate_playlists.all_artist_top_tracks()).start()
+      return get_response_str("Generating top tracks playlist for all artists", 200)  
+    except Exception as e:
+      exc_type, exc_obj, exc_tb = sys.exc_info()
+      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      g.request_error = str(e)
+
 @nsgenerate.route('/reccommendations')
 class ReccommendationsClass(Resource):
   def get (self):
@@ -159,6 +186,11 @@ if os.environ.get(constants.SCHEDULER_ENABLED, constants.SCHEDULER_ENABLED_DEFAU
     @scheduler.task('interval', id='artist_reccommendations', hours=int(os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)))
     def artist_reccommendations():
       generate_playlists.show_recommendations_for_artist(random.choice(subsonic_helper.get_artists_array_names()))
+
+  if os.environ.get(constants.ARTIST_TOP_GEN_SCHED, constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
+    @scheduler.task('interval', id='artist_top_tracks', hours=int(os.environ.get(constants.ARTIST_TOP_GEN_SCHED, constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE)))
+    def artist_top_tracks():
+      generate_playlists.artist_top_tracks(random.choice(subsonic_helper.get_artists_array_names()))
 
   if os.environ.get(constants.RECCOMEND_GEN_SCHED, constants.RECCOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
     @scheduler.task('interval', id='my_reccommendations', hours=int(os.environ.get(constants.RECCOMEND_GEN_SCHED, constants.RECCOMEND_GEN_SCHED_DEFAULT_VALUE)))

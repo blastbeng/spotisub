@@ -27,7 +27,7 @@ if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VAL
     import spotdl_helper
     logging.warning("You have enabled SPOTDL integration, make sure to configure the correct download path and check that you have enough disk space for music downloading.")
 
-if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE):
+if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
     import lidarr_helper
     logging.warning("You have enabled LIDARR integration, if an artist won't be found inside the lidarr database, the download process will be skipped.")
 
@@ -39,6 +39,21 @@ scope="user-top-read,user-library-read,user-read-recently-played"
 creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, open_browser=False, cache_path=os.path.dirname(os.path.abspath(__file__)) + "/cache/spotipy_cache")
 
 sp = spotipy.Spotify(auth_manager=creds)
+
+def artist_top_tracks(query):
+    results = sp.search(query)
+    artists_uri = {}
+    if "tracks" in results and "items" in results["tracks"] and len(results["tracks"]["items"]) > 0:
+        for item in results['tracks']["items"]:
+            if "artists" in item:
+                for artist in item["artists"]:
+                    if "uri" in artist and "name" in artist and (query.lower() == artist["name"].lower() or query.lower() in artist["name"].lower() or artist["name"].lower() in query.lower()):
+                        artists_uri[artist["name"]] = artist["uri"] 
+
+    for artist_name in artists_uri:
+        artist_top = sp.artist_top_tracks(artists_uri[artist_name])
+        playlist_name = artist_name + " - Top Tracks"
+        subsonic_helper.write_playlist(playlist_name, artist_top)
 
 def my_reccommendations(count = None):
     try:
@@ -137,6 +152,13 @@ def all_artists_recommendations():
         random.shuffle(artist_names)
         for artist_name in artist_names:
             show_recommendations_for_artist(artist_name)
+
+def all_artists_top_tracks():
+    artist_names = subsonic_helper.get_artists_array_names()
+    if len(artist_names) > 0:
+        random.shuffle(artist_names)
+        for artist_name in artist_names:
+            artist_top_tracks(artist_name)
 
 def get_user_saved_tracks():
     result = dict({'tracks': []})

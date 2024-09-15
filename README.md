@@ -30,6 +30,7 @@ The default endpoint path is: http://127.0.0.1:50811
 FEATURES:
 * Generate 5 playlist based on your history, top tracks and saved tracks
 * Generate artist reccommendation playlists for every artist in your library
+* Generate artist top tracks playlists for every artist in your library
 * Generate playlists based on your created and followed playlists on Spotify
 * Generate playlist with all your saved tracks on Spotify
 * Optional Spotdl integration, to automate the dowload process of missing tracks from the subsonic database
@@ -46,6 +47,8 @@ So for example if you want to automate the download process, using this system y
 FLASK APP ENDPOINTS:
 * /generate/artist_reccommendations/<artist_name>/ => Generate artist reccommendations playlists, if no artist is provided it will choose a random one from your library
 * /generate/artist_reccommendations/all/ => Generate reccommendations playlists for all the artists in your library
+* /generate/artist_top_tracks/<artist_name>/ => Generate artist top tracks playlists, if no artist is provided it will choose a random one from your library
+* /generate/artist_top_tracks/all/ => Generate top tracks playlists for all the artists in your library
 * /generate/reccommendations => Generate a random reccommendations Playlist
 * /import/user_playlists => import a random playlist from your spotify account
 * /import/user_playlists/all => import all playlist from your spotify account
@@ -230,6 +233,7 @@ networks:
 | NUM_USER_PLAYLISTS  | How many custom reccommendations playlist to generate | 5 | No |
 | SCHEDULER_ENABLED  | Set to 0 to disable the integrated scheduler, you will need to use the rest APIs if you disable this | 1 | No |
 | ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccommendations generation, set to 0 to disable this generator | 1 | No |
+| ARTIST_TOP_GEN_SCHED  | Interval in hours to schedule the top artists playlist import, set to 0 to disable this generator | 1 | No |
 | RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccommendations generation, set to 0 to disable this generator | 4 | No |
 | PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import, set to 0 to disable this generator | 3 | No |
 | SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import, set to 0 to disable this generator | 2 | No |
