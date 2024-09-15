@@ -252,9 +252,6 @@ For spotdl format examples please refer to: [https://spotdl.github.io/spotify-do
 
 ## Planned Features
 
-Playlists
-* Generate artist top tracks playlist
-
 Dashboard
 * View which tracks are missing and decide to download it trough spotdl or just ignore em
 * Configure some parameters of subtify trough the dashboard instead of docker env variables
