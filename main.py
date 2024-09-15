@@ -104,7 +104,7 @@ class ArtistTopTracksClass(Resource):
 class ArtistTopTracksAllClass(Resource):
   def get (self, artist_name = None):
     try:
-      threading.Thread(target=lambda: generate_playlists.all_artist_top_tracks()).start()
+      threading.Thread(target=lambda: generate_playlists.all_artists_top_tracks()).start()
       return get_response_str("Generating top tracks playlist for all artists", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
