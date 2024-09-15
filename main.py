@@ -58,39 +58,39 @@ def dashboard():
 
 nsgenerate = api.namespace('generate', 'Generate APIs')
 
-@nsgenerate.route('/artist_reccomendations/')
-@nsgenerate.route('/artist_reccomendations/<string:artist_name>/')
-class ArtistReccomendationsClass(Resource):
+@nsgenerate.route('/artist_reccommendations/')
+@nsgenerate.route('/artist_reccommendations/<string:artist_name>/')
+class ArtistReccommendationsClass(Resource):
   def get (self, artist_name = None):
     try:
       if artist_name is None:
         artist_name = random.choice(generate_playlists.get_artists_array_names())
       threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
-      return get_response_str("Generating reccomendations playlist for artist " + artist_name, 200)  
+      return get_response_str("Generating reccommendations playlist for artist " + artist_name, 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsgenerate.route('/artist_reccomendations/all/')
-class ArtistReccomendationsAllClass(Resource):
+@nsgenerate.route('/artist_reccommendations/all/')
+class ArtistReccommendationsAllClass(Resource):
   def get (self, artist_name = None):
     try:
       threading.Thread(target=lambda: generate_playlists.all_artists_recommendations()).start()
-      return get_response_str("Generating reccomendations playlist for all artists", 200)  
+      return get_response_str("Generating reccommendations playlist for all artists", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsgenerate.route('/reccomendations')
-class ReccomendationsClass(Resource):
+@nsgenerate.route('/reccommendations')
+class ReccommendationsClass(Resource):
   def get (self):
     try:
         threading.Thread(target=lambda: generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get("NUM_USER_PLAYLISTS", "5"))))).start()
-        return get_response_str("Generating a reccomendation playlist", 200)  
+        return get_response_str("Generating a reccommendation playlist", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -156,8 +156,8 @@ if os.environ.get("SCHEDULER_ENABLED", "1") == "1":
   scheduler = APScheduler()
 
   if os.environ.get("ARTIST_GEN_SCHED", "1") != "0":
-    @scheduler.task('interval', id='artist_reccomendations', hours=int(os.environ.get("ARTIST_GEN_SCHED", "1")))
-    def artist_reccomendations():
+    @scheduler.task('interval', id='artist_reccommendations', hours=int(os.environ.get("ARTIST_GEN_SCHED", "1")))
+    def artist_reccommendations():
       generate_playlists.show_recommendations_for_artist(random.choice(generate_playlists.get_artists_array_names()))
 
   if os.environ.get("RECCOMEND_GEN_SCHED", "1") != "0":

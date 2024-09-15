@@ -7,6 +7,7 @@ import spotipy
 import sys
 import time
 import string
+import constants
 
 from dotenv import load_dotenv
 from os.path import dirname
@@ -16,14 +17,14 @@ from spotipy import SpotifyOAuth
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-os.environ["VERSION"] = "0.1.4"
+os.environ["VERSION"] = "0.1.5"
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=int(os.environ.get("LOG_LEVEL", "40")),
         datefmt='%Y-%m-%d %H:%M:%S')
 
-EXCLUDED_WORDS = [ "acoustic" , "instrumental", "demo" ]
+EXCLUDED_WORDS = constants.EXCLUDED_WORDS
 if os.environ.get("EXCLUDED_WORDS") is not None and os.environ.get("EXCLUDED_WORDS").strip() != "":
     EXCLUDED_WORDS = os.environ.get("EXCLUDED_WORDS").split(",")
 
@@ -73,14 +74,14 @@ def my_reccommendations(count = None):
         time.sleep(2)
         for i in range(int(os.environ.get("NUM_USER_PLAYLISTS","5"))):
             if count is None or (count is not None and count == i):
-                logging.info('Searching your reccomendations (playlist %s)', str(i+1))
+                logging.info('Searching your reccommendations (playlist %s)', str(i+1))
                 top_track_ids = [track['id'] for track in top_tracks['items']]
                 liked_track_ids = [track['track']['id'] for track in liked_tracks['items']]
                 history_track_ids = [track['track']['id'] for track in history['items']]
                 seed_track_ids = top_track_ids + liked_track_ids + history_track_ids
                 random.shuffle(seed_track_ids)
                 results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
-                playlist_name = "00" + str(i+1) + " - My Reccomendations"
+                playlist_name = "My Reccommendations " + str(i+1)
                 write_playlist(playlist_name, results)
                 if count is not None:
                     break
@@ -122,6 +123,7 @@ def get_navidrome_search_results(text_to_search):
 
 def write_playlist(playlist_name, results):
     try:
+        playlist_name = os.environ.get("PLAYLIST_PREFIX", constants.PLAYLIST_PREFIX) + playlist_name
         song_ids = []
         for track in results['tracks']:
             for artist_spotify in track['artists']:
@@ -207,11 +209,11 @@ def write_playlist(playlist_name, results):
         logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
 
 def show_recommendations_for_artist(name):
-    logging.info('Searching reccomendations for: %s', name)
+    logging.info('Searching reccommendations for: %s', name)
     artist = get_artist(name)
     if artist is not None:
         results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get("ITEMS_PER_PLAYLIST")))
-        playlist_name = name + " - Reccomendations"
+        playlist_name = name + " - Reccommendations"
         write_playlist(playlist_name, results)
     else:
         logging.warning('Artist: %s Not found!', name)
@@ -267,7 +269,7 @@ def all_artists_recommendations():
 def get_user_saved_tracks():
     result = dict({'tracks': []})
     result = get_user_saved_tracks_playlist(result)
-    write_playlist("000 - Saved Tracks", result)
+    write_playlist("Saved Tracks", result)
 
 def get_user_saved_tracks_playlist(result, offset_tracks = 0):
     response_tracks = sp.current_user_saved_tracks(

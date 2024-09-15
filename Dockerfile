@@ -39,6 +39,7 @@ COPY init.py .
 COPY generate_playlists.py .
 COPY spotdl_helper.py .
 COPY lidarr_helper.py .
+COPY constants.py .
 COPY database.py .
 COPY templates templates/
 COPY entrypoint.sh .
