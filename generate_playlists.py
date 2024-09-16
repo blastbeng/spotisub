@@ -119,7 +119,10 @@ def get_playlist_tracks(item, result, offset_tracks = 0):
     for track_item in response_tracks['items']:
         track = track_item['track']
         logging.info('Found %s - %s inside playlist %s', track['artists'][0]['name'], track['name'], item['name'])
-        track_dict = dict({'name': track['name'], 'artists': [{"name": track['artists'][0]['name']}]})
+        #track_dict = dict({'name': track['name'], 'uri': 'spotify:track:' + track['id'], 'artists': [{"uri": track['artists'][0]['uri'], "name": track['artists'][0]['name']}]})
+        
+        if "uri" not in track:
+            track["uri"] = 'spotify:track:' + track['id']
         result["tracks"].append(track)
     time.sleep(2)
     if len(response_tracks['items']) != 0:

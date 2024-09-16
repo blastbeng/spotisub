@@ -40,7 +40,6 @@ class Database:
   spotify_song = Table(SPOTIFY_SONG, metadata,
                 Column('uuid', String(36), primary_key=True, nullable=False),
                 Column('title', String(500), nullable=False),
-                Column('album', String(500), nullable=False),
                 Column('spotify_uri', String(500), nullable=False),
                 Column('tms_insert', DateTime(timezone=True), server_default=func.now(), nullable=False),
                 Column('tms_update', DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -100,7 +99,7 @@ def insert_playlist_relation(self, conn, subsonic_song_id, subsonic_artist_id, s
   conn.execute(stmt)
 
 def select_all_playlists(self, missing):
-  value = []
+  value = {}
   stmt = None
   with self.db_engine.connect() as conn:
     if missing:
@@ -132,7 +131,9 @@ def select_all_playlists(self, missing):
           result["subsonic_artist_id"] = row.subsonic_artist_id
           result["subsonic_playlist_id"] = row.subsonic_playlist_id
 
-        value.append(result)
+          if row.subsonic_playlist_id not in value:
+            value[row.subsonic_playlist_id] = []
+          value[row.subsonic_playlist_id].append(result)
 
     cursor.close()
     conn.close()
@@ -158,7 +159,7 @@ def insert_spotify_song(self, conn, artist_spotify, track_spotify):
   song_uuid = None
   if song_db is None:
     song_uuid = str(uuid.uuid4().hex)
-    stmt = insert(self.spotify_song).values(uuid=song_uuid,title=track_spotify["name"], album=track_spotify["album"]["name"], spotify_uri=track_spotify["uri"])
+    stmt = insert(self.spotify_song).values(uuid=song_uuid,title=track_spotify["name"], spotify_uri=track_spotify["uri"])
     stmt.compile()
     conn.execute(stmt)
   elif song_db is not None and song_db.uuid is not None:

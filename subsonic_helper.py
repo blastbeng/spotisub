@@ -170,22 +170,30 @@ def write_playlist(playlist_name, results):
         logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
 
 def get_missing_songs():
-    unmatched_songs = database.select_all_playlists(dbms, True)
-    for missing in unmatched_songs:
-        if "subsonic_playlist_id" in missing and missing["subsonic_playlist_id"] is not None:
-            playlists_search = pysonic.getPlaylist(missing["subsonic_playlist_id"])
-            if "playlist" in playlist_search :
-                single_playlist_search = playlist_search["playlist"]
-                missing["subsonic_playlist_name"] = single_playlist_search["name"]
-        if "subsonic_artist_id" in missing and missing["subsonic_artist_id"] is not None:
-            artist_search = pysonic.getArtist(missing["subsonic_artist_id"])
-            if "artist" in artist_search:
-                single_artist_search = artist_search["playlist"]
-                missing["subsonic_playlist_name"] = single_artist_search["name"]
-        if "subsonic_song_id" in missing and missing["subsonic_song_id"] is not None:
-            artist_search = pysonic.getArtist(missing["subsonic_song_id"])
-            if "song" in song_search:
-                single_song_search = song_search["playlist"]
-                missing["subsonic_song_title"] = single_song_search["title"]
+    unmatched_songs_db = database.select_all_playlists(dbms, True)
+    unmatched_songs = {}
+    for key in unmatched_songs_db:
+        missings = unmatched_songs_db[key]
+        for missing in missings:
+            if "subsonic_playlist_id" in missing and missing["subsonic_playlist_id"] is not None:
+                playlist_search = pysonic.getPlaylist(missing["subsonic_playlist_id"])
+                if "playlist" in playlist_search :
+                    single_playlist_search = playlist_search["playlist"]
+
+                    if "subsonic_artist_id" in missing and missing["subsonic_artist_id"] is not None:
+                        artist_search = pysonic.getArtist(missing["subsonic_artist_id"])
+                        if "artist" in artist_search:
+                            single_artist_search = artist_search["playlist"]
+                            missing["subsonic_playlist_name"] = single_artist_search["name"]
+                    if "subsonic_song_id" in missing and missing["subsonic_song_id"] is not None:
+                        artist_search = pysonic.getArtist(missing["subsonic_song_id"])
+                        if "song" in song_search:
+                            single_song_search = song_search["playlist"]
+                            missing["subsonic_song_title"] = single_song_search["title"]
+
+                    if single_playlist_search["name"] not in unmatched_songs:
+                        unmatched_songs[single_playlist_search["name"]] = []
+                        
+                    unmatched_songs[single_playlist_search["name"]].append(missing)
 
     return unmatched_songs
