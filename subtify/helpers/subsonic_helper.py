@@ -2,9 +2,9 @@ import libsonic
 import logging
 import os
 import random
-import constants
+from ..constants import constants
 import sys
-import database
+from ..database import database
 import re
 
 from dotenv import load_dotenv

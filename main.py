@@ -1,10 +1,8 @@
-import generate_playlists
 import logging
 import os
 import random
 import sys
 import threading
-import utils
 import json
 
 from dotenv import load_dotenv
@@ -20,9 +18,10 @@ from flask_restx import Resource
 from os.path import dirname
 from os.path import join
 from time import strftime
-import constants
-
-import subsonic_helper
+from subtify.constants import constants
+from subtify.utils import utils
+from subtify.helpers import subsonic_helper
+from subtify.helpers import generate_playlists
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)

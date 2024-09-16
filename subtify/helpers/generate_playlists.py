@@ -6,13 +6,13 @@ import spotipy
 import sys
 import time
 import re
-import constants
+from ..constants import constants
 
 from dotenv import load_dotenv
 from os.path import dirname
 from os.path import join
 from spotipy import SpotifyOAuth
-import subsonic_helper
+from . import subsonic_helper
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
