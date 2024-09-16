@@ -11,7 +11,7 @@ The current release has all the base features, but it is still a work in progres
 
 ## Description
 
-Simple playlist generator based on spotify user and artists reccommendations with Subsonic API support
+Simple playlist generator based on spotify user and artists recommendations with Subsonic API support
 
 This software will try to match all your Spotify playlists to your music library using Subsonic APIs
 
@@ -45,14 +45,15 @@ If this artist isn't found inside the Lidarr database, the download process is s
 So for example if you want to automate the download process, using this system you can skip the artists you don't like.
 
 FLASK APP ENDPOINTS:
-* /generate/artist_reccommendations/<artist_name>/ => Generate artist reccommendations playlists, if no artist is provided it will choose a random one from your library
-* /generate/artist_reccommendations/all/ => Generate reccommendations playlists for all the artists in your library
+* /generate/artist_recommendations/<artist_name>/ => Generate artist recommendations playlists, if no artist is provided it will choose a random one from your library
+* /generate/artist_recommendations/all/ => Generate recommendations playlists for all the artists in your library
 * /generate/artist_top_tracks/<artist_name>/ => Generate artist top tracks playlists, if no artist is provided it will choose a random one from your library
 * /generate/artist_top_tracks/all/ => Generate top tracks playlists for all the artists in your library
-* /generate/reccommendations => Generate a random reccommendations Playlist
+* /generate/recommendations => Generate a random recommendations Playlist
 * /import/user_playlists => import a random playlist from your spotify account
 * /import/user_playlists/all => import all playlist from your spotify account
 * /import/saved_tracks => import a playlist with all your saved tracks from your spotify account
+* /database/unmatched_songs => show a json containing all the missing songs from your subsonic database
 
 ## Getting Started
 
@@ -185,7 +186,7 @@ services:
             - ITEMS_PER_PLAYLIST=100
             - NUM_USER_PLAYLISTS=5
             - ARTIST_GEN_SCHED=2
-            - RECCOMEND_GEN_SCHED=8
+            - RECOMEND_GEN_SCHED=8
             - PLAYLIST_GEN_SCHED=6
             - SAVED_GEN_SCHED=24
             - SCHEDULER_ENABLED=1
@@ -227,14 +228,14 @@ networks:
 | SUBSONIC_API_USER  | Subsonic API user | None | Yes |
 | SUBSONIC_API_PASS  | Subsonic API password | None | Yes |
 | SUBSONIC_API_BASE_URL  | Subsonic API Base Url, if your Navidrome ND_BASEURL param is "/music", set this to /music | Empty | No |
-| ITEMS_PER_PLAYLIST  | How many items per playlists for reccommendations playlists, take care to not set this too high | 100 | No |
+| ITEMS_PER_PLAYLIST  | How many items per playlists for recommendations playlists, take care to not set this too high | 100 | No |
 | PLAYLIST_PREFIX  | Playlists prefix name, every Subtify created playlist will have this prefix for better filtering, if set Empty playlists won't have a prefix | "Subtify - " | No |
 | EXCLUDED_WORDS  | List of excluded words separated by comma used to filter search results from the subsonic library | acoustic,instrumental,demo | No |
-| NUM_USER_PLAYLISTS  | How many custom reccommendations playlist to generate | 5 | No |
+| NUM_USER_PLAYLISTS  | How many custom recommendations playlist to generate | 5 | No |
 | SCHEDULER_ENABLED  | Set to 0 to disable the integrated scheduler, you will need to use the rest APIs if you disable this | 1 | No |
-| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists reccommendations generation, set to 0 to disable this generator | 1 | No |
+| ARTIST_GEN_SCHED  | Interval in hours to schedule the artists recommendations generation, set to 0 to disable this generator | 1 | No |
 | ARTIST_TOP_GEN_SCHED  | Interval in hours to schedule the top artists playlist import, set to 0 to disable this generator | 1 | No |
-| RECCOMEND_GEN_SCHED  | Interval in hours to schedule the custom reccommendations generation, set to 0 to disable this generator | 4 | No |
+| RECOMEND_GEN_SCHED  | Interval in hours to schedule the custom recommendations generation, set to 0 to disable this generator | 4 | No |
 | PLAYLIST_GEN_SCHED  | Interval in hours to schedule the custom playlist import, set to 0 to disable this generator | 3 | No |
 | SAVED_GEN_SCHED  | Interval in hours to schedule the saved tracks playlist import, set to 0 to disable this generator | 2 | No |
 | SPOTDL_ENABLED  | Automate the missing track download process using spotdl, set to 1 to enable | 0 | No |
@@ -253,7 +254,7 @@ For spotdl format examples please refer to: [https://spotdl.github.io/spotify-do
 ## Planned Features
 
 Dashboard
-* View which tracks are missing and decide to download it trough spotdl or just ignore em
+* View which tracks are missing and decide to download trough spotdl or just ignore em
 * View which tracks are being matched with the spotdl playlists\recommendations, and decide to keep or exclude em
 * Configure some parameters of subtify trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard

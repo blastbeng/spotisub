@@ -4,7 +4,8 @@ import os
 import random
 import constants
 import sys
-import string
+import database
+import re
 
 from dotenv import load_dotenv
 from os.path import dirname
@@ -17,6 +18,9 @@ logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=int(os.environ.get(constants.LOG_LEVEL, constants.LOG_LEVEL_DEFAULT_VALUE)),
         datefmt='%Y-%m-%d %H:%M:%S')
+
+dbms = database.Database(database.SQLITE, dbname='subtify.sqlite3')
+database.create_db_tables(dbms)
 
 pysonic = libsonic.Connection(os.environ.get(constants.SUBSONIC_API_HOST), os.environ.get(constants.SUBSONIC_API_USER), os.environ.get(constants.SUBSONIC_API_PASS), appName="Subtify", serverPath=os.environ.get(constants.SUBSONIC_API_BASE_URL, constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) + "/rest", port=int(os.environ.get(constants.SUBSONIC_API_PORT)))
 
@@ -32,41 +36,61 @@ def get_artists_array_names():
     return artist_names
 
     
-def get_navidrome_search_results(text_to_search):
+def get_subsonic_search_results(text_to_search):
 
     result = []
     searches = []
     searches.append(text_to_search)
     searches.append(text_to_search.split("(", 1)[0].strip())
-    searches.append(text_to_search.split("(", 1)[0].translate(str.maketrans("", "", string.punctuation)).strip())
+    searches.append(re.sub(r'[^\w\s]','',text_to_search.split("(", 1)[0]))
     searches.append(text_to_search.split("-", 1)[0].strip())
-    searches.append(text_to_search.split("-", 1)[0].translate(str.maketrans("", "", string.punctuation)).strip())
+    searches.append(re.sub(r'[^\w\s]','',text_to_search.split("-", 1)[0]).strip())
     searches.append(text_to_search.split("feat", 1)[0].strip())
-    searches.append(text_to_search.split("feat", 1)[0].translate(str.maketrans("", "", string.punctuation)).strip())
+    searches.append(re.sub(r'[^\w\s]','',text_to_search.split("feat", 1)[0]).strip())
     set_searches = list(set(searches))
     count = 0
     for set_search in set_searches:
-        navidrome_search = pysonic.search2(set_search)
-        if "searchResult2" in navidrome_search and len(navidrome_search["searchResult2"]) > 0 and "song" in navidrome_search["searchResult2"]:
-            result.append(navidrome_search)
+        subsonic_search = pysonic.search2(set_search)
+        if "searchResult2" in subsonic_search and len(subsonic_search["searchResult2"]) > 0 and "song" in subsonic_search["searchResult2"]:
+            result.append(subsonic_search)
         count = count + 1
 
     return result
 
+def get_playlist_id_by_name(playlist_name):  
+    playlist_id = None  
+    playlists_search = pysonic.getPlaylists()
+    if "playlists" in playlists_search and len(playlists_search["playlists"]) > 0:
+        single_playlist_search = playlists_search["playlists"]
+        if "playlist" in single_playlist_search and len(single_playlist_search["playlist"]) > 0:
+            for playlist in single_playlist_search["playlist"]:
+                if playlist["name"].strip() == playlist_name.strip():
+                    playlist_id = playlist["id"]
+                    break
+    return playlist_id
+
 def write_playlist(playlist_name, results):
     try:
         playlist_name = os.environ.get(constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE) + playlist_name
+        playlist_id = get_playlist_id_by_name(playlist_name)
+        if playlist_id is None:
+            pysonic.createPlaylist(name = playlist_name, songIds = [])
+            logging.info('Creating playlist %s', playlist_name)
+            playlist_id = get_playlist_id_by_name(playlist_name)
+            database.delete_playlist_relation_by_id(dbms, playlist_id)
+
+
         song_ids = []
         for track in results['tracks']:
             for artist_spotify in track['artists']:
                 artist_name_spotify = artist_spotify["name"]
                 logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
                 text_to_search = artist_name_spotify + " " + track['name']
-                navidrome_search_results = get_navidrome_search_results(text_to_search)
+                subsonic_search_results = get_subsonic_search_results(text_to_search)
                 found = False
                 excluded = False
-                for navidrome_search in navidrome_search_results:
-                    for song in navidrome_search["searchResult2"]["song"]:
+                for subsonic_search in subsonic_search_results:
+                    for song in subsonic_search["searchResult2"]["song"]:
                         excluded = False
                         song_title  = song["title"].strip().lower()
                         song_album  = song["album"].strip().lower()
@@ -77,9 +101,9 @@ def write_playlist(playlist_name, results):
                             excluded_words = excluded_words_string.split(",")
 
                         if excluded_words is not None and len(excluded_words) > 0:
-                            song_title_no_punt = song_title.translate(str.maketrans("", "", string.punctuation))
+                            song_title_no_punt = re.sub(r'[^\w\s]','',song_title)
                             song_title_splitted = song_title_no_punt.split()
-                            song_album_no_punt = song_album.translate(str.maketrans("", "", string.punctuation))
+                            song_album_no_punt = re.sub(r'[^\w\s]','',song_album)
                             song_album_splitted = song_album_no_punt.split()
                             countw = 0
                             while excluded is not True and countw < len(excluded_words):
@@ -96,46 +120,47 @@ def write_playlist(playlist_name, results):
                                         break
                                 countw = countw + 1
 
-                        song_artist = song["artist"].strip().lower()
+                        song_artist = song["artist"].strip()
+                        song_artist_no_punct = re.sub(r'[^\w\s]','',song_artist)
+                        artist_name_spotify_no_punct = re.sub(r'[^\w\s]','',artist_name_spotify)
 
-                        if ((song_artist != '' and (artist_name_spotify.lower() == song_artist or song_artist in artist_name_spotify.lower() or artist_name_spotify.lower() in song_artist))
+                        
+                        track_name_no_punct = re.sub(r'[^\w\s]','',track['name'])
+                        song_title_no_punct = re.sub(r'[^\w\s]','',song_title)
+
+                        if (song["id"] not in song_ids
+                            and song_artist != '' 
+                            and ((artist_name_spotify.lower() == song_artist.lower() or song_artist.lower() in artist_name_spotify.lower() or artist_name_spotify.lower() in song_artist.lower())
+                            or  (artist_name_spotify_no_punct.lower() == song_artist_no_punct.lower() or song_artist_no_punct.lower() in artist_name_spotify_no_punct.lower() or artist_name_spotify_no_punct.lower() in song_artist_no_punct.lower()))
                             and excluded is not True
-                            and (song_title != '' and (track['name'].lower() == song_title or song_title in track['name'].lower() or track['name'].lower() in song_title))):
+                            and (song_title != '' 
+                            and ((track['name'].lower() == song_title.lower() or song_title.lower() in track['name'].lower() or track['name'].lower() in song_title.lower())
+                            or  (track_name_no_punct.lower() == song_title_no_punct.lower() or song_title_no_punct.lower() in track_name_no_punct.lower() or track_name_no_punct.lower() in song_title_no_punct.lower())))):
                                 song_ids.append(song["id"])
                                 found = True
+                                database.insert_song(dbms, playlist_id, song, artist_spotify, track)
                 if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
                     is_monitored = True
                     if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
                         is_monitored = lidarr_helper.is_artist_monitored(artist_name_spotify)
                     if is_monitored:
                         logging.warning('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
-                        logging.warning('This track will be available after navidrome rescan your music dir')
+                        logging.warning('This track will be available after navidrome rescans your music dir')
                         spotdl_helper.download_track(track["external_urls"]["spotify"])
                     else:
                         logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
                         logging.warning('This track hasn''t been found in your Lidarr database, skipping download process')
                 elif found is False: 
                     logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
+                    database.insert_song(dbms, playlist_id, None, artist_spotify, track)
                 elif found is True: 
                     logging.info('Track %s - %s found in your music library', artist_name_spotify, track['name'])
                 
         if len(song_ids) > 0:
-            playlist_id = None
-            playlists_search = pysonic.getPlaylists()
-            if "playlists" in playlists_search and len(playlists_search["playlists"]) > 0:
-                single_playlist_search = playlists_search["playlists"]
-                if "playlist" in single_playlist_search and len(single_playlist_search["playlist"]) > 0:
-                    for playlist in single_playlist_search["playlist"]:
-                        if playlist["name"].strip() == playlist_name.strip():
-                            playlist_id = playlist["id"]
-                            break
-                random.shuffle(song_ids)
+            random.shuffle(song_ids)
             if playlist_id is not None:
                 pysonic.createPlaylist(playlistId = playlist_id, songIds = song_ids)
-                logging.info('Success! Updating playlist %s', playlist_name)
-            else:
-                pysonic.createPlaylist(name = playlist_name, songIds = song_ids)
-                logging.info('Success! Creating playlist %s', playlist_name)
+                logging.info('Success! Adding songs to playlist %s', playlist_name)
 
                 
 
@@ -143,3 +168,32 @@ def write_playlist(playlist_name, results):
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+
+def get_missing_songs():
+    unmatched_songs_db = database.select_all_playlists(dbms, True)
+    unmatched_songs = {}
+    for key in unmatched_songs_db:
+        missings = unmatched_songs_db[key]
+        for missing in missings:
+            if "subsonic_playlist_id" in missing and missing["subsonic_playlist_id"] is not None:
+                playlist_search = pysonic.getPlaylist(missing["subsonic_playlist_id"])
+                if "playlist" in playlist_search :
+                    single_playlist_search = playlist_search["playlist"]
+
+                    if "subsonic_artist_id" in missing and missing["subsonic_artist_id"] is not None:
+                        artist_search = pysonic.getArtist(missing["subsonic_artist_id"])
+                        if "artist" in artist_search:
+                            single_artist_search = artist_search["playlist"]
+                            missing["subsonic_playlist_name"] = single_artist_search["name"]
+                    if "subsonic_song_id" in missing and missing["subsonic_song_id"] is not None:
+                        artist_search = pysonic.getArtist(missing["subsonic_song_id"])
+                        if "song" in song_search:
+                            single_song_search = song_search["playlist"]
+                            missing["subsonic_song_title"] = single_song_search["title"]
+
+                    if single_playlist_search["name"] not in unmatched_songs:
+                        unmatched_songs[single_playlist_search["name"]] = []
+                        
+                    unmatched_songs[single_playlist_search["name"]].append(missing)
+
+    return unmatched_songs

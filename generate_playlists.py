@@ -5,6 +5,7 @@ import random
 import spotipy  
 import sys
 import time
+import re
 import constants
 
 from dotenv import load_dotenv
@@ -47,7 +48,11 @@ def artist_top_tracks(query):
         for item in results['tracks']["items"]:
             if "artists" in item:
                 for artist in item["artists"]:
-                    if "uri" in artist and "name" in artist and (query.lower() == artist["name"].lower() or query.lower() in artist["name"].lower() or artist["name"].lower() in query.lower()):
+                    artist_name_no_punct = re.sub(r'[^\w\s]','',artist["name"])
+                    query_no_punct = re.sub(r'[^\w\s]','',query)
+                    if ("uri" in artist and "name" in artist 
+                        and ((query.lower() == artist["name"].lower() or query.lower() in artist["name"].lower() or artist["name"].lower() in query.lower()) 
+                        or (query_no_punct.lower() == artist_name_no_punct.lower() or query_no_punct.lower() in artist_name_no_punct.lower() or artist_name_no_punct.lower() in query_no_punct.lower()))):
                         artists_uri[artist["name"]] = artist["uri"] 
 
     for artist_name in artists_uri:
@@ -55,7 +60,7 @@ def artist_top_tracks(query):
         playlist_name = artist_name + " - Top Tracks"
         subsonic_helper.write_playlist(playlist_name, artist_top)
 
-def my_reccommendations(count = None):
+def my_recommendations(count = None):
     try:
         top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
         logging.info('Loaded your custom top tracks')
@@ -68,14 +73,14 @@ def my_reccommendations(count = None):
         time.sleep(2)
         for i in range(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))):
             if count is None or (count is not None and count == i):
-                logging.info('Searching your reccommendations (playlist %s)', str(i+1))
+                logging.info('Searching your recommendations (playlist %s)', str(i+1))
                 top_track_ids = [track['id'] for track in top_tracks['items']]
                 liked_track_ids = [track['track']['id'] for track in liked_tracks['items']]
                 history_track_ids = [track['track']['id'] for track in history['items']]
                 seed_track_ids = top_track_ids + liked_track_ids + history_track_ids
                 random.shuffle(seed_track_ids)
                 results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(os.environ.get(constants.ITEMS_PER_PLAYLIST, constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
-                playlist_name = "My Reccommendations " + str(i+1)
+                playlist_name = "My Recommendations " + str(i+1)
                 subsonic_helper.write_playlist(playlist_name, results)
                 if count is not None:
                     break
@@ -96,11 +101,11 @@ def get_artist(name):
 
 
 def show_recommendations_for_artist(name):
-    logging.info('Searching reccommendations for: %s', name)
+    logging.info('Searching recommendations for: %s', name)
     artist = get_artist(name)
     if artist is not None:
         results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get(constants.ITEMS_PER_PLAYLIST, constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
-        playlist_name = name + " - Reccommendations"
+        playlist_name = name + " - Recommendations"
         subsonic_helper.write_playlist(playlist_name, results)
     else:
         logging.warning('Artist: %s Not found!', name)
@@ -114,7 +119,10 @@ def get_playlist_tracks(item, result, offset_tracks = 0):
     for track_item in response_tracks['items']:
         track = track_item['track']
         logging.info('Found %s - %s inside playlist %s', track['artists'][0]['name'], track['name'], item['name'])
-        track_dict = dict({'name': track['name'], 'artists': [{"name": track['artists'][0]['name']}]})
+        #track_dict = dict({'name': track['name'], 'uri': 'spotify:track:' + track['id'], 'artists': [{"uri": track['artists'][0]['uri'], "name": track['artists'][0]['name']}]})
+        
+        if "uri" not in track:
+            track["uri"] = 'spotify:track:' + track['id']
         result["tracks"].append(track)
     time.sleep(2)
     if len(response_tracks['items']) != 0:
