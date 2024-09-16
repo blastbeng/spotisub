@@ -172,7 +172,7 @@ def insert_spotify_song(self, conn, artist_spotify, track_spotify):
 
 def select_spotify_song_by_uri(self, conn, spotify_uri: str):
   value = None
-  stmt = select(self.spotify_song.c.uuid,self.spotify_song.c.spotify_uri,self.spotify_song.c.name).where(self.spotify_song.c.spotify_uri==spotify_uri)
+  stmt = select(self.spotify_song.c.uuid,self.spotify_song.c.spotify_uri,self.spotify_song.c.title).where(self.spotify_song.c.spotify_uri==spotify_uri)
   stmt.compile()
   with self.db_engine.connect() as conn:
     cursor = conn.execute(stmt)
