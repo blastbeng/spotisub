@@ -21,11 +21,6 @@ This is an example about what it generates using Navidrome:
 
 ![image](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
 
-Also there are five endpoints available for manually importing playlists.
-
-The default endpoint path is: http://127.0.0.1:50811
-
-
 
 FEATURES:
 * Generate 5 playlist based on your history, top tracks and saved tracks
