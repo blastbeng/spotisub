@@ -83,7 +83,7 @@ def insert_song(self, playlist_id, subsonic_track, artist_spotify, track_spotify
 
 def delete_playlist_relation_by_id(self, playlist_id: str):
   try:
-    stmt = delete(self.subsonic_spotify_relation).where(self.subsonic_spotify_relation.c.playlist_id==playlist_id)
+    stmt = delete(self.subsonic_spotify_relation).where(self.subsonic_spotify_relation.c.subsonic_playlist_id==playlist_id)
     compiled = stmt.compile()
     with self.db_engine.connect() as conn:
       result = conn.execute(stmt)
