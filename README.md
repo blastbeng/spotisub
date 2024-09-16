@@ -21,7 +21,7 @@ This is an example about what it generates using Navidrome:
 
 ![image](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
 
-For install instructions take a look at the WIKI: [[https://github.com/Lidarr/Lidarr](https://github.com/blastbeng/subtify/wiki)
+For install instructions take a look at the WIKI: [https://github.com/blastbeng/subtify/wiki](https://github.com/blastbeng/subtify/wiki)
 
 
 FEATURES:
