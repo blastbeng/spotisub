@@ -254,6 +254,7 @@ For spotdl format examples please refer to: [https://spotdl.github.io/spotify-do
 
 Dashboard
 * View which tracks are missing and decide to download it trough spotdl or just ignore em
+* View which tracks are being matched with the spotdl playlists\recommendations, and decide to keep or exclude em
 * Configure some parameters of subtify trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard
 
