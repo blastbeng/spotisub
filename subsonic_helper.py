@@ -5,6 +5,7 @@ import random
 import constants
 import sys
 import string
+import database
 
 from dotenv import load_dotenv
 from os.path import dirname
@@ -17,6 +18,9 @@ logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=int(os.environ.get(constants.LOG_LEVEL, constants.LOG_LEVEL_DEFAULT_VALUE)),
         datefmt='%Y-%m-%d %H:%M:%S')
+
+dbms = database.Database(database.SQLITE, dbname='subtify.sqlite3')
+database.create_db_tables(dbms)
 
 pysonic = libsonic.Connection(os.environ.get(constants.SUBSONIC_API_HOST), os.environ.get(constants.SUBSONIC_API_USER), os.environ.get(constants.SUBSONIC_API_PASS), appName="Subtify", serverPath=os.environ.get(constants.SUBSONIC_API_BASE_URL, constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) + "/rest", port=int(os.environ.get(constants.SUBSONIC_API_PORT)))
 
@@ -32,7 +36,7 @@ def get_artists_array_names():
     return artist_names
 
     
-def get_navidrome_search_results(text_to_search):
+def get_subsonic_search_results(text_to_search):
 
     result = []
     searches = []
@@ -46,9 +50,9 @@ def get_navidrome_search_results(text_to_search):
     set_searches = list(set(searches))
     count = 0
     for set_search in set_searches:
-        navidrome_search = pysonic.search2(set_search)
-        if "searchResult2" in navidrome_search and len(navidrome_search["searchResult2"]) > 0 and "song" in navidrome_search["searchResult2"]:
-            result.append(navidrome_search)
+        subsonic_search = pysonic.search2(set_search)
+        if "searchResult2" in subsonic_search and len(subsonic_search["searchResult2"]) > 0 and "song" in subsonic_search["searchResult2"]:
+            result.append(subsonic_search)
         count = count + 1
 
     return result
@@ -62,11 +66,11 @@ def write_playlist(playlist_name, results):
                 artist_name_spotify = artist_spotify["name"]
                 logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
                 text_to_search = artist_name_spotify + " " + track['name']
-                navidrome_search_results = get_navidrome_search_results(text_to_search)
+                subsonic_search_results = get_subsonic_search_results(text_to_search)
                 found = False
                 excluded = False
-                for navidrome_search in navidrome_search_results:
-                    for song in navidrome_search["searchResult2"]["song"]:
+                for subsonic_search in subsonic_search_results:
+                    for song in subsonic_search["searchResult2"]["song"]:
                         excluded = False
                         song_title  = song["title"].strip().lower()
                         song_album  = song["album"].strip().lower()
@@ -109,13 +113,14 @@ def write_playlist(playlist_name, results):
                         is_monitored = lidarr_helper.is_artist_monitored(artist_name_spotify)
                     if is_monitored:
                         logging.warning('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
-                        logging.warning('This track will be available after navidrome rescan your music dir')
+                        logging.warning('This track will be available after navidrome rescans your music dir')
                         spotdl_helper.download_track(track["external_urls"]["spotify"])
                     else:
                         logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
                         logging.warning('This track hasn''t been found in your Lidarr database, skipping download process')
                 elif found is False: 
                     logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
+                    database.insert_song(dbms, playlist_name, None, artist_spotify, track, 1)
                 elif found is True: 
                     logging.info('Track %s - %s found in your music library', artist_name_spotify, track['name'])
                 

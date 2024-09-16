@@ -58,27 +58,27 @@ def dashboard():
 
 nsgenerate = api.namespace('generate', 'Generate APIs')
 
-@nsgenerate.route('/artist_reccommendations/')
-@nsgenerate.route('/artist_reccommendations/<string:artist_name>/')
-class ArtistReccommendationsClass(Resource):
+@nsgenerate.route('/artist_recommendations/')
+@nsgenerate.route('/artist_recommendations/<string:artist_name>/')
+class ArtistRecommendationsClass(Resource):
   def get (self, artist_name = None):
     try:
       if artist_name is None:
         artist_name = random.choice(subsonic_helper.get_artists_array_names())
       threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
-      return get_response_str("Generating reccommendations playlist for artist " + artist_name, 200)  
+      return get_response_str("Generating recommendations playlist for artist " + artist_name, 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsgenerate.route('/artist_reccommendations/all/')
-class ArtistReccommendationsAllClass(Resource):
+@nsgenerate.route('/artist_recommendations/all/')
+class ArtistRecommendationsAllClass(Resource):
   def get (self, artist_name = None):
     try:
       threading.Thread(target=lambda: generate_playlists.all_artists_recommendations()).start()
-      return get_response_str("Generating reccommendations playlist for all artists", 200)  
+      return get_response_str("Generating recommendations playlist for all artists", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -112,11 +112,11 @@ class ArtistTopTracksAllClass(Resource):
       logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
       g.request_error = str(e)
 
-@nsgenerate.route('/reccommendations')
-class ReccommendationsClass(Resource):
+@nsgenerate.route('/recommendations')
+class RecommendationsClass(Resource):
   def get (self):
     try:
-        threading.Thread(target=lambda: generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))).start()
+        threading.Thread(target=lambda: generate_playlists.my_recommendations(count=random.randrange(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))).start()
         return get_response_str("Generating a reccommendation playlist", 200)  
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -183,8 +183,8 @@ if os.environ.get(constants.SCHEDULER_ENABLED, constants.SCHEDULER_ENABLED_DEFAU
   scheduler = APScheduler()
 
   if os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) != "0":
-    @scheduler.task('interval', id='artist_reccommendations', hours=int(os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)))
-    def artist_reccommendations():
+    @scheduler.task('interval', id='artist_recommendations', hours=int(os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)))
+    def artist_recommendations():
       generate_playlists.show_recommendations_for_artist(random.choice(subsonic_helper.get_artists_array_names()))
 
   if os.environ.get(constants.ARTIST_TOP_GEN_SCHED, constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
@@ -192,10 +192,10 @@ if os.environ.get(constants.SCHEDULER_ENABLED, constants.SCHEDULER_ENABLED_DEFAU
     def artist_top_tracks():
       generate_playlists.artist_top_tracks(random.choice(subsonic_helper.get_artists_array_names()))
 
-  if os.environ.get(constants.RECCOMEND_GEN_SCHED, constants.RECCOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
-    @scheduler.task('interval', id='my_reccommendations', hours=int(os.environ.get(constants.RECCOMEND_GEN_SCHED, constants.RECCOMEND_GEN_SCHED_DEFAULT_VALUE)))
-    def my_reccommendations():
-      generate_playlists.my_reccommendations(count=random.randrange(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))
+  if os.environ.get(constants.RECOMEND_GEN_SCHED, constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
+    @scheduler.task('interval', id='my_recommendations', hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED, constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)))
+    def my_recommendations():
+      generate_playlists.my_recommendations(count=random.randrange(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))
 
   if os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
     @scheduler.task('interval', id='user_playlists', hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)))
