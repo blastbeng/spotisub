@@ -5,6 +5,7 @@ import random
 import spotipy  
 import sys
 import time
+import re
 import constants
 
 from dotenv import load_dotenv
@@ -47,7 +48,11 @@ def artist_top_tracks(query):
         for item in results['tracks']["items"]:
             if "artists" in item:
                 for artist in item["artists"]:
-                    if "uri" in artist and "name" in artist and (query.lower() == artist["name"].lower() or query.lower() in artist["name"].lower() or artist["name"].lower() in query.lower()):
+                    artist_name_no_punct = re.sub(r'[^\w\s]','',artist["name"])
+                    query_no_punct = re.sub(r'[^\w\s]','',query)
+                    if ("uri" in artist and "name" in artist 
+                        and ((query.lower() == artist["name"].lower() or query.lower() in artist["name"].lower() or artist["name"].lower() in query.lower()) 
+                        or (query_no_punct.lower() == artist_name_no_punct.lower() or query_no_punct.lower() in artist_name_no_punct.lower() or artist_name_no_punct.lower() in query_no_punct.lower()))):
                         artists_uri[artist["name"]] = artist["uri"] 
 
     for artist_name in artists_uri:

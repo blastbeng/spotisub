@@ -5,6 +5,7 @@ import random
 import sys
 import threading
 import utils
+import json
 
 from dotenv import load_dotenv
 from flask import Flask
@@ -50,7 +51,11 @@ def get_response_str(text: str, status):
   r.headers["Content-Type"] = "text/xml; charset=utf-8"
   return r
 
-
+def get_response_json(data, status):
+  r = Response(response=data, status=status, mimetype="application/json")
+  r.headers["Content-Type"] = "application/json; charset=utf-8"
+  r.headers["Accept"] = "application/json"
+  return r
 
 @app.route('/dashboard')
 def dashboard():
@@ -174,9 +179,8 @@ nsdatabase = api.namespace('database', 'Database APIs')
 class UnmatchedSongsClass(Resource):
   def get (self):
     try:
-      data = {
-        "status": "TODO",
-      }
+      missing_songs = subsonic_helper.get_missing_songs()
+      return get_response_json(json.dumps(missing_songs), 200)   
     except Exception as e:
       exc_type, exc_obj, exc_tb = sys.exc_info()
       fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]

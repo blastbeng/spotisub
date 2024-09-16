@@ -53,6 +53,7 @@ FLASK APP ENDPOINTS:
 * /import/user_playlists => import a random playlist from your spotify account
 * /import/user_playlists/all => import all playlist from your spotify account
 * /import/saved_tracks => import a playlist with all your saved tracks from your spotify account
+* /database/unmatched_songs => show a json containing all the missing songs from your subsonic database
 
 ## Getting Started
 
@@ -253,7 +254,7 @@ For spotdl format examples please refer to: [https://spotdl.github.io/spotify-do
 ## Planned Features
 
 Dashboard
-* View which tracks are missing and decide to download it trough spotdl or just ignore em
+* View which tracks are missing and decide to download trough spotdl or just ignore em
 * View which tracks are being matched with the spotdl playlists\recommendations, and decide to keep or exclude em
 * Configure some parameters of subtify trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard
