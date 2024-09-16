@@ -57,9 +57,28 @@ def get_subsonic_search_results(text_to_search):
 
     return result
 
+def get_playlist_id_by_name(playlist_name):  
+    playlist_id = None  
+    playlists_search = pysonic.getPlaylists()
+    if "playlists" in playlists_search and len(playlists_search["playlists"]) > 0:
+        single_playlist_search = playlists_search["playlists"]
+        if "playlist" in single_playlist_search and len(single_playlist_search["playlist"]) > 0:
+            for playlist in single_playlist_search["playlist"]:
+                if playlist["name"].strip() == playlist_name.strip():
+                    playlist_id = playlist["id"]
+                    break
+    return playlist_id
+
 def write_playlist(playlist_name, results):
     try:
         playlist_name = os.environ.get(constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE) + playlist_name
+        playlist_id = get_playlist_id_by_name(playlist_name)
+        if playlist_id is None:
+            pysonic.createPlaylist(name = playlist_name, songIds = [])
+            logging.info('Creating playlist %s', playlist_name)
+            playlist_id = get_playlist_id_by_name(playlist_name)
+            
+
         song_ids = []
         for track in results['tracks']:
             for artist_spotify in track['artists']:
@@ -107,6 +126,7 @@ def write_playlist(playlist_name, results):
                             and (song_title != '' and (track['name'].lower() == song_title or song_title in track['name'].lower() or track['name'].lower() in song_title))):
                                 song_ids.append(song["id"])
                                 found = True
+                                database.insert_song(dbms, playlist_name, song, artist_spotify, track, 0, playlist_id)
                 if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
                     is_monitored = True
                     if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
@@ -120,27 +140,15 @@ def write_playlist(playlist_name, results):
                         logging.warning('This track hasn''t been found in your Lidarr database, skipping download process')
                 elif found is False: 
                     logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
-                    database.insert_song(dbms, playlist_name, None, artist_spotify, track, 1)
+                    database.insert_song(dbms, playlist_name, None, artist_spotify, track, 1, playlist_id)
                 elif found is True: 
                     logging.info('Track %s - %s found in your music library', artist_name_spotify, track['name'])
                 
         if len(song_ids) > 0:
-            playlist_id = None
-            playlists_search = pysonic.getPlaylists()
-            if "playlists" in playlists_search and len(playlists_search["playlists"]) > 0:
-                single_playlist_search = playlists_search["playlists"]
-                if "playlist" in single_playlist_search and len(single_playlist_search["playlist"]) > 0:
-                    for playlist in single_playlist_search["playlist"]:
-                        if playlist["name"].strip() == playlist_name.strip():
-                            playlist_id = playlist["id"]
-                            break
-                random.shuffle(song_ids)
+            random.shuffle(song_ids)
             if playlist_id is not None:
                 pysonic.createPlaylist(playlistId = playlist_id, songIds = song_ids)
-                logging.info('Success! Updating playlist %s', playlist_name)
-            else:
-                pysonic.createPlaylist(name = playlist_name, songIds = song_ids)
-                logging.info('Success! Creating playlist %s', playlist_name)
+                logging.info('Success! Adding songs to playlist %s', playlist_name)
 
                 
 
