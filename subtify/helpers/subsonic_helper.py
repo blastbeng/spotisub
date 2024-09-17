@@ -3,9 +3,12 @@ import logging
 import os
 import random
 from ..constants import constants
+from ..utils import utils
+from ..exceptions.exceptions import SubsonicOfflineException
 import sys
 from ..database import database
 import re
+from libsonic.errors import DataNotFoundError
 
 from dotenv import load_dotenv
 from os.path import dirname
@@ -24,12 +27,19 @@ database.create_db_tables(dbms)
 
 pysonic = libsonic.Connection(os.environ.get(constants.SUBSONIC_API_HOST), os.environ.get(constants.SUBSONIC_API_USER), os.environ.get(constants.SUBSONIC_API_PASS), appName="Subtify", serverPath=os.environ.get(constants.SUBSONIC_API_BASE_URL, constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) + "/rest", port=int(os.environ.get(constants.SUBSONIC_API_PORT)))
 
+def checkPysonicConnection():
+    global pysonic
+    if pysonic.ping():
+        return pysonic
+    else:
+        raise SubsonicOfflineException()
+
 def get_artists_array_names():
-    pysonic.getArtists()
+    checkPysonicConnection().getArtists()
     
     artist_names = []
 
-    for index in pysonic.getArtists()["artists"]["index"]:
+    for index in checkPysonicConnection().getArtists()["artists"]["index"]:
         for artist in index["artist"]:
             artist_names.append(artist["name"])
 
@@ -50,7 +60,7 @@ def get_subsonic_search_results(text_to_search):
     set_searches = list(set(searches))
     count = 0
     for set_search in set_searches:
-        subsonic_search = pysonic.search2(set_search)
+        subsonic_search = checkPysonicConnection().search2(set_search)
         if "searchResult2" in subsonic_search and len(subsonic_search["searchResult2"]) > 0 and "song" in subsonic_search["searchResult2"]:
             result.append(subsonic_search)
         count = count + 1
@@ -59,7 +69,7 @@ def get_subsonic_search_results(text_to_search):
 
 def get_playlist_id_by_name(playlist_name):  
     playlist_id = None  
-    playlists_search = pysonic.getPlaylists()
+    playlists_search = checkPysonicConnection().getPlaylists()
     if "playlists" in playlists_search and len(playlists_search["playlists"]) > 0:
         single_playlist_search = playlists_search["playlists"]
         if "playlist" in single_playlist_search and len(single_playlist_search["playlist"]) > 0:
@@ -74,7 +84,7 @@ def write_playlist(playlist_name, results):
         playlist_name = os.environ.get(constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE) + playlist_name
         playlist_id = get_playlist_id_by_name(playlist_name)
         if playlist_id is None:
-            pysonic.createPlaylist(name = playlist_name, songIds = [])
+            checkPysonicConnection().createPlaylist(name = playlist_name, songIds = [])
             logging.info('Creating playlist %s', playlist_name)
             playlist_id = get_playlist_id_by_name(playlist_name)
             database.delete_playlist_relation_by_id(dbms, playlist_id)
@@ -159,37 +169,48 @@ def write_playlist(playlist_name, results):
         if len(song_ids) > 0:
             random.shuffle(song_ids)
             if playlist_id is not None:
-                pysonic.createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
                 logging.info('Success! Adding songs to playlist %s', playlist_name)
 
-                
-
+    except SubsonicException:
+        logging.error('There was an error creating a Playlist, perhaps is your Subsonic server offline?')
     except Exception:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+        utils.write_exception()
 
-def get_missing_songs():
-    unmatched_songs_db = database.select_all_playlists(dbms, True)
+def get_playlist_songs(missing=False):
+    unmatched_songs_db = database.select_all_playlists(dbms, missing)
     unmatched_songs = {}
     for key in unmatched_songs_db:
         missings = unmatched_songs_db[key]
         for missing in missings:
             if "subsonic_playlist_id" in missing and missing["subsonic_playlist_id"] is not None:
-                playlist_search = pysonic.getPlaylist(missing["subsonic_playlist_id"])
-                if "playlist" in playlist_search :
+                playlist_search = None
+                try:
+                    playlist_search = checkPysonicConnection().getPlaylist(missing["subsonic_playlist_id"])
+                except SubsonicOfflineException as ex:
+                    raise ex
+                except DataNotFoundError:
+                    utils.write_exception()
+                    pass
+                if playlist_search is None:
+                    logging.warning('Playlist id "%s" not found, may be you deleted this playlist from Subsonic?', missing["subsonic_playlist_id"])
+                    logging.warning('Deleting Playlist with id "%s" from subtify database.', missing["subsonic_playlist_id"])
+                    database.delete_playlist_relation_by_id(dbms, missing["subsonic_playlist_id"])
+                elif playlist_search is not None and "playlist" in playlist_search :
                     single_playlist_search = playlist_search["playlist"]
 
                     if "subsonic_artist_id" in missing and missing["subsonic_artist_id"] is not None:
-                        artist_search = pysonic.getArtist(missing["subsonic_artist_id"])
+                        artist_search = checkPysonicConnection().getArtist(missing["subsonic_artist_id"])
                         if "artist" in artist_search:
                             single_artist_search = artist_search["playlist"]
                             missing["subsonic_playlist_name"] = single_artist_search["name"]
                     if "subsonic_song_id" in missing and missing["subsonic_song_id"] is not None:
-                        artist_search = pysonic.getArtist(missing["subsonic_song_id"])
+                        artist_search = checkPysonicConnection().getArtist(missing["subsonic_song_id"])
                         if "song" in song_search:
                             single_song_search = song_search["playlist"]
                             missing["subsonic_song_title"] = single_song_search["title"]
+                            if "subsonic_artist_id" not in missing:
+                                missing["subsonic_playlist_name"] = single_artist_search["artist"]
 
                     if single_playlist_search["name"] not in unmatched_songs:
                         unmatched_songs[single_playlist_search["name"]] = []
@@ -197,3 +218,21 @@ def get_missing_songs():
                     unmatched_songs[single_playlist_search["name"]].append(missing)
 
     return unmatched_songs
+
+def remove_subsonic_deleted_playlist():
+    subtify_playlists = database.select_all_playlists(dbms, False)
+    for key in subtify_playlists:
+        playlists = subtify_playlists[key]
+        for playlist in playlists:
+            if "subsonic_playlist_id" in playlist and playlist["subsonic_playlist_id"] is not None:
+                playlist_search = None
+                try:
+                    playlist_search = checkPysonicConnection().getPlaylist(playlist["subsonic_playlist_id"])
+                except SubsonicOfflineException as ex:
+                    raise ex
+                except DataNotFoundError:
+                    pass
+                if playlist_search is None:
+                    logging.warning('Playlist id "%s" not found, may be you deleted this playlist from Subsonic?', playlist["subsonic_playlist_id"])
+                    logging.warning('Deleting Playlist with id "%s" from subtify database.', playlist["subsonic_playlist_id"])
+                    database.delete_playlist_relation_by_id(dbms, playlist["subsonic_playlist_id"])

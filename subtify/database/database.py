@@ -25,7 +25,7 @@ class Database:
   def __init__(self, dbtype, username='', password='', dbname=''):
     dbtype = dbtype.lower()
     engine_url = self.DB_ENGINE[dbtype].format(DB=dbname)
-    self.db_engine = create_engine(engine_url)
+    self.db_engine = create_engine(engine_url, isolation_level=None)
 
   metadata = MetaData()
 
@@ -70,7 +70,13 @@ def insert_song(self, playlist_id, subsonic_track, artist_spotify, track_spotify
         if subsonic_track is None:
           insert_playlist_relation(self, conn, None, None, playlist_id, spotify_song_uuid)
         else:
-          insert_playlist_relation(self, conn, subsonic_track["id"], subsonic_track["artistId"], playlist_id, spotify_song_uuid)
+          track_id = None
+          artist_id = None
+          if "id" in subsonic_track:
+            track_id = subsonic_track["id"]
+          if "artistId" in subsonic_track:
+            artist_id = subsonic_track["id"]
+          insert_playlist_relation(self, conn, track_id, artist_id, playlist_id, spotify_song_uuid)
         conn.commit()      
       else:
         conn.rollback()
