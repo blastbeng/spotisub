@@ -140,50 +140,26 @@ def write_playlist(playlist_name, results):
                                         break
                                 countw = countw + 1
 
-                        song_artist = song["artist"].strip()
-                        song_artist_no_punct = re.sub(r'[^\w\s]','',song_artist)
-                        artist_name_spotify_no_punct = re.sub(r'[^\w\s]','',artist_name_spotify)                  
+                        if excluded is not True:
 
-                        song_titles = []
-                        song_titles.append(song_title.strip())
-                        song_titles.append(song_title_no_punt.strip())
-                        song_titles.append(song_title.split("(", 1)[0].strip())
-                        song_titles.append(re.sub(r'[^\w\s]','',song_title.split("(", 1)[0]))
-                        song_titles.append(song_title.split("-", 1)[0].strip())
-                        song_titles.append(re.sub(r'[^\w\s]','',song_title.split("-", 1)[0]).strip())
-                        song_titles.append(song_title.split("feat", 1)[0].strip())
-                        song_titles.append(re.sub(r'[^\w\s]','',song_title.split("feat", 1)[0]).strip()) 
+                            song_artist = song["artist"].strip()
+                            song_artist_no_punct = re.sub(r'[^\w\s]','',song_artist)
+                            artist_name_spotify_no_punct = re.sub(r'[^\w\s]','',artist_name_spotify) 
 
-                        song_titles = list(set(song_titles))
+                            placeholder = song_artist + " " + track['name'] + " " + song_album
 
-                        track_names = []
-                        track_names.append(track['name'].strip())
-                        track_names.append(re.sub(r'[^\w\s]','',track['name']).strip())
-                        track_names.append(track['name'].split("(", 1)[0].strip())
-                        track_names.append(re.sub(r'[^\w\s]','',track['name'].split("(", 1)[0]))
-                        track_names.append(track['name'].split("-", 1)[0].strip())
-                        track_names.append(re.sub(r'[^\w\s]','',track['name'].split("-", 1)[0]).strip())
-                        track_names.append(track['name'].split("feat", 1)[0].strip())
-                        track_names.append(re.sub(r'[^\w\s]','',track['name'].split("feat", 1)[0]).strip())
-
-                        track_names = list(set(track_names))
-
-                        placeholder = song_artist + " " + track['name'] + " " + song_album
-
-                        if (song["id"] not in song_ids
-                            and placeholder not in track_helper
-                            and song_artist != '' 
-                            and ((artist_name_spotify.lower() == song_artist.lower() or song_artist.lower() in artist_name_spotify.lower() or artist_name_spotify.lower() in song_artist.lower())
-                            or  (artist_name_spotify_no_punct.lower() == song_artist_no_punct.lower() or song_artist_no_punct.lower() in artist_name_spotify_no_punct.lower() or artist_name_spotify_no_punct.lower() in song_artist_no_punct.lower()))
-                            and excluded is not True
-                            and song_title != '' 
-                            and compare_title(track_names, song_titles)):
-                                song_ids.append(song["id"])
-                                track_helper.append(placeholder)
-                                found = True
-                                database.insert_song(dbms, playlist_id, song, artist_spotify, track)
-                                logging.info('Adding song %s - %s from album %s to playlist %s', song_artist, track['name'], song_album, playlist_name)
-                                checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                            if (song["id"] not in song_ids
+                                and placeholder not in track_helper
+                                and song_artist != '' 
+                                and utils.compare_arrays(artist_name_spotify, song["artist"])
+                                and song_title != '' 
+                                and utils.compare_arrays(track['name'], song_title)):
+                                    song_ids.append(song["id"])
+                                    track_helper.append(placeholder)
+                                    found = True
+                                    database.insert_song(dbms, playlist_id, song, artist_spotify, track)
+                                    logging.info('Adding song %s - %s from album %s to playlist %s', song_artist, track['name'], song_album, playlist_name)
+                                    checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
                 if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
                     is_monitored = True
                     if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
@@ -215,13 +191,6 @@ def write_playlist(playlist_name, results):
         logging.error('There was an error creating a Playlist, perhaps is your Subsonic server offline?')
     except Exception:
         utils.write_exception()
-
-def compare_title(track_names, song_titles):
-    for song_title in song_titles:
-        for track_name in track_names:
-            if track_name.lower() == song_title.lower() or song_title.lower() in track_name.lower() or track_name.lower() in song_title.lower():
-                return True
-    return False
 
 
 def get_playlist_songs(missing=False):
