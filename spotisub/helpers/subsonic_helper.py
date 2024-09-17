@@ -182,7 +182,7 @@ def write_playlist(playlist_name, results):
                                 track_helper.append(placeholder)
                                 found = True
                                 database.insert_song(dbms, playlist_id, song, artist_spotify, track)
-                                logging.info('Success! Adding song %s - %s from album %s to playlist %s', song_artist, track['name'], song_album, playlist_name)
+                                logging.info('Adding song %s - %s from album %s to playlist %s', song_artist, track['name'], song_album, playlist_name)
                                 checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
                 if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
                     is_monitored = True
