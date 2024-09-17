@@ -97,14 +97,14 @@ def write_playlist(playlist_name, results):
         for track in results['tracks']:
             for artist_spotify in track['artists']:
                 excluded = False
-                if artist_spotify != '':
+                if artist_spotify != '' and name in artist_spotify:
                     artist_name_spotify = artist_spotify["name"]
                     logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
                     text_to_search = artist_name_spotify + " " + track['name']
-                    if (utils.compare_string_to_exclusion(track['name'], excluded_words)
-                        or utils.compare_string_to_exclusion(track["album"]["name"], excluded_words)):
+                    if ("name" in track and utils.compare_string_to_exclusion(track['name'], excluded_words)
+                        or ("album" in track and "name" in track["album"] and utils.compare_string_to_exclusion(track["album"]["name"], excluded_words))):
                         excluded = True
-                    else:
+                    elif "name" in track:
                         subsonic_search_results = get_subsonic_search_results(text_to_search)
                         found = False
                         for song_id in subsonic_search_results:
