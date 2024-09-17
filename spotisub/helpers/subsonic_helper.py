@@ -97,7 +97,7 @@ def write_playlist(playlist_name, results):
         for track in results['tracks']:
             for artist_spotify in track['artists']:
                 excluded = False
-                if artist_spotify != '' and name in artist_spotify:
+                if artist_spotify != '' and "name" in artist_spotify:
                     artist_name_spotify = artist_spotify["name"]
                     logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
                     text_to_search = artist_name_spotify + " " + track['name']
