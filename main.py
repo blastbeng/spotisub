@@ -244,7 +244,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED, constants.SCHEDULER_ENABLED_DEFAU
     def saved_tracks():
       generate_playlists.get_user_saved_tracks()
 
-@scheduler.task('interval', id='remove_subsonic_deleted_playlist', hours=1)
+@scheduler.task('interval', id='remove_subsonic_deleted_playlist', hours=12)
 def remove_subsonic_deleted_playlist():
   subsonic_helper.remove_subsonic_deleted_playlist()
 

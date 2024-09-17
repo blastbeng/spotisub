@@ -253,5 +253,3 @@ def remove_subsonic_deleted_playlist():
             database.delete_playlist_relation_by_id(dbms, key)
 
     database.clean_spotify_songs(dbms)
-
-remove_subsonic_deleted_playlist()
