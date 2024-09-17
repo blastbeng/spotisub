@@ -203,7 +203,6 @@ def get_playlist_songs(missing=False):
         except SubsonicOfflineException as ex:
             raise ex
         except DataNotFoundError:
-            utils.write_exception()
             pass
         if playlist_search is None:
             logging.warning('Playlist id "%s" not found, may be you deleted this playlist from Subsonic?', key)
