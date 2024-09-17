@@ -18,12 +18,12 @@ from flask_restx import Resource
 from os.path import dirname
 from os.path import join
 from time import strftime
-from subtify.constants import constants
-from subtify.utils import utils
-from subtify.helpers import subsonic_helper
-from subtify.helpers import generate_playlists
+from spotisub.constants import constants
+from spotisub.utils import utils
+from spotisub.helpers import subsonic_helper
+from spotisub.helpers import generate_playlists
 from flask_apscheduler import APScheduler
-from subtify.exceptions.exceptions import SubsonicOfflineException
+from spotisub.exceptions.exceptions import SubsonicOfflineException
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)

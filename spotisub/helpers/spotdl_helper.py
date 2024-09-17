@@ -17,7 +17,7 @@ client_secret=os.environ.get(constants.SPOTIPY_CLIENT_SECRET)
 
 spotdl_client = Spotdl(client_id=client_id, client_secret=client_secret, no_cache=True)
 
-spotdl_client.downloader.settings["output"] = os.environ.get(constants.SPOTDL_FORMAT, constants.SPOTDL_FORMAT_DEFAULT_VALUE)
+spotdl_client.downloader.settings["output"] = os.environ.get(constants.SPOTDL_FORMAT, constants.SPOTDL_FORMAT_DEFAULT_VALUE).replace("\"", "")
 
 def download_track(url):
     song = Song.from_url(url)

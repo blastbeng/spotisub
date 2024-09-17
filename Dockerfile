@@ -8,7 +8,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         gcc \
-        locales
+        locales \
+        ffmpeg
 
 
 RUN sed -i '/it_IT.UTF-8/s/^# //g' /etc/locale.gen && \
@@ -25,7 +26,7 @@ WORKDIR $HOME
 RUN mkdir $HOME/.config && chmod -R 777 $HOME
 ENV PATH="$HOME/.local/bin:$PATH"
         
-WORKDIR $HOME/subtify
+WORKDIR $HOME/spotisub
 ENV PATH="/home/uwsgi/.local/bin:${PATH}"
 
 COPY requirements.txt .
@@ -36,14 +37,7 @@ USER root
 ENV HOME=/home/user
 COPY main.py .
 COPY init.py .
-COPY utils.py .
-COPY generate_playlists.py .
-COPY subsonic_helper.py .
-COPY spotdl_helper.py .
-COPY lidarr_helper.py .
-COPY constants.py .
-COPY database.py .
-COPY templates templates/
+COPY spotisub spotisub/
 COPY entrypoint.sh .
 COPY first_run.sh .
 COPY uwsgi.ini .

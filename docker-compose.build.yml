@@ -1,11 +1,11 @@
-name: subtify
+name: spotisub
 services:
-  subtify:
+  spotisub:
     build:
       context: .
       dockerfile: Dockerfile
       network: host
-    container_name: subtify
+    container_name: spotisub
     user: 1000:1000
     environment:
       - PUID=1000
@@ -18,10 +18,10 @@ services:
       - SUBSONIC_API_PORT=4533
       - SUBSONIC_API_USER=user
       - SUBSONIC_API_PASS=pass
-    image: "blastbeng/subtify:latest"
+    image: "blastbeng/spotisub:latest"
     restart: always
     volumes:
-      - "./cache:/home/user/subtify/cache"
+      - "./cache:/home/user/spotisub/cache"
     entrypoint: ./entrypoint.sh
     ports:
       - 50811:50811

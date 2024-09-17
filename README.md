@@ -1,6 +1,5 @@
 # Spotisub
-![image](https://github.com/user-attachments/assets/245e1b9f-9e4a-4c6a-b5da-2d8f0b916e61)
-
+![spotisub-high-resolution-logo](https://github.com/user-attachments/assets/8e5d50d9-8aec-4864-b2d6-78f8d01d25b1)
 
 Spotify to subsonic Playlist Generator and Importer
 
@@ -22,7 +21,7 @@ This is an example about what it generates using Navidrome:
 
 ![image](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
 
-For install instructions take a look at the WIKI: [https://github.com/blastbeng/subtify/wiki](https://github.com/blastbeng/subtify/wiki)
+For install instructions take a look at the WIKI: [https://github.com/blastbeng/spotisub/wiki](https://github.com/blastbeng/spotisub/wiki)
 
 
 FEATURES:
@@ -37,7 +36,7 @@ FEATURES:
 Take a look at Spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
 Take a look at Lidarr here: [https://github.com/Lidarr/Lidarr](https://github.com/Lidarr/Lidarr)
 
-When both Spotdl and Lidarr integrations are enabled, if subtify doesn't find a song in subsonic database, it tries to search the artist returned from the spotify APIs inside the Lidarr database (via Lidarr APIs).
+When both Spotdl and Lidarr integrations are enabled, if spotisub doesn't find a song in subsonic database, it tries to search the artist returned from the spotify APIs inside the Lidarr database (via Lidarr APIs).
 If this artist isn't found inside the Lidarr database, the download process is skipped.
 
 So for example if you want to automate the download process, using this system you can skip the artists you don't like.
@@ -48,7 +47,7 @@ So for example if you want to automate the download process, using this system y
 Dashboard
 * View which tracks are missing and decide to download trough spotdl or just ignore em
 * View which tracks are being matched with the spotdl playlists\recommendations, and decide to keep or exclude em
-* Configure some parameters of subtify trough the dashboard instead of docker env variables
+* Configure some parameters of spotisub trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard
 
 Initial imports

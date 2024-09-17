@@ -22,16 +22,6 @@ logging.basicConfig(
         level=int(os.environ.get(constants.LOG_LEVEL, constants.LOG_LEVEL_DEFAULT_VALUE)),
         datefmt='%Y-%m-%d %H:%M:%S')
 
-
-
-if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1":
-    import spotdl_helper
-    logging.warning("You have enabled SPOTDL integration, make sure to configure the correct download path and check that you have enough disk space for music downloading.")
-
-if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
-    import lidarr_helper
-    logging.warning("You have enabled LIDARR integration, if an artist won't be found inside the lidarr database, the download process will be skipped.")
-
 client_id=os.environ.get(constants.SPOTIPY_CLIENT_ID)
 client_secret=os.environ.get(constants.SPOTIPY_CLIENT_SECRET)
 redirect_uri=os.environ.get(constants.SPOTIPY_REDIRECT_URI)
