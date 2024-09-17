@@ -157,6 +157,8 @@ def write_playlist(playlist_name, results):
                                 song_ids.append(song["id"])
                                 found = True
                                 database.insert_song(dbms, playlist_id, song, artist_spotify, track)
+                                logging.info('Success! Adding song %s - %s to playlist %s', artist_spotify, song, playlist_name)
+                                checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
                 if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
                     is_monitored = True
                     if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
@@ -175,10 +177,7 @@ def write_playlist(playlist_name, results):
                     logging.info('Track %s - %s found in your music library', artist_name_spotify, track['name'])
                 
         if len(song_ids) > 0:
-            random.shuffle(song_ids)
-            if playlist_id is not None:
-                checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
-                logging.info('Success! Adding songs to playlist %s', playlist_name)
+            logging.info('Success! Created playlist %s', playlist_name)
         elif len(song_ids) == 0:
             if playlist_id is not None:
                 try:
