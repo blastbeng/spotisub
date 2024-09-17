@@ -99,6 +99,7 @@ def write_playlist(playlist_name, results):
 
 
         song_ids = []
+        track_helper = []
         for track in results['tracks']:
             for artist_spotify in track['artists']:
                 artist_name_spotify = artist_spotify["name"]
@@ -167,7 +168,10 @@ def write_playlist(playlist_name, results):
 
                         track_names = list(set(track_names))
 
+                        placeholder = song_artist + " " + track['name'] + " " + song_album
+
                         if (song["id"] not in song_ids
+                            and placeholder not in track_helper
                             and song_artist != '' 
                             and ((artist_name_spotify.lower() == song_artist.lower() or song_artist.lower() in artist_name_spotify.lower() or artist_name_spotify.lower() in song_artist.lower())
                             or  (artist_name_spotify_no_punct.lower() == song_artist_no_punct.lower() or song_artist_no_punct.lower() in artist_name_spotify_no_punct.lower() or artist_name_spotify_no_punct.lower() in song_artist_no_punct.lower()))
@@ -175,6 +179,7 @@ def write_playlist(playlist_name, results):
                             and song_title != '' 
                             and compare_title(track_names, song_titles)):
                                 song_ids.append(song["id"])
+                                track_helper.append(placeholder)
                                 found = True
                                 database.insert_song(dbms, playlist_id, song, artist_spotify, track)
                                 logging.info('Success! Adding song %s - %s from album %s to playlist %s', song_artist, track['name'], song_album, playlist_name)
