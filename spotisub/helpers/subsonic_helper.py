@@ -55,24 +55,12 @@ def get_artists_array_names():
 
     
 def get_subsonic_search_results(text_to_search):
-
     result = []
-    searches = []
-    searches.append(text_to_search)
-    searches.append(text_to_search.split("(", 1)[0].strip())
-    searches.append(re.sub(r'[^\w\s]','',text_to_search.split("(", 1)[0]))
-    searches.append(text_to_search.split("-", 1)[0].strip())
-    searches.append(re.sub(r'[^\w\s]','',text_to_search.split("-", 1)[0]).strip())
-    searches.append(text_to_search.split("feat", 1)[0].strip())
-    searches.append(re.sub(r'[^\w\s]','',text_to_search.split("feat", 1)[0]).strip())
-    set_searches = list(set(searches))
-    count = 0
+    set_searches = utils.generate_compare_array(text_to_search)
     for set_search in set_searches:
         subsonic_search = checkPysonicConnection().search2(set_search)
         if "searchResult2" in subsonic_search and len(subsonic_search["searchResult2"]) > 0 and "song" in subsonic_search["searchResult2"]:
             result.append(subsonic_search)
-        count = count + 1
-
     return result
 
 def get_playlist_id_by_name(playlist_name):  
@@ -120,8 +108,8 @@ def write_playlist(playlist_name, results):
                                 if (song["id"] not in song_ids
                                     and not utils.compare_string_to_array(song["title"], excluded_words)
                                     and not utils.compare_string_to_array(song["album"], excluded_words)
-                                    and utils.compare_arrays(artist_name_spotify, song["artist"])
-                                    and utils.compare_arrays(track['name'], song["title"])):
+                                    and utils.compare_strings(artist_name_spotify, song["artist"])
+                                    and utils.compare_strings(track['name'], song["title"])):
                                         song_ids.append(song["id"])
                                         track_helper.append(placeholder)
                                         found = True
