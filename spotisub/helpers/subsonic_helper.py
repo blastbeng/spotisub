@@ -97,69 +97,37 @@ def write_playlist(playlist_name, results):
             playlist_id = get_playlist_id_by_name(playlist_name)
             database.delete_playlist_relation_by_id(dbms, playlist_id)
 
+        excluded_words = []
+        excluded_words_string = os.environ.get(constants.EXCLUDED_WORDS, constants.EXCLUDED_WORDS_DEFAULT_VALUE)
+        if excluded_words_string is not None and excluded_words_string != "":
+            excluded_words = excluded_words_string.split(",")
 
         song_ids = []
         track_helper = []
         for track in results['tracks']:
             for artist_spotify in track['artists']:
-                artist_name_spotify = artist_spotify["name"]
-                logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
-                text_to_search = artist_name_spotify + " " + track['name']
-                subsonic_search_results = get_subsonic_search_results(text_to_search)
-                found = False
-                excluded = False
-                for subsonic_search in subsonic_search_results:
-                    for song in subsonic_search["searchResult2"]["song"]:
-                        excluded = False
-                        song_title  = song["title"].strip().lower()
-                        song_album  = song["album"].strip().lower()
-
-                        excluded_words = []
-                        excluded_words_string = os.environ.get(constants.EXCLUDED_WORDS, constants.EXCLUDED_WORDS_DEFAULT_VALUE)
-                        if excluded_words_string is not None and excluded_words_string != "":
-                            excluded_words = excluded_words_string.split(",")
-
-                        song_title_no_punt = re.sub(r'[^\w\s]','',song_title)
-                        song_title_splitted = song_title_no_punt.split()
-
-                        if excluded_words is not None and len(excluded_words) > 0:
-                            song_album_no_punt = re.sub(r'[^\w\s]','',song_album)
-                            song_album_splitted = song_album_no_punt.split()
-                            countw = 0
-                            while excluded is not True and countw < len(excluded_words):
-                                excluded_word = excluded_words[countw]
-                                for song_title_sentence in song_title_splitted:
-                                    if excluded_word == song_title_sentence.strip().lower():
-                                        excluded = True
-                                        logging.warning('Excluding search result %s - %s - %s because it contains the excluded word: %s', song["artist"], song["title"].strip(), song["album"], excluded_word)
-                                        break
-                                for song_album_sentence in song_album_splitted:
-                                    if excluded_word == song_album_sentence.strip().lower():
-                                        excluded = True
-                                        logging.warning('Excluding search result %s - %s - %s because it contains the excluded word: %s', song["artist"], song["title"].strip(), song["album"], excluded_word)
-                                        break
-                                countw = countw + 1
-
-                        if excluded is not True:
-
-                            song_artist = song["artist"].strip()
-                            song_artist_no_punct = re.sub(r'[^\w\s]','',song_artist)
-                            artist_name_spotify_no_punct = re.sub(r'[^\w\s]','',artist_name_spotify) 
-
-                            placeholder = song_artist + " " + track['name'] + " " + song_album
-
-                            if (song["id"] not in song_ids
-                                and placeholder not in track_helper
-                                and song_artist != '' 
-                                and utils.compare_arrays(artist_name_spotify, song["artist"])
-                                and song_title != '' 
-                                and utils.compare_arrays(track['name'], song_title)):
-                                    song_ids.append(song["id"])
-                                    track_helper.append(placeholder)
-                                    found = True
-                                    database.insert_song(dbms, playlist_id, song, artist_spotify, track)
-                                    logging.info('Adding song %s - %s from album %s to playlist %s', song_artist, track['name'], song_album, playlist_name)
-                                    checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                if artist_spotify != '':
+                    artist_name_spotify = artist_spotify["name"]
+                    logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
+                    text_to_search = artist_name_spotify + " " + track['name']
+                    subsonic_search_results = get_subsonic_search_results(text_to_search)
+                    found = False
+                    excluded = False
+                    for subsonic_search in subsonic_search_results:
+                        for song in subsonic_search["searchResult2"]["song"]:
+                            if song["artist"] != '' and track['name'] != '' and song["album"] != '' and song["title"] != '':
+                                placeholder = song["artist"] + " " + track['name'] + " " + song["album"]
+                                if (song["id"] not in song_ids
+                                    and not utils.compare_string_to_array(song["title"], excluded_words)
+                                    and not utils.compare_string_to_array(song["album"], excluded_words)
+                                    and utils.compare_arrays(artist_name_spotify, song["artist"])
+                                    and utils.compare_arrays(track['name'], song["title"])):
+                                        song_ids.append(song["id"])
+                                        track_helper.append(placeholder)
+                                        found = True
+                                        database.insert_song(dbms, playlist_id, song, artist_spotify, track)
+                                        logging.info('Adding song %s - %s from album %s to playlist %s', song["artist"], track['name'], song["album"], playlist_name)
+                                        checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
                 if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
                     is_monitored = True
                     if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":

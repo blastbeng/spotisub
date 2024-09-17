@@ -53,10 +53,14 @@ def generate_compare_array(strings):
     return list(set(compare_array_values))
 
 def compare_arrays(a, b):
-    stringsa = generate_compare_array(a)
-    stringsb = generate_compare_array(b)
+    return compare(generate_compare_array(a), generate_compare_array(b))
+
+def compare_string_to_array(a, stringb):
+    return compare(generate_compare_array(a), stringb)
+
+def compare(stringsa, stringsb):
     for stringa in stringsa:
         for stringb in stringsb:
             if stringa == stringb or stringb in stringa or stringa in stringb:
-                return True
+                return True    
     return False
