@@ -34,6 +34,7 @@ FEATURES:
 * Optional Lidarr integration, used altogether with spotdl to make decision about download a matching song or not
 
 Take a look at Spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
+
 Take a look at Lidarr here: [https://github.com/Lidarr/Lidarr](https://github.com/Lidarr/Lidarr)
 
 When both Spotdl and Lidarr integrations are enabled, if spotisub doesn't find a song in subsonic database, it tries to search the artist returned from the spotify APIs inside the Lidarr database (via Lidarr APIs).
