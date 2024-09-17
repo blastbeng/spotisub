@@ -43,22 +43,24 @@ def generate_compare_array(strings):
     strings = strings.strip().lower()
     compare_array_values = []
     compare_array_values.append(strings)
-    compare_array_values.append(re.sub(r'[^\w\s]','',strings))
+    compare_array_values.append(re.sub(r'[^\w\s]','',strings).strip())
     for token in constants.SPLIT_TOKENS:
-        compare_array_values.append(strings.split(token, 1)[0])
-        compare_array_values.append(re.sub(r'[^\w\s]','',strings.split(token, 1)[0]))
+        compare_array_values.append(strings.split(token, 1)[0].strip())
+        compare_array_values.append(re.sub(r'[^\w\s]','',strings.split(token, 1)[0]).strip())
 
     return list(set(compare_array_values))
 
 def compare_strings(a, b):
     return compare(generate_compare_array(a), generate_compare_array(b))
 
-def compare_string_to_array(a, stringb):
-    return compare(generate_compare_array(a), stringb)
+def compare_string_to_exclusion(a, stringb):
+    return compare(generate_compare_array(a), stringb, log_excluded=True)
 
-def compare(stringsa, stringsb):
+def compare(stringsa, stringsb, log_excluded=False):
     for stringa in stringsa:
         for stringb in stringsb:
             if stringa == stringb or stringb in stringa or stringa in stringb:
+                if log_excluded is True:
+                    logging.warning("Found excluded word: %s. Skipping...", stringb)
                 return True    
     return False

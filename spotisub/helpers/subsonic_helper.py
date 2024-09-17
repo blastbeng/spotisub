@@ -55,12 +55,14 @@ def get_artists_array_names():
 
     
 def get_subsonic_search_results(text_to_search):
-    result = []
+    result = {}
     set_searches = utils.generate_compare_array(text_to_search)
     for set_search in set_searches:
         subsonic_search = checkPysonicConnection().search2(set_search)
         if "searchResult2" in subsonic_search and len(subsonic_search["searchResult2"]) > 0 and "song" in subsonic_search["searchResult2"]:
-            result.append(subsonic_search)
+            for song in subsonic_search["searchResult2"]["song"]:
+                if "id" in song and song["id"] not in result:
+                    result[song["id"]] = song
     return result
 
 def get_playlist_id_by_name(playlist_name):  
@@ -86,7 +88,7 @@ def write_playlist(playlist_name, results):
             database.delete_playlist_relation_by_id(dbms, playlist_id)
 
         excluded_words = []
-        excluded_words_string = os.environ.get(constants.EXCLUDED_WORDS, constants.EXCLUDED_WORDS_DEFAULT_VALUE)
+        excluded_words_string = os.environ.get(constants.EXCLUDED_WORDS, constants.EXCLUDED_WORDS_DEFAULT_VALUE).replace("\"","")
         if excluded_words_string is not None and excluded_words_string != "":
             excluded_words = excluded_words_string.split(",")
 
@@ -94,44 +96,51 @@ def write_playlist(playlist_name, results):
         track_helper = []
         for track in results['tracks']:
             for artist_spotify in track['artists']:
+                excluded = False
                 if artist_spotify != '':
                     artist_name_spotify = artist_spotify["name"]
                     logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
                     text_to_search = artist_name_spotify + " " + track['name']
-                    subsonic_search_results = get_subsonic_search_results(text_to_search)
-                    found = False
-                    excluded = False
-                    for subsonic_search in subsonic_search_results:
-                        for song in subsonic_search["searchResult2"]["song"]:
-                            if song["artist"] != '' and track['name'] != '' and song["album"] != '' and song["title"] != '':
-                                placeholder = song["artist"] + " " + track['name'] + " " + song["album"]
-                                if (song["id"] not in song_ids
-                                    and not utils.compare_string_to_array(song["title"], excluded_words)
-                                    and not utils.compare_string_to_array(song["album"], excluded_words)
-                                    and utils.compare_strings(artist_name_spotify, song["artist"])
-                                    and utils.compare_strings(track['name'], song["title"])):
-                                        song_ids.append(song["id"])
-                                        track_helper.append(placeholder)
-                                        found = True
-                                        database.insert_song(dbms, playlist_id, song, artist_spotify, track)
-                                        logging.info('Adding song %s - %s from album %s to playlist %s', song["artist"], track['name'], song["album"], playlist_name)
-                                        checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
-                if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
-                    is_monitored = True
-                    if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
-                        is_monitored = lidarr_helper.is_artist_monitored(artist_name_spotify)
-                    if is_monitored:
-                        logging.warning('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
-                        logging.warning('This track will be available after navidrome rescans your music dir')
-                        spotdl_helper.download_track(track["external_urls"]["spotify"])
+                    if (utils.compare_string_to_exclusion(track['name'], excluded_words)
+                        or utils.compare_string_to_exclusion(track["album"]["name"], excluded_words)):
+                        excluded = True
                     else:
+                        subsonic_search_results = get_subsonic_search_results(text_to_search)
+                        found = False
+                        for song_id in subsonic_search_results:
+                            song = subsonic_search_results[song_id]
+                            if song["artist"] != '' and track['name'] != '' and song["album"] != '' and song["title"] != '':
+                                logging.info('Found %s - %s - %s in your music library', song["artist"], song["title"], song["album"])
+                                placeholder = song["artist"] + " " + track['name'] + " " + song["album"]
+                                if song["id"] not in song_ids:
+                                    if (utils.compare_string_to_exclusion(song["title"], excluded_words)
+                                        or utils.compare_string_to_exclusion(song["album"], excluded_words)):
+                                        excluded = True
+                                    elif (utils.compare_strings(artist_name_spotify, song["artist"])
+                                        and utils.compare_strings(track['name'], song["title"])):
+                                            song_ids.append(song["id"])
+                                            track_helper.append(placeholder)
+                                            found = True
+                                            database.insert_song(dbms, playlist_id, song, artist_spotify, track)
+                                            logging.info('Adding song %s - %s from album %s to playlist %s', song["artist"], track['name'], song["album"], playlist_name)
+                                            checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                if not excluded:
+                    if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
+                        is_monitored = True
+                        if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
+                            is_monitored = lidarr_helper.is_artist_monitored(artist_name_spotify)
+                        if is_monitored:
+                            logging.warning('Track %s - %s not found in your music library, using SPOTDL downloader', artist_name_spotify, track['name'])
+                            logging.warning('This track will be available after navidrome rescans your music dir')
+                            spotdl_helper.download_track(track["external_urls"]["spotify"])
+                        else:
+                            logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
+                            logging.warning('This track hasn''t been found in your Lidarr database, skipping download process')
+                    elif found is False: 
                         logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
-                        logging.warning('This track hasn''t been found in your Lidarr database, skipping download process')
-                elif found is False: 
-                    logging.warning('Track %s - %s not found in your music library', artist_name_spotify, track['name'])
-                    database.insert_song(dbms, playlist_id, None, artist_spotify, track)
-                elif found is True: 
-                    logging.info('Track %s - %s found in your music library', artist_name_spotify, track['name'])
+                        database.insert_song(dbms, playlist_id, None, artist_spotify, track)
+                    elif found is True: 
+                        logging.info('Track %s - %s found in your music library', artist_name_spotify, track['name'])
                 
         if len(song_ids) > 0:
             logging.info('Success! Created playlist %s', playlist_name)
