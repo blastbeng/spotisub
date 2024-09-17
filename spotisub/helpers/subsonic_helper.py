@@ -117,7 +117,8 @@ def write_playlist(playlist_name, results):
                                         or utils.compare_string_to_exclusion(song["album"], excluded_words)):
                                         excluded = True
                                     elif (utils.compare_strings(artist_name_spotify, song["artist"])
-                                        and utils.compare_strings(track['name'], song["title"])):
+                                        and utils.compare_strings(track['name'], song["title"])
+                                        and placeholder not in track_helper):
                                             song_ids.append(song["id"])
                                             track_helper.append(placeholder)
                                             found = True
