@@ -129,6 +129,7 @@ def write_playlist(playlist_name, results):
                                                 database.insert_song(dbms, playlist_id, song, artist_spotify, track)
                                                 logging.info('Adding song %s - %s from album %s to playlist %s', song["artist"], song["title"], song["album"], playlist_name)
                                                 checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                                                break
                                         else:
                                             skipped_songs.append(song)
                         if found is False and excluded is False and len(skipped_songs) > 0:
