@@ -1,4 +1,4 @@
-# Spotisub
+## Spotisub
 ![image](https://github.com/user-attachments/assets/ad0740d9-e70c-4940-b98f-8d8b03deb200)
 
 Spotify to subsonic Playlist Generator and Importer
