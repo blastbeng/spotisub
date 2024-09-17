@@ -2,14 +2,25 @@ import libsonic
 import logging
 import os
 import random
-import constants
+from ..constants import constants
+from ..utils import utils
+from ..exceptions.exceptions import SubsonicOfflineException
 import sys
-import database
+from ..database import database
 import re
+from libsonic.errors import DataNotFoundError
 
 from dotenv import load_dotenv
 from os.path import dirname
 from os.path import join
+
+if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1":
+    from . import spotdl_helper
+    logging.warning("You have enabled SPOTDL integration, make sure to configure the correct download path and check that you have enough disk space for music downloading.")
+
+if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
+    from . import lidarr_helper
+    logging.warning("You have enabled LIDARR integration, if an artist won't be found inside the lidarr database, the download process will be skipped.")
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -19,17 +30,24 @@ logging.basicConfig(
         level=int(os.environ.get(constants.LOG_LEVEL, constants.LOG_LEVEL_DEFAULT_VALUE)),
         datefmt='%Y-%m-%d %H:%M:%S')
 
-dbms = database.Database(database.SQLITE, dbname='subtify.sqlite3')
+dbms = database.Database(database.SQLITE, dbname='spotisub.sqlite3')
 database.create_db_tables(dbms)
 
-pysonic = libsonic.Connection(os.environ.get(constants.SUBSONIC_API_HOST), os.environ.get(constants.SUBSONIC_API_USER), os.environ.get(constants.SUBSONIC_API_PASS), appName="Subtify", serverPath=os.environ.get(constants.SUBSONIC_API_BASE_URL, constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) + "/rest", port=int(os.environ.get(constants.SUBSONIC_API_PORT)))
+pysonic = libsonic.Connection(os.environ.get(constants.SUBSONIC_API_HOST), os.environ.get(constants.SUBSONIC_API_USER), os.environ.get(constants.SUBSONIC_API_PASS), appName="Spotisub", serverPath=os.environ.get(constants.SUBSONIC_API_BASE_URL, constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) + "/rest", port=int(os.environ.get(constants.SUBSONIC_API_PORT)))
+
+def checkPysonicConnection():
+    global pysonic
+    if pysonic.ping():
+        return pysonic
+    else:
+        raise SubsonicOfflineException()
 
 def get_artists_array_names():
-    pysonic.getArtists()
+    checkPysonicConnection().getArtists()
     
     artist_names = []
 
-    for index in pysonic.getArtists()["artists"]["index"]:
+    for index in checkPysonicConnection().getArtists()["artists"]["index"]:
         for artist in index["artist"]:
             artist_names.append(artist["name"])
 
@@ -50,7 +68,7 @@ def get_subsonic_search_results(text_to_search):
     set_searches = list(set(searches))
     count = 0
     for set_search in set_searches:
-        subsonic_search = pysonic.search2(set_search)
+        subsonic_search = checkPysonicConnection().search2(set_search)
         if "searchResult2" in subsonic_search and len(subsonic_search["searchResult2"]) > 0 and "song" in subsonic_search["searchResult2"]:
             result.append(subsonic_search)
         count = count + 1
@@ -59,7 +77,7 @@ def get_subsonic_search_results(text_to_search):
 
 def get_playlist_id_by_name(playlist_name):  
     playlist_id = None  
-    playlists_search = pysonic.getPlaylists()
+    playlists_search = checkPysonicConnection().getPlaylists()
     if "playlists" in playlists_search and len(playlists_search["playlists"]) > 0:
         single_playlist_search = playlists_search["playlists"]
         if "playlist" in single_playlist_search and len(single_playlist_search["playlist"]) > 0:
@@ -71,10 +89,10 @@ def get_playlist_id_by_name(playlist_name):
 
 def write_playlist(playlist_name, results):
     try:
-        playlist_name = os.environ.get(constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE) + playlist_name
+        playlist_name = os.environ.get(constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace("\"", "") + playlist_name
         playlist_id = get_playlist_id_by_name(playlist_name)
         if playlist_id is None:
-            pysonic.createPlaylist(name = playlist_name, songIds = [])
+            checkPysonicConnection().createPlaylist(name = playlist_name, songIds = [])
             logging.info('Creating playlist %s', playlist_name)
             playlist_id = get_playlist_id_by_name(playlist_name)
             database.delete_playlist_relation_by_id(dbms, playlist_id)
@@ -139,6 +157,8 @@ def write_playlist(playlist_name, results):
                                 song_ids.append(song["id"])
                                 found = True
                                 database.insert_song(dbms, playlist_id, song, artist_spotify, track)
+                                logging.info('Success! Adding song %s - %s to playlist %s', artist_spotify, song, playlist_name)
+                                checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
                 if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1" and found is False:
                     is_monitored = True
                     if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
@@ -157,43 +177,77 @@ def write_playlist(playlist_name, results):
                     logging.info('Track %s - %s found in your music library', artist_name_spotify, track['name'])
                 
         if len(song_ids) > 0:
-            random.shuffle(song_ids)
+            logging.info('Success! Created playlist %s', playlist_name)
+        elif len(song_ids) == 0:
             if playlist_id is not None:
-                pysonic.createPlaylist(playlistId = playlist_id, songIds = song_ids)
-                logging.info('Success! Adding songs to playlist %s', playlist_name)
-
+                try:
+                    checkPysonicConnection().deletePlaylist(playlist_id)
+                except DataNotFoundError:
+                    utils.write_exception()
+                    pass
                 
 
+    except SubsonicOfflineException:
+        logging.error('There was an error creating a Playlist, perhaps is your Subsonic server offline?')
     except Exception:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+        utils.write_exception()
 
-def get_missing_songs():
-    unmatched_songs_db = database.select_all_playlists(dbms, True)
+def get_playlist_songs(missing=False):
+    unmatched_songs_db = database.select_all_playlists(dbms, missing)
     unmatched_songs = {}
     for key in unmatched_songs_db:
-        missings = unmatched_songs_db[key]
-        for missing in missings:
-            if "subsonic_playlist_id" in missing and missing["subsonic_playlist_id"] is not None:
-                playlist_search = pysonic.getPlaylist(missing["subsonic_playlist_id"])
-                if "playlist" in playlist_search :
-                    single_playlist_search = playlist_search["playlist"]
+        playlist_search = None
+        try:
+            playlist_search = checkPysonicConnection().getPlaylist(key)
+        except SubsonicOfflineException as ex:
+            raise ex
+        except DataNotFoundError:
+            pass
+        if playlist_search is None:
+            logging.warning('Playlist id "%s" not found, may be you deleted this playlist from Subsonic?', key)
+            logging.warning('Deleting Playlist with id "%s" from spotisub database.', key)
+            database.delete_playlist_relation_by_id(dbms, key)
+        elif playlist_search is not None:
+            missings = unmatched_songs_db[key]
+            for missing in missings:
+                if "subsonic_playlist_id" in missing and missing["subsonic_playlist_id"] is not None:
+                    if "playlist" in playlist_search :
+                        single_playlist_search = playlist_search["playlist"]
 
-                    if "subsonic_artist_id" in missing and missing["subsonic_artist_id"] is not None:
-                        artist_search = pysonic.getArtist(missing["subsonic_artist_id"])
-                        if "artist" in artist_search:
-                            single_artist_search = artist_search["playlist"]
-                            missing["subsonic_playlist_name"] = single_artist_search["name"]
-                    if "subsonic_song_id" in missing and missing["subsonic_song_id"] is not None:
-                        artist_search = pysonic.getArtist(missing["subsonic_song_id"])
-                        if "song" in song_search:
-                            single_song_search = song_search["playlist"]
-                            missing["subsonic_song_title"] = single_song_search["title"]
+                        if "subsonic_artist_id" in missing and missing["subsonic_artist_id"] is not None:
+                            artist_search = checkPysonicConnection().getArtist(missing["subsonic_artist_id"])
+                            if "artist" in artist_search:
+                                single_artist_search = artist_search["playlist"]
+                                missing["subsonic_playlist_name"] = single_artist_search["name"]
+                        if "subsonic_song_id" in missing and missing["subsonic_song_id"] is not None:
+                            artist_search = checkPysonicConnection().getArtist(missing["subsonic_song_id"])
+                            if "song" in song_search:
+                                single_song_search = song_search["playlist"]
+                                missing["subsonic_song_title"] = single_song_search["title"]
+                                if "subsonic_artist_id" not in missing:
+                                    missing["subsonic_playlist_name"] = single_artist_search["artist"]
 
-                    if single_playlist_search["name"] not in unmatched_songs:
-                        unmatched_songs[single_playlist_search["name"]] = []
-                        
-                    unmatched_songs[single_playlist_search["name"]].append(missing)
+                        if single_playlist_search["name"] not in unmatched_songs:
+                            unmatched_songs[single_playlist_search["name"]] = []
+                            
+                        unmatched_songs[single_playlist_search["name"]].append(missing)
 
     return unmatched_songs
+
+def remove_subsonic_deleted_playlist():
+
+    spotisub_playlists = database.select_all_playlists(dbms, False)
+    for key in spotisub_playlists:
+        playlist_search = None
+        try:
+            playlist_search = checkPysonicConnection().getPlaylist(key)
+        except SubsonicOfflineException as ex:
+            raise ex
+        except DataNotFoundError:
+            pass
+        if playlist_search is None:
+            logging.warning('Playlist id "%s" not found, may be you deleted this playlist from Subsonic?', key)
+            logging.warning('Deleting Playlist with id "%s" from spotisub database.', key)
+            database.delete_playlist_relation_by_id(dbms, key)
+
+    database.clean_spotify_songs(dbms)

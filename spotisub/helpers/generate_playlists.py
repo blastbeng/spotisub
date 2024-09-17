@@ -6,13 +6,13 @@ import spotipy
 import sys
 import time
 import re
-import constants
+from ..constants import constants
 
 from dotenv import load_dotenv
 from os.path import dirname
 from os.path import join
 from spotipy import SpotifyOAuth
-import subsonic_helper
+from . import subsonic_helper
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -22,22 +22,12 @@ logging.basicConfig(
         level=int(os.environ.get(constants.LOG_LEVEL, constants.LOG_LEVEL_DEFAULT_VALUE)),
         datefmt='%Y-%m-%d %H:%M:%S')
 
-
-
-if os.environ.get(constants.SPOTDL_ENABLED, constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1":
-    import spotdl_helper
-    logging.warning("You have enabled SPOTDL integration, make sure to configure the correct download path and check that you have enough disk space for music downloading.")
-
-if os.environ.get(constants.LIDARR_ENABLED, constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1":
-    import lidarr_helper
-    logging.warning("You have enabled LIDARR integration, if an artist won't be found inside the lidarr database, the download process will be skipped.")
-
 client_id=os.environ.get(constants.SPOTIPY_CLIENT_ID)
 client_secret=os.environ.get(constants.SPOTIPY_CLIENT_SECRET)
 redirect_uri=os.environ.get(constants.SPOTIPY_REDIRECT_URI)
 scope="user-top-read,user-library-read,user-read-recently-played"
 
-creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, open_browser=False, cache_path=os.path.dirname(os.path.abspath(__file__)) + "/cache/spotipy_cache")
+creds = SpotifyOAuth(scope=scope, client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, open_browser=False, cache_path=os.path.dirname(os.path.abspath(__file__)) + "/../../cache/spotipy_cache")
 
 sp = spotipy.Spotify(auth_manager=creds)
 
@@ -61,34 +51,29 @@ def artist_top_tracks(query):
         subsonic_helper.write_playlist(playlist_name, artist_top)
 
 def my_recommendations(count = None):
-    try:
-        top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
-        logging.info('Loaded your custom top tracks')
-        time.sleep(2)
-        liked_tracks = sp.current_user_saved_tracks(limit=50)
-        logging.info('Loaded your top liked tracks')
-        time.sleep(2)
-        history = sp.current_user_recently_played(limit=50)
-        logging.info('Loaded your played tracks')
-        time.sleep(2)
-        for i in range(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))):
-            if count is None or (count is not None and count == i):
-                logging.info('Searching your recommendations (playlist %s)', str(i+1))
-                top_track_ids = [track['id'] for track in top_tracks['items']]
-                liked_track_ids = [track['track']['id'] for track in liked_tracks['items']]
-                history_track_ids = [track['track']['id'] for track in history['items']]
-                seed_track_ids = top_track_ids + liked_track_ids + history_track_ids
-                random.shuffle(seed_track_ids)
-                results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(os.environ.get(constants.ITEMS_PER_PLAYLIST, constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
-                playlist_name = "My Recommendations " + str(i+1)
-                subsonic_helper.write_playlist(playlist_name, results)
-                if count is not None:
-                    break
-            time.sleep(10)
-    except Exception:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+    top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
+    logging.info('Loaded your custom top tracks')
+    time.sleep(2)
+    liked_tracks = sp.current_user_saved_tracks(limit=50)
+    logging.info('Loaded your top liked tracks')
+    time.sleep(2)
+    history = sp.current_user_recently_played(limit=50)
+    logging.info('Loaded your played tracks')
+    time.sleep(2)
+    for i in range(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))):
+        if count is None or (count is not None and count == i):
+            logging.info('Searching your recommendations (playlist %s)', str(i+1))
+            top_track_ids = [track['id'] for track in top_tracks['items']]
+            liked_track_ids = [track['track']['id'] for track in liked_tracks['items']]
+            history_track_ids = [track['track']['id'] for track in history['items']]
+            seed_track_ids = top_track_ids + liked_track_ids + history_track_ids
+            random.shuffle(seed_track_ids)
+            results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(os.environ.get(constants.ITEMS_PER_PLAYLIST, constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
+            playlist_name = "My Recommendations " + str(i+1)
+            subsonic_helper.write_playlist(playlist_name, results)
+            if count is not None:
+                break
+        time.sleep(10)
 
 def get_artist(name):
     results = sp.search(q='artist:' + name, type='artist')

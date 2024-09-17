@@ -1,5 +1,5 @@
 import os
-import constants
+from ..constants import constants
 
 from dotenv import load_dotenv
 from os.path import dirname

@@ -25,7 +25,7 @@ class Database:
   def __init__(self, dbtype, username='', password='', dbname=''):
     dbtype = dbtype.lower()
     engine_url = self.DB_ENGINE[dbtype].format(DB=dbname)
-    self.db_engine = create_engine(engine_url)
+    self.db_engine = create_engine(engine_url, isolation_level=None)
 
   metadata = MetaData()
 
@@ -63,35 +63,64 @@ def create_db_tables(self):
   self.metadata.create_all(self.db_engine)
 
 def insert_song(self, playlist_id, subsonic_track, artist_spotify, track_spotify):
-  try:
-    with self.db_engine.connect() as conn:
-      spotify_song_uuid = insert_spotify_song(self, conn, artist_spotify, track_spotify)
-      if spotify_song_uuid is not None:
-        if subsonic_track is None:
-          insert_playlist_relation(self, conn, None, None, playlist_id, spotify_song_uuid)
-        else:
-          insert_playlist_relation(self, conn, subsonic_track["id"], subsonic_track["artistId"], playlist_id, spotify_song_uuid)
-        conn.commit()      
+  with self.db_engine.connect() as conn:
+    spotify_song_uuid = insert_spotify_song(self, conn, artist_spotify, track_spotify)
+    if spotify_song_uuid is not None:
+      if subsonic_track is None:
+        insert_playlist_relation(self, conn, None, None, playlist_id, spotify_song_uuid)
       else:
-        conn.rollback()
-      conn.close()
-  except Exception as e:
-    exc_type, exc_obj, exc_tb = sys.exc_info()
-    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-    logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+        track_id = None
+        artist_id = None
+        if "id" in subsonic_track:
+          track_id = subsonic_track["id"]
+        if "artistId" in subsonic_track:
+          artist_id = subsonic_track["id"]
+        insert_playlist_relation(self, conn, track_id, artist_id, playlist_id, spotify_song_uuid)
+      conn.commit()      
+    else:
+      conn.rollback()
+    conn.close()
+
+
+### TODO IMPLEMENT A METHOD TO CLEAN SPOTIFY DATABASE IF SONG IS NOT RELATED TO ANY PLAYLIST
+def clean_spotify_songs(self):
+  stmt = select(self.spotify_song.c.uuid)
+  compiled = stmt.compile()
+  
+  with self.db_engine.connect() as conn:
+
+    song_uuids_to_delete = []
+
+    cursor = conn.execute(stmt)
+    records = cursor.fetchall()
+
+    for row in records:
+      stmt_songs = select(self.subsonic_spotify_relation.c.uuid).where(self.subsonic_spotify_relation.c.spotify_song_uuid==row.uuid)
+      cursor_songs = conn.execute(stmt_songs)
+      records_songs = cursor_songs.fetchall()
+
+      found = False
+      for row_songs in records_songs:
+        found = True
+        break
+      if found is False:
+        song_uuids_to_delete.append(row.uuid)
+    
+    for song_uuid in song_uuids_to_delete:
+      artists_relation = select_spotify_song_artists_relation_by_song_uuid(self, conn, song_uuid)
+      
+  
+    conn.close()
+### TODO IMPLEMENT A METHOD TO CLEAN SPOTIFY DATABASE IF SONG IS NOT RELATED TO ANY PLAYLIST
+
 
 def delete_playlist_relation_by_id(self, playlist_id: str):
-  try:
-    stmt = delete(self.subsonic_spotify_relation).where(self.subsonic_spotify_relation.c.subsonic_playlist_id==playlist_id)
-    compiled = stmt.compile()
-    with self.db_engine.connect() as conn:
-      result = conn.execute(stmt)
-      conn.commit()
-    conn.close()
-  except Exception as e:
-    exc_type, exc_obj, exc_tb = sys.exc_info()
-    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-    logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+  stmt = delete(self.subsonic_spotify_relation).where(self.subsonic_spotify_relation.c.subsonic_playlist_id==playlist_id)
+  compiled = stmt.compile()
+  with self.db_engine.connect() as conn:
+    result = conn.execute(stmt)
+    conn.commit()
+  conn.close()
 
 def insert_playlist_relation(self, conn, subsonic_song_id, subsonic_artist_id, subsonic_playlist_id, spotify_song_uuid):
   stmt = insert(self.subsonic_spotify_relation).values(uuid=str(uuid.uuid4().hex), subsonic_song_id=subsonic_song_id, subsonic_artist_id=subsonic_artist_id, subsonic_playlist_id=subsonic_playlist_id, spotify_song_uuid=spotify_song_uuid).prefix_with('OR IGNORE')

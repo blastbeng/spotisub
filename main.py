@@ -1,10 +1,8 @@
-import generate_playlists
 import logging
 import os
 import random
 import sys
 import threading
-import utils
 import json
 
 from dotenv import load_dotenv
@@ -20,9 +18,12 @@ from flask_restx import Resource
 from os.path import dirname
 from os.path import join
 from time import strftime
-import constants
-
-import subsonic_helper
+from spotisub.constants import constants
+from spotisub.utils import utils
+from spotisub.helpers import subsonic_helper
+from spotisub.helpers import generate_playlists
+from flask_apscheduler import APScheduler
+from spotisub.exceptions.exceptions import SubsonicOfflineException
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -37,6 +38,8 @@ log.setLevel(int(os.environ.get(constants.LOG_LEVEL, constants.LOG_LEVEL_DEFAULT
 
 app = Flask(__name__)
 
+scheduler = APScheduler()
+
 @app.after_request
 def after_request(response):
   if not request.path.startswith('/utils/healthcheck'):
@@ -46,16 +49,18 @@ def after_request(response):
 
 api = Api(app)
 
-def get_response_str(text: str, status):
-  r = Response(response=text, status=status, mimetype="text/xml")
-  r.headers["Content-Type"] = "text/xml; charset=utf-8"
-  return r
-
 def get_response_json(data, status):
   r = Response(response=data, status=status, mimetype="application/json")
   r.headers["Content-Type"] = "application/json; charset=utf-8"
   r.headers["Accept"] = "application/json"
   return r
+
+def get_json_message(message, is_ok):
+  data = {
+    "status": "ko" if is_ok is False else "ok",
+    "message": message,
+  }
+  return json.dumps(data)
 
 @app.route('/dashboard')
 def dashboard():
@@ -68,26 +73,30 @@ nsgenerate = api.namespace('generate', 'Generate APIs')
 class ArtistRecommendationsClass(Resource):
   def get (self, artist_name = None):
     try:
+      subsonic_helper.checkPysonicConnection()
       if artist_name is None:
         artist_name = random.choice(subsonic_helper.get_artists_array_names())
       threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
-      return get_response_str("Generating recommendations playlist for artist " + artist_name, 200)  
+      return get_response_json(get_json_message("Generating recommendations playlist for artist " + artist_name, True), 200)  
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
 
 @nsgenerate.route('/artist_recommendations/all/')
 class ArtistRecommendationsAllClass(Resource):
   def get (self, artist_name = None):
     try:
+      subsonic_helper.checkPysonicConnection()
       threading.Thread(target=lambda: generate_playlists.all_artists_recommendations()).start()
-      return get_response_str("Generating recommendations playlist for all artists", 200)  
+      return get_response_json(get_json_message("Generating recommendations playlist for all artists", True), 200)
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
 
 @nsgenerate.route('/artist_top_tracks/')
@@ -95,38 +104,44 @@ class ArtistRecommendationsAllClass(Resource):
 class ArtistTopTracksClass(Resource):
   def get (self, artist_name = None):
     try:
+      subsonic_helper.checkPysonicConnection()
       if artist_name is None:
         artist_name = random.choice(subsonic_helper.get_artists_array_names())
       threading.Thread(target=lambda: generate_playlists.artist_top_tracks(artist_name)).start()
-      return get_response_str("Generating top tracks playlist for artist " + artist_name, 200)  
+      return get_response_json(get_json_message("Generating top tracks playlist for artist " + artist_name, True), 200)  
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
 
 @nsgenerate.route('/artist_top_tracks/all/')
 class ArtistTopTracksAllClass(Resource):
   def get (self, artist_name = None):
     try:
+      subsonic_helper.checkPysonicConnection()
       threading.Thread(target=lambda: generate_playlists.all_artists_top_tracks()).start()
-      return get_response_str("Generating top tracks playlist for all artists", 200)  
+      return get_response_json(get_json_message("Generating top tracks playlist for all artists", True), 200)  
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
 
 @nsgenerate.route('/recommendations')
 class RecommendationsClass(Resource):
   def get (self):
     try:
-        threading.Thread(target=lambda: generate_playlists.my_recommendations(count=random.randrange(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))).start()
-        return get_response_str("Generating a reccommendation playlist", 200)  
+      subsonic_helper.checkPysonicConnection()
+      threading.Thread(target=lambda: generate_playlists.my_recommendations(count=random.randrange(int(os.environ.get(constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))).start()
+      return get_response_json(get_json_message("Generating a reccommendation playlist", True), 200)  
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
 
 
@@ -137,41 +152,46 @@ nsimport = api.namespace('import', 'Generate APIs')
 class UserPlaylistsClass(Resource):
   def get (self, playlist_name = None):
     try:
-        if playlist_name is None:
-          count = generate_playlists.count_user_playlists(0)
-          threading.Thread(target=lambda: generate_playlists.get_user_playlists(random.randrange(count), single_execution = True)).start()
-          return get_response_str("Importing a random playlist", 200)  
-        else:
-          threading.Thread(target=lambda: generate_playlists.get_user_playlists(0, single_execution = False, playlist_name = playlist_name)).start()
-          return get_response_str("Searching and importing your spotify account for playlist " + playlist_name, 200)  
+      subsonic_helper.checkPysonicConnection()
+      if playlist_name is None:
+        count = generate_playlists.count_user_playlists(0)
+        threading.Thread(target=lambda: generate_playlists.get_user_playlists(random.randrange(count), single_execution = True)).start()
+        return get_response_json(get_json_message("Importing a random playlist", True), 200)  
+      else:
+        threading.Thread(target=lambda: generate_playlists.get_user_playlists(0, single_execution = False, playlist_name = playlist_name)).start()
+        return get_response_json(get_json_message("Searching and importing your spotify account for playlist " + playlist_name, True), 200)  
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
-
 @nsimport.route('/user_playlist/all/')
 class UserPlaylistsAllClass(Resource):
   def get (self, playlist_name = None):
     try:
+      subsonic_helper.checkPysonicConnection()
       threading.Thread(target=lambda: generate_playlists.get_user_playlists(0)).start()
-      return get_response_str("Importing all your spotify playlists", 200)  
+      return get_response_json(get_json_message("Importing all your spotify playlists", True), 200)  
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
 
 @nsimport.route('/saved_tracks')
 class SavedTracksClass(Resource):
   def get (self):
     try:
-        threading.Thread(target=lambda: generate_playlists.get_user_saved_tracks()).start()
-        return get_response_str("Importing your saved tracks", 200)  
+      subsonic_helper.checkPysonicConnection()
+      threading.Thread(target=lambda: generate_playlists.get_user_saved_tracks()).start()
+      return get_response_json(get_json_message("Importing your saved tracks", True), 200)  
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
 
 nsdatabase = api.namespace('database', 'Database APIs')
@@ -179,12 +199,14 @@ nsdatabase = api.namespace('database', 'Database APIs')
 class UnmatchedSongsClass(Resource):
   def get (self):
     try:
-      missing_songs = subsonic_helper.get_missing_songs()
+      subsonic_helper.checkPysonicConnection()
+      missing_songs = subsonic_helper.get_playlist_songs(missing=True)
       return get_response_json(json.dumps(missing_songs), 200)   
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
     except Exception as e:
-      exc_type, exc_obj, exc_tb = sys.exc_info()
-      fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-      logging.error("%s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_info=1)
+      utils.write_exception()
       g.request_error = str(e)
 
 
@@ -196,10 +218,6 @@ class Healthcheck(Resource):
     return "Ok!"
 
 if os.environ.get(constants.SCHEDULER_ENABLED, constants.SCHEDULER_ENABLED_DEFAULT_VALUE) == "1":
-
-  from flask_apscheduler import APScheduler
-
-  scheduler = APScheduler()
 
   if os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) != "0":
     @scheduler.task('interval', id='artist_recommendations', hours=int(os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)))
@@ -219,17 +237,19 @@ if os.environ.get(constants.SCHEDULER_ENABLED, constants.SCHEDULER_ENABLED_DEFAU
   if os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
     @scheduler.task('interval', id='user_playlists', hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)))
     def user_playlists():
-      count = generate_playlists.count_user_playlists(0)
-      generate_playlists.get_user_playlists(random.randrange(count), single_execution = True)
+      generate_playlists.get_user_playlists(random.randrange(generate_playlists.count_user_playlists(0)), single_execution = True)
 
   if os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
     @scheduler.task('interval', id='saved_tracks', hours=int(os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE)))
     def saved_tracks():
       generate_playlists.get_user_saved_tracks()
 
+@scheduler.task('interval', id='remove_subsonic_deleted_playlist', hours=12)
+def remove_subsonic_deleted_playlist():
+  subsonic_helper.remove_subsonic_deleted_playlist()
 
-  scheduler.init_app(app)
-  scheduler.start()
+scheduler.init_app(app)
+scheduler.start()
 
 
 utils.print_logo(constants.VERSION)
