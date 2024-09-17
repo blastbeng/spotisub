@@ -118,9 +118,10 @@ def write_playlist(playlist_name, results):
                         if excluded_words_string is not None and excluded_words_string != "":
                             excluded_words = excluded_words_string.split(",")
 
+                        song_title_no_punt = re.sub(r'[^\w\s]','',song_title)
+                        song_title_splitted = song_title_no_punt.split()
+
                         if excluded_words is not None and len(excluded_words) > 0:
-                            song_title_no_punt = re.sub(r'[^\w\s]','',song_title)
-                            song_title_splitted = song_title_no_punt.split()
                             song_album_no_punt = re.sub(r'[^\w\s]','',song_album)
                             song_album_splitted = song_album_no_punt.split()
                             countw = 0
@@ -140,20 +141,39 @@ def write_playlist(playlist_name, results):
 
                         song_artist = song["artist"].strip()
                         song_artist_no_punct = re.sub(r'[^\w\s]','',song_artist)
-                        artist_name_spotify_no_punct = re.sub(r'[^\w\s]','',artist_name_spotify)
+                        artist_name_spotify_no_punct = re.sub(r'[^\w\s]','',artist_name_spotify)                  
 
-                        
-                        track_name_no_punct = re.sub(r'[^\w\s]','',track['name'])
-                        song_title_no_punct = re.sub(r'[^\w\s]','',song_title)
+                        song_titles = []
+                        song_titles.append(song_title.strip())
+                        song_titles.append(song_title_no_punt.strip())
+                        song_titles.append(song_title.split("(", 1)[0].strip())
+                        song_titles.append(re.sub(r'[^\w\s]','',song_title.split("(", 1)[0]))
+                        song_titles.append(song_title.split("-", 1)[0].strip())
+                        song_titles.append(re.sub(r'[^\w\s]','',song_title.split("-", 1)[0]).strip())
+                        song_titles.append(song_title.split("feat", 1)[0].strip())
+                        song_titles.append(re.sub(r'[^\w\s]','',song_title.split("feat", 1)[0]).strip()) 
+
+                        song_titles = list(set(song_titles))
+
+                        track_names = []
+                        track_names.append(track['name'].strip())
+                        track_names.append(re.sub(r'[^\w\s]','',track['name']).strip())
+                        track_names.append(track['name'].split("(", 1)[0].strip())
+                        track_names.append(re.sub(r'[^\w\s]','',track['name'].split("(", 1)[0]))
+                        track_names.append(track['name'].split("-", 1)[0].strip())
+                        track_names.append(re.sub(r'[^\w\s]','',track['name'].split("-", 1)[0]).strip())
+                        track_names.append(track['name'].split("feat", 1)[0].strip())
+                        track_names.append(re.sub(r'[^\w\s]','',track['name'].split("feat", 1)[0]).strip())
+
+                        track_names = list(set(track_names))
 
                         if (song["id"] not in song_ids
                             and song_artist != '' 
                             and ((artist_name_spotify.lower() == song_artist.lower() or song_artist.lower() in artist_name_spotify.lower() or artist_name_spotify.lower() in song_artist.lower())
                             or  (artist_name_spotify_no_punct.lower() == song_artist_no_punct.lower() or song_artist_no_punct.lower() in artist_name_spotify_no_punct.lower() or artist_name_spotify_no_punct.lower() in song_artist_no_punct.lower()))
                             and excluded is not True
-                            and (song_title != '' 
-                            and ((track['name'].lower() == song_title.lower() or song_title.lower() in track['name'].lower() or track['name'].lower() in song_title.lower())
-                            or  (track_name_no_punct.lower() == song_title_no_punct.lower() or song_title_no_punct.lower() in track_name_no_punct.lower() or track_name_no_punct.lower() in song_title_no_punct.lower())))):
+                            and song_title != '' 
+                            and compare_title(track_names, song_titles)):
                                 song_ids.append(song["id"])
                                 found = True
                                 database.insert_song(dbms, playlist_id, song, artist_spotify, track)
@@ -190,6 +210,14 @@ def write_playlist(playlist_name, results):
         logging.error('There was an error creating a Playlist, perhaps is your Subsonic server offline?')
     except Exception:
         utils.write_exception()
+
+def compare_title(track_names, song_titles):
+    for song_title in song_titles:
+        for track_name in track_names:
+            if track_name.lower() == song_title.lower() or song_title.lower() in track_name.lower() or track_name.lower() in song_title.lower():
+                return True
+    return False
+
 
 def get_playlist_songs(missing=False):
     unmatched_songs_db = database.select_all_playlists(dbms, missing)
