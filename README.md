@@ -1,5 +1,5 @@
 # Spotisub
-![spotisub-high-resolution-logo](https://github.com/user-attachments/assets/8e5d50d9-8aec-4864-b2d6-78f8d01d25b1)
+![image](https://github.com/user-attachments/assets/ad0740d9-e70c-4940-b98f-8d8b03deb200)
 
 Spotify to subsonic Playlist Generator and Importer
 
