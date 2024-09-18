@@ -1,6 +1,6 @@
 import os
 import spotipy
-from spotisub.constants
+from spotisub.constants import constants
 
 from dotenv import load_dotenv
 from os.path import dirname
