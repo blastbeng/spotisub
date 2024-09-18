@@ -141,10 +141,12 @@ def write_playlist(sp, playlist_name, results):
                         artist_name_spotify = artist_spotify["name"]
                         logging.info('Searching %s - %s in your music library', artist_name_spotify, track['name'])
                         text_to_search = artist_name_spotify + " " + track['name']
-                        if ("name" in track and utils.compare_string_to_exclusion(track['name'], excluded_words)
-                            or ("album" in track and "name" in track["album"] and utils.compare_string_to_exclusion(track["album"]["name"], excluded_words))):
-                            excluded = True
-                        elif "name" in track:
+                        #REMOVED: Do we really need to check for exclusions on Spotify Tracks?
+                        #if ("name" in track and utils.compare_string_to_exclusion(track['name'], excluded_words)
+                        #    or ("album" in track and "name" in track["album"] and utils.compare_string_to_exclusion(track["album"]["name"], excluded_words))):
+                        #    excluded = True
+                        #elif "name" in track:
+                        if "name" in track:
                             subsonic_search_results = get_subsonic_search_results(text_to_search)
                             skipped_songs = []
                             for song_id in subsonic_search_results:
@@ -156,15 +158,19 @@ def write_playlist(sp, playlist_name, results):
                                     album_name = track["album"]["name"] if ("album" in track and "name" in track["album"] and track["album"]["name"]) is not None else ""
                                     logging.info('Comparing song "%s - %s - %s" with Spotify track "%s - %s - %s"', song["artist"], song["title"], song["album"], artist_name_spotify, track['name'], album_name)
                                     if has_isrc(track):
+                                        found_isrc = False
                                         for isrc in song["isrc-list"]:
                                             if isrc.strip() == track["external_ids"]["isrc"].strip():
-                                                song_ids.append(song["id"])
-                                                track_helper.append(placeholder)
-                                                found = True
-                                                database.insert_song(dbms, playlist_id, song, artist_spotify, track)
-                                                logging.info('Adding song "%s - %s - %s" to playlist "%s", matched by ISRC: "%s"', song["artist"], song["title"], song["album"], playlist_name, isrc)
-                                                checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                                                found_isrc = True
                                                 break
+                                        if found_isrc is True:
+                                            song_ids.append(song["id"])
+                                            track_helper.append(placeholder)
+                                            found = True
+                                            database.insert_song(dbms, playlist_id, song, artist_spotify, track)
+                                            logging.info('Adding song "%s - %s - %s" to playlist "%s", matched by ISRC: "%s"', song["artist"], song["title"], song["album"], playlist_name, isrc)
+                                            checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                                            break
                                     if song["id"] not in song_ids:
                                         if (utils.compare_string_to_exclusion(song["title"], excluded_words)
                                             or utils.compare_string_to_exclusion(song["album"], excluded_words)):
