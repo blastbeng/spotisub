@@ -272,6 +272,7 @@ def remove_subsonic_deleted_playlist():
 scheduler.init_app(app)
 scheduler.start()
 
+generate_playlists.show_recommendations_for_artist(random.choice(subsonic_helper.get_artists_array_names()))
 
 utils.print_logo(constants.VERSION)
 

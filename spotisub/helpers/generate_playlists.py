@@ -48,7 +48,7 @@ def artist_top_tracks(query):
     for artist_name in artists_uri:
         artist_top = sp.artist_top_tracks(artists_uri[artist_name])
         playlist_name = artist_name + " - Top Tracks"
-        subsonic_helper.write_playlist(playlist_name, artist_top)
+        subsonic_helper.write_playlist(sp, playlist_name, artist_top)
 
 def my_recommendations(count = None):
     top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
@@ -70,7 +70,7 @@ def my_recommendations(count = None):
             random.shuffle(seed_track_ids)
             results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(os.environ.get(constants.ITEMS_PER_PLAYLIST, constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
             playlist_name = "My Recommendations " + str(i+1)
-            subsonic_helper.write_playlist(playlist_name, results)
+            subsonic_helper.write_playlist(sp, playlist_name, results)
             if count is not None:
                 break
         time.sleep(10)
@@ -91,7 +91,7 @@ def show_recommendations_for_artist(name):
     if artist is not None:
         results = sp.recommendations(seed_artists=[artist['id']], limit=int(os.environ.get(constants.ITEMS_PER_PLAYLIST, constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
         playlist_name = name + " - Recommendations"
-        subsonic_helper.write_playlist(playlist_name, results)
+        subsonic_helper.write_playlist(sp, playlist_name, results)
     else:
         logging.warning('Artist: %s Not found!', name)
 
@@ -104,9 +104,8 @@ def get_playlist_tracks(item, result, offset_tracks = 0):
     for track_item in response_tracks['items']:
         track = track_item['track']
         logging.info('Found %s - %s inside playlist %s', track['artists'][0]['name'], track['name'], item['name'])
-        #track_dict = dict({'name': track['name'], 'uri': 'spotify:track:' + track['id'], 'artists': [{"uri": track['artists'][0]['uri'], "name": track['artists'][0]['name']}]})
-        track = add_missing_values_to_track(track)
-        result["tracks"].append(track)
+        if track is not None:
+            result["tracks"].append(track)
     time.sleep(2)
     if len(response_tracks['items']) != 0:
         result = get_playlist_tracks(item, result, offset_tracks = offset_tracks + 50)
@@ -134,7 +133,7 @@ def get_user_playlists(offset = 0, single_execution = False, playlist_name = Non
             logging.info('Importing playlist: %s', item['name'])
             result = dict({'tracks': []})     
             result = get_playlist_tracks(item, result)    
-            subsonic_helper.write_playlist(item['name'].strip(), result)
+            subsonic_helper.write_playlist(sp, item['name'].strip(), result)
             if single_execution:
                 break    
     
@@ -167,7 +166,7 @@ def all_artists_top_tracks():
 def get_user_saved_tracks():
     result = dict({'tracks': []})
     result = get_user_saved_tracks_playlist(result)
-    subsonic_helper.write_playlist("Saved Tracks", result)
+    subsonic_helper.write_playlist(sp, "Saved Tracks", result)
 
 def get_user_saved_tracks_playlist(result, offset_tracks = 0):
     response_tracks = sp.current_user_saved_tracks(
@@ -178,24 +177,9 @@ def get_user_saved_tracks_playlist(result, offset_tracks = 0):
             track = track_item['track']
             if track is not None:
                 logging.info('Found %s - %s inside your saved tracks', track['artists'][0]['name'], track['name'])
-                #track_dict = dict({'name': track['name'], 'artists': [{"name": track['artists'][0]['name']}]})
-                track = add_missing_values_to_track(track)
                 if track is not None:
                     result["tracks"].append(track)
     time.sleep(2)
     if len(response_tracks['items']) != 0:
         result = get_user_saved_tracks_playlist(result, offset_tracks = offset_tracks + 50)
     return result
-
-
-def add_missing_values_to_track(track):
-    if "id" in track:
-        uri = 'spotify:track:' + track['id']
-        if "album" not in track:
-            track = sp.track(uri)
-            time.sleep(1)
-        elif "uri" not in track:
-            track["uri"] = uri
-        return track
-    else:
-        return None
