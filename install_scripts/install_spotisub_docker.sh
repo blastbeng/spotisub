@@ -65,7 +65,7 @@ done
 
 TIMEZONE="$(cat /etc/timezone)"
 PUID=$(id -u $(whoami))
-PGID=$(getent group $(groups blast | awk '{print $3}') | cut -d: -f3)
+PGID=$(getent group $(groups $(whoami) | awk '{print $3}') | cut -d: -f3)
 
 echo "name: spotisub" >> "${WORKDIR}/docker-compose.yml"
 echo "services:" >> "${WORKDIR}/docker-compose.yml"
