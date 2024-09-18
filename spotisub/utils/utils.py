@@ -54,12 +54,14 @@ def compare_strings(a, b):
     return compare(generate_compare_array(a), generate_compare_array(b))
 
 def compare_string_to_exclusion(a, stringb):
-    return compare_exclusions(a.split(), stringb)
+    return compare_exact_word(a.split(), stringb)
 
-def compare_exclusions(stringsa, stringsb):
+def compare_exact_word(stringsa, stringsb):
     for stringa in stringsa:
         for stringb in stringsb:
-            if stringa.strip().lower() == stringb.strip().lower():
+            comparea = stringa.strip().lower()
+            compareb = stringb.strip().lower()
+            if comparea != '' and compareb !='' and comparea.strip().lower() == compareb.strip().lower():
                 logging.warning("Found excluded word: %s. Skipping...", stringb)
                 return True    
     return False

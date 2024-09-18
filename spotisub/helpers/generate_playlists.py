@@ -161,7 +161,7 @@ def get_user_saved_tracks_playlist(result, offset_tracks = 0):
         offset=offset_tracks,
         limit=50)
     for track_item in response_tracks['items']:
-        if "track" in track:
+        if "track" in track_item:
             track = track_item['track']
             if track is not None:
                 logging.info('Found %s - %s inside your saved tracks', track['artists'][0]['name'], track['name'])

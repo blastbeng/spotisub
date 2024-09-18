@@ -166,6 +166,7 @@ class UserPlaylistsClass(Resource):
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
+
 @nsimport.route('/user_playlist/all/')
 class UserPlaylistsAllClass(Resource):
   def get (self, playlist_name = None):
@@ -253,6 +254,8 @@ scheduler.start()
 
 
 utils.print_logo(constants.VERSION)
+
+threading.Thread(target=lambda: generate_playlists.get_user_saved_tracks()).start()
 
 if __name__ == '__main__':
   app.run()
