@@ -1,5 +1,6 @@
 import os
 from ..constants import constants
+from ..utils import utils
 
 from dotenv import load_dotenv
 from os.path import dirname
@@ -30,8 +31,7 @@ def is_artist_monitored(artist_name):
         cache["lidarr_artists"] = artists_list
     if artists_list is not None:
         for artist in artists_list:
-            if artist_name.strip().lower() == artist["artistName"].strip().lower() and artist["monitored"] is True:
-                monitored = True
-                break
+            if artist["monitored"] is True and utils.compare_strings(artist_name, artist["artistName"]):
+                return True
 
-    return monitored
+    return False

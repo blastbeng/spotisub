@@ -54,7 +54,19 @@ def compare_strings(a, b):
     return compare(generate_compare_array(a), generate_compare_array(b))
 
 def compare_string_to_exclusion(a, stringb):
-    return compare(generate_compare_array(a), stringb, log_excluded=True)
+    if a is not None and a.strip() != '':
+        words_no_punctuation = []
+        for word in a.split():
+            words_no_punctuation.append(re.sub(r'[^\w\s]','',word).strip().lower())
+    return compare_exact_word(list(set(words_no_punctuation)), stringb)
+
+def compare_exact_word(stringsa, stringsb):
+    for stringa in stringsa:
+        for stringb in stringsb:
+            if stringa != '' and stringb !='' and stringa == stringb:
+                logging.warning("Found excluded word: %s. Skipping...", stringb)
+                return True    
+    return False
 
 def compare(stringsa, stringsb, log_excluded=False):
     for stringa in stringsa:

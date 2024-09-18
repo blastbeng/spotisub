@@ -76,8 +76,15 @@ class ArtistRecommendationsClass(Resource):
       subsonic_helper.checkPysonicConnection()
       if artist_name is None:
         artist_name = random.choice(subsonic_helper.get_artists_array_names())
-      threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
-      return get_response_json(get_json_message("Generating recommendations playlist for artist " + artist_name, True), 200)  
+      else:
+        search_result_name = subsonic_helper.search_artist(artist_name)
+        if search_result_name is None:
+          return get_response_json(get_json_message("Artist " + artist_name + " not found, maybe a misspelling error?",True), 206) 
+        else:
+          artist_name = search_result_name
+      if artist_name is not None:
+        threading.Thread(target=lambda: generate_playlists.show_recommendations_for_artist(artist_name)).start()
+        return get_response_json(get_json_message("Generating recommendations playlist for artist " + artist_name, True), 200)   
     except SubsonicOfflineException:
       utils.write_exception()
       return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
@@ -107,8 +114,15 @@ class ArtistTopTracksClass(Resource):
       subsonic_helper.checkPysonicConnection()
       if artist_name is None:
         artist_name = random.choice(subsonic_helper.get_artists_array_names())
-      threading.Thread(target=lambda: generate_playlists.artist_top_tracks(artist_name)).start()
-      return get_response_json(get_json_message("Generating top tracks playlist for artist " + artist_name, True), 200)  
+      else:
+        search_result_name = subsonic_helper.search_artist(artist_name)
+        if search_result_name is None:
+          return get_response_json(get_json_message("Artist " + artist_name + " not found, maybe a misspelling error?",True), 206) 
+        else:
+          artist_name = search_result_name
+      if artist_name is not None:
+        threading.Thread(target=lambda: generate_playlists.artist_top_tracks(artist_name)).start()
+        return get_response_json(get_json_message("Generating top tracks playlist for artist " + artist_name, True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
       return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
@@ -158,14 +172,21 @@ class UserPlaylistsClass(Resource):
         threading.Thread(target=lambda: generate_playlists.get_user_playlists(random.randrange(count), single_execution = True)).start()
         return get_response_json(get_json_message("Importing a random playlist", True), 200)  
       else:
-        threading.Thread(target=lambda: generate_playlists.get_user_playlists(0, single_execution = False, playlist_name = playlist_name)).start()
-        return get_response_json(get_json_message("Searching and importing your spotify account for playlist " + playlist_name, True), 200)  
+        search_result_name = generate_playlists.get_user_playlist_by_name(playlist_name)
+        if search_result_name is None:
+          return get_response_json(get_json_message("Playlist " + playlist_name + " not found, maybe a misspelling error?", True), 206) 
+        else:
+          playlist_name = search_result_name
+        if playlist_name is not None:
+          threading.Thread(target=lambda: generate_playlists.get_user_playlists(0, single_execution = False, playlist_name = playlist_name)).start()
+          return get_response_json(get_json_message("Searching and importing your spotify account for playlist " + playlist_name, True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
       return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
+
 @nsimport.route('/user_playlist/all/')
 class UserPlaylistsAllClass(Resource):
   def get (self, playlist_name = None):
@@ -241,7 +262,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED, constants.SCHEDULER_ENABLED_DEFAU
 
   if os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
     @scheduler.task('interval', id='saved_tracks', hours=int(os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE)))
-    def saved_tracks():
+    def saved_tracks(): 
       generate_playlists.get_user_saved_tracks()
 
 @scheduler.task('interval', id='remove_subsonic_deleted_playlist', hours=12)
