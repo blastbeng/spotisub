@@ -114,7 +114,7 @@ def get_playlist_tracks(item, result, offset_tracks = 0):
 
 def get_user_playlist_by_name(playlist_name, offset = 0):
 
-    playlist_result = sp.current_user_playlists(limit=(50 if single_execution is False else 1), offset = offset)
+    playlist_result = sp.current_user_playlists(limit=50, offset = offset)
 
     name_found = None
 
