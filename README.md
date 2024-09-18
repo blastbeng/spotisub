@@ -48,7 +48,7 @@ The track matching is made in two different ways, by recording ISRC and by simpl
 ### ISRC
 The ISRC is univoque for song, read more about it on [ISRC - MusicBrainz](https://musicbrainz.org/doc/ISRC)
 
-In case the song found in your library has a musicBrainzId, it will be used to retrieve the ISRC from Musicbrainz Database.
+In case the song found in your library has a *musicBrainzId tag*, it will be used to retrieve the ISRC from Musicbrainz Database.
 This ISRC will then be compared with the Spotify song ISRC (if present).
 
 If these two ISRC matches, the song will be added to the playlist.
