@@ -21,6 +21,10 @@ logging.basicConfig(
         level=int(os.environ.get(constants.LOG_LEVEL, constants.LOG_LEVEL_DEFAULT_VALUE)),
         datefmt='%Y-%m-%d %H:%M:%S')
 
+#Disabling musicbrainz INFO log as we don't want to see ugly infos in the console
+log = logging.getLogger("musicbrainzngs")
+log.setLevel(40)
+
 musicbrainzngs.set_useragent("navidrome music", "0.1", "http://example.com/music")
 
 def get_isrc_by_id(song):
