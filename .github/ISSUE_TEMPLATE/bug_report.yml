@@ -1,0 +1,84 @@
+name: Bug report
+description: File a bug report
+labels: 'type/bug'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **NOTE:** Before you start, the following should be completed.
+
+        - Read [documentation](https://docs.totaldebug.uk/pyarr) to ensure the correct setup.
+        - Make sure no [similar issues(including closed ones)](https://github.com/totaldebug/pyarr/issues?q=is%3Aissue+is%3Aopen+label%3Atype%2Fbug) exists.
+        - Make sure the request is based on the latest code in the `master` branch.
+
+        Thanks for taking the time to assist with improving this project!
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the bug you encountered.
+      options:
+      - label: I have searched the existing issues
+        required: true
+  - type: textarea
+    id: current-behaviour
+    attributes:
+      label: Current Behaviour
+      description: A concise description of what you're experiencing.
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. In this environment...
+        2. With this config...
+        3. Run '...'
+        4. See error...
+    validations:
+      required: false
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: Expected behaviour
+      description: A concise description of what you expected to happen.
+      placeholder: Tell us what you should see!
+    validations:
+      required: true
+  - type: input
+    id: pyarr-version
+    attributes:
+      label: Pyarr Version
+      description: The version of the Pyarr you have installed
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: The version of Python you have installed
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Code
+      description: Please copy and paste an example code. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/marksie1988/.github/blob/main/.github/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
