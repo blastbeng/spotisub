@@ -41,27 +41,30 @@ If this artist isn't found inside the Lidarr database, the download process is s
 
 So for example if you want to automate the download process, using this system you can skip the artists you don't like.
 
+## Track Matching
+
+The track matching is made in two different ways, by recording ISRC and by simple text comparison
+
+### ISRC
+The ISRC is univoque for song, read more about it on [ISRC - MusicBrainz](https://musicbrainz.org/doc/ISRC)
+
+In case the song found in your library has a musicBrainzId, it will be used to retrieve the ISRC from Musicbrainz Database.
+This ISRC will then be compared with the Spotify song ISRC (if present).
+
+If these two ISRC matches, the song will be added to the playlist.
+
+### Simple Text Comparison
+When the two ISRCs doesn't match, the text comparison will be executed between the Subsonic found song and Spotify song.
+
+In case of successfull compare, the song will be added to the playlist.
 
 ## Planned Features
 
 Dashboard
 * View which tracks are missing and decide to download trough spotdl or just ignore em
-* View which tracks are being matched with the spotdl playlists\recommendations, and decide to keep or exclude em
+* View which tracks are being matched with the Spotify playlists\recommendations, and decide to keep or exclude em
 * Configure some parameters of spotisub trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard
-
-Initial imports
-* Ability to enable initial imports at startup instead of just running em trough the scheduler
-
-## TODO
-
-At the actual state the song comparison is made by just comparing song name and artist name, but I think that the comparison will be more accurate by using something like AcoustID.
-
-The problem is that the Spotify APIs doesn't return any AcoustID, it is needed to download the song with SpotDL, generate the AcoustID and compare it with the local track AcoustID.
-
-This can take very long time and can be a very cpu intensive process. 
-
-For now I decided not to implement it, but if I find a faster and less cpu intensive way of doing it I may choose to implement it. 
 
 ## Help
 

@@ -272,7 +272,6 @@ def remove_subsonic_deleted_playlist():
 scheduler.init_app(app)
 scheduler.start()
 
-
 utils.print_logo(constants.VERSION)
 
 if __name__ == '__main__':
