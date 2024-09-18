@@ -7,9 +7,9 @@ body:
       value: |
         **NOTE:** Before you start, the following should be completed.
 
-        - Read [documentation](https://docs.totaldebug.uk/pyarr) to ensure the correct setup.
-        - Make sure no [similar issues(including closed ones)](https://github.com/totaldebug/pyarr/issues?q=is%3Aissue+is%3Aopen+label%3Atype%2Fbug) exists.
-        - Make sure the request is based on the latest code in the `master` branch.
+        - Read [documentation](https://github.com/blastbeng/spotisub/wiki) to ensure the correct setup.
+        - Make sure no [similar issues(including closed ones)](https://github.com/blastbeng/spotisub/issues) exists.
+        - Make sure the request is based on the latest code in the `main` branch.
 
         Thanks for taking the time to assist with improving this project!
   - type: checkboxes
@@ -47,10 +47,10 @@ body:
     validations:
       required: true
   - type: input
-    id: pyarr-version
+    id: spotisub-version
     attributes:
-      label: Pyarr Version
-      description: The version of the Pyarr you have installed
+      label: Spotisub Version
+      description: The version of the Spotisub you have installed
     validations:
       required: true
   - type: input
