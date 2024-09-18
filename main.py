@@ -80,7 +80,7 @@ class ArtistRecommendationsClass(Resource):
       return get_response_json(get_json_message("Generating recommendations playlist for artist " + artist_name, True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
@@ -94,7 +94,7 @@ class ArtistRecommendationsAllClass(Resource):
       return get_response_json(get_json_message("Generating recommendations playlist for all artists", True), 200)
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
@@ -111,7 +111,7 @@ class ArtistTopTracksClass(Resource):
       return get_response_json(get_json_message("Generating top tracks playlist for artist " + artist_name, True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
@@ -125,7 +125,7 @@ class ArtistTopTracksAllClass(Resource):
       return get_response_json(get_json_message("Generating top tracks playlist for all artists", True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
@@ -139,7 +139,7 @@ class RecommendationsClass(Resource):
       return get_response_json(get_json_message("Generating a reccommendation playlist", True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
@@ -162,7 +162,7 @@ class UserPlaylistsClass(Resource):
         return get_response_json(get_json_message("Searching and importing your spotify account for playlist " + playlist_name, True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
@@ -175,7 +175,7 @@ class UserPlaylistsAllClass(Resource):
       return get_response_json(get_json_message("Importing all your spotify playlists", True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
@@ -189,7 +189,7 @@ class SavedTracksClass(Resource):
       return get_response_json(get_json_message("Importing your saved tracks", True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
@@ -204,7 +204,7 @@ class UnmatchedSongsClass(Resource):
       return get_response_json(json.dumps(missing_songs), 200)   
     except SubsonicOfflineException:
       utils.write_exception()
-      return get_response_json(get_json_message("Your Subsonic instance is Offline", False), 400) 
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
     except Exception as e:
       utils.write_exception()
       g.request_error = str(e)
