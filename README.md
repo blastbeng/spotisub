@@ -24,7 +24,7 @@ This is an example about what it generates using Navidrome:
 For install instructions take a look at the WIKI: [https://github.com/blastbeng/spotisub/wiki](https://github.com/blastbeng/spotisub/wiki)
 
 
-### FEATURES
+## Features
 
 * Generate 5 playlist based on your history, top tracks and saved tracks
 * Generate artist reccommendation playlists for every artist in your library
