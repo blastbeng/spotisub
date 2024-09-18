@@ -121,10 +121,9 @@ def get_user_playlist_by_name(playlist_name, offset = 0):
     for item in playlist_result['items']:
         if item['name'] is not None and item['name'].strip() != '' and (playlist_name is None or (playlist_name is not None and item['name'].lower().strip() == playlist_name.lower().strip())):
             name_found = item['name'].strip()
-    if name_found is None:
-        get_user_playlists(playlist_name, offset = offset + 50)
-    else:
-        return name_found
+    if name_found is None and len(playlist_result['items']) != 0:
+        name_found = get_user_playlist_by_name(playlist_name, offset = offset + 50)
+    return name_found
 
 def get_user_playlists(offset = 0, single_execution = False, playlist_name = None):
 

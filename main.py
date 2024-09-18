@@ -79,7 +79,7 @@ class ArtistRecommendationsClass(Resource):
       else:
         search_result_name = subsonic_helper.search_artist(artist_name)
         if search_result_name is None:
-          return get_response_json(get_json_message("Artist %s not found, maybe a misspelling error?", artist_name, True), 206) 
+          return get_response_json(get_json_message("Artist " + artist_name + " not found, maybe a misspelling error?",True), 206) 
         else:
           artist_name = search_result_name
       if artist_name is not None:
@@ -117,7 +117,7 @@ class ArtistTopTracksClass(Resource):
       else:
         search_result_name = subsonic_helper.search_artist(artist_name)
         if search_result_name is None:
-          return get_response_json(get_json_message("Artist %s not found, maybe a misspelling error?", artist_name, True), 206) 
+          return get_response_json(get_json_message("Artist " + artist_name + " not found, maybe a misspelling error?",True), 206) 
         else:
           artist_name = search_result_name
       if artist_name is not None:
@@ -174,7 +174,7 @@ class UserPlaylistsClass(Resource):
       else:
         search_result_name = generate_playlists.get_user_playlist_by_name(playlist_name)
         if search_result_name is None:
-          return get_response_json(get_json_message("Playlist %s not found, maybe a misspelling error?", playlist_name, True), 206) 
+          return get_response_json(get_json_message("Playlist " + playlist_name + " not found, maybe a misspelling error?", True), 206) 
         else:
           playlist_name = search_result_name
         if playlist_name is not None:
