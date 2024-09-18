@@ -49,10 +49,21 @@ def get_artists_array_names():
 
     for index in checkPysonicConnection().getArtists()["artists"]["index"]:
         for artist in index["artist"]:
-            artist_names.append(artist["name"])
+            if "name" in artist:
+                artist_names.append(artist["name"])
 
     return artist_names
 
+def search_artist(artist_name):
+    artist_names = []
+
+    for index in checkPysonicConnection().getArtists()["artists"]["index"]:
+        for artist in index["artist"]:
+            if "name" in artist:
+                if artist_name.strip().lower() == artist["name"].strip().lower()
+                    return artist["name"]
+
+    return None
     
 def get_subsonic_search_results(text_to_search):
     result = {}
