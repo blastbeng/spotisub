@@ -43,16 +43,18 @@ So for example if you want to automate the download process, using this system y
 
 ## Track Matching
 
-The track matching is made in two different ways, by recording ISRC and by simple text comparison
-For perfect track match by ISRC it is important that the songs in your library have the **musicBrainzId tag**
+The track matching is made in two different ways, by ISRC comparison and simple text comparison.
+
+For perfect track match by ISRC it is important that the songs in your library have the **musicBrainzId tag**.
 
 ### ISRC
 The ISRC is univoque for song, read more about it on [ISRC - MusicBrainz](https://musicbrainz.org/doc/ISRC)
 
 In case the song found in your library has a musicBrainzId tag, it will be used to retrieve the ISRC from Musicbrainz Database.
+
 This ISRC will then be compared with the Spotify song ISRC (if present).
 
-If these two ISRC matches, the song will be added to the playlist.
+If these two ISRC matches, the song will be added to the playlist and the text comparison will be skipped.
 
 ### Simple Text Comparison
 When the two ISRCs doesn't match, the text comparison will be executed between the Subsonic found song and Spotify song.
