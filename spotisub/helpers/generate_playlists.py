@@ -112,6 +112,20 @@ def get_playlist_tracks(item, result, offset_tracks = 0):
         result = get_playlist_tracks(item, result, offset_tracks = offset_tracks + 50)
     return result
 
+def get_user_playlist_by_name(playlist_name, offset = 0):
+
+    playlist_result = sp.current_user_playlists(limit=(50 if single_execution is False else 1), offset = offset)
+
+    name_found = None
+
+    for item in playlist_result['items']:
+        if item['name'] is not None and item['name'].strip() != '' and (playlist_name is None or (playlist_name is not None and item['name'].lower().strip() == playlist_name.lower().strip())):
+            name_found = item['name'].strip()
+    if name_found is None:
+        get_user_playlists(playlist_name, offset = offset + 50)
+    else:
+        return name_found
+
 def get_user_playlists(offset = 0, single_execution = False, playlist_name = None):
 
     playlist_result = sp.current_user_playlists(limit=(50 if single_execution is False else 1), offset = offset)

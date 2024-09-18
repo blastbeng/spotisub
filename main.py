@@ -79,7 +79,7 @@ class ArtistRecommendationsClass(Resource):
       else:
         search_result_name = subsonic_helper.search_artist(artist_name)
         if search_result_name is None:
-          return get_response_json(get_json_message("Artist %s not found, maybe a misspelling error?", search_result_name, True), 206) 
+          return get_response_json(get_json_message("Artist %s not found, maybe a misspelling error?", artist_name, True), 206) 
         else:
           artist_name = search_result_name
       if artist_name is not None:
@@ -117,7 +117,7 @@ class ArtistTopTracksClass(Resource):
       else:
         search_result_name = subsonic_helper.search_artist(artist_name)
         if search_result_name is None:
-          return get_response_json(get_json_message("Artist %s not found, maybe a misspelling error?", search_result_name, True), 206) 
+          return get_response_json(get_json_message("Artist %s not found, maybe a misspelling error?", artist_name, True), 206) 
         else:
           artist_name = search_result_name
       if artist_name is not None:
@@ -172,8 +172,14 @@ class UserPlaylistsClass(Resource):
         threading.Thread(target=lambda: generate_playlists.get_user_playlists(random.randrange(count), single_execution = True)).start()
         return get_response_json(get_json_message("Importing a random playlist", True), 200)  
       else:
-        threading.Thread(target=lambda: generate_playlists.get_user_playlists(0, single_execution = False, playlist_name = playlist_name)).start()
-        return get_response_json(get_json_message("Searching and importing your spotify account for playlist " + playlist_name, True), 200)  
+        search_result_name = generate_playlists.get_user_playlist_by_name(playlist_name)
+        if search_result_name is None:
+          return get_response_json(get_json_message("Playlist %s not found, maybe a misspelling error?", playlist_name, True), 206) 
+        else:
+          playlist_name = search_result_name
+        if playlist_name is not None:
+          threading.Thread(target=lambda: generate_playlists.get_user_playlists(0, single_execution = False, playlist_name = playlist_name)).start()
+          return get_response_json(get_json_message("Searching and importing your spotify account for playlist " + playlist_name, True), 200)  
     except SubsonicOfflineException:
       utils.write_exception()
       return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
