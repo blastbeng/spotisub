@@ -161,11 +161,14 @@ def get_user_saved_tracks_playlist(result, offset_tracks = 0):
         offset=offset_tracks,
         limit=50)
     for track_item in response_tracks['items']:
-        track = track_item['track']
-        logging.info('Found %s - %s inside your saved tracks', track['artists'][0]['name'], track['name'])
-        #track_dict = dict({'name': track['name'], 'artists': [{"name": track['artists'][0]['name']}]})
-        track = add_missing_values_to_track(track)
-        result["tracks"].append(track)
+        if "track" in track:
+            track = track_item['track']
+            if track is not None:
+                logging.info('Found %s - %s inside your saved tracks', track['artists'][0]['name'], track['name'])
+                #track_dict = dict({'name': track['name'], 'artists': [{"name": track['artists'][0]['name']}]})
+                track = add_missing_values_to_track(track)
+                if track is not None:
+                    result["tracks"].append(track)
     time.sleep(2)
     if len(response_tracks['items']) != 0:
         result = get_user_saved_tracks_playlist(result, offset_tracks = offset_tracks + 50)
@@ -173,11 +176,13 @@ def get_user_saved_tracks_playlist(result, offset_tracks = 0):
 
 
 def add_missing_values_to_track(track):
-    uri = 'spotify:track:' + track['id']
-    if "album" not in track:
-        track = sp.track(uri)
-        time.sleep(1)
-    elif "uri" not in track:
-        track["uri"] = uri
-
-    return track
+    if "id" in track:
+        uri = 'spotify:track:' + track['id']
+        if "album" not in track:
+            track = sp.track(uri)
+            time.sleep(1)
+        elif "uri" not in track:
+            track["uri"] = uri
+        return track
+    else:
+        return None
