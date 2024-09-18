@@ -118,18 +118,20 @@ def write_playlist(sp, playlist_name, results):
     try:
         playlist_name = os.environ.get(constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace("\"", "") + playlist_name
         playlist_id = get_playlist_id_by_name(playlist_name)
+        song_ids = []
         if playlist_id is None:
             checkPysonicConnection().createPlaylist(name = playlist_name, songIds = [])
             logging.info('Creating playlist %s', playlist_name)
             playlist_id = get_playlist_id_by_name(playlist_name)
             database.delete_playlist_relation_by_id(dbms, playlist_id)
+        else:
+            song_ids = get_playlist_songs_ids_by_id(playlist_id)
 
         excluded_words = []
         excluded_words_string = os.environ.get(constants.EXCLUDED_WORDS, constants.EXCLUDED_WORDS_DEFAULT_VALUE).replace("\"","")
         if excluded_words_string is not None and excluded_words_string != "":
             excluded_words = excluded_words_string.split(",")
 
-        song_ids = []
         track_helper = []
         for track in results['tracks']:
             track = add_missing_values_to_track(sp, track)
@@ -154,7 +156,9 @@ def write_playlist(sp, playlist_name, results):
                                 musicbrainz_track = None
                                 song["isrc-list"] = musicbrainz_helper.get_isrc_by_id(song)
                                 placeholder = song["artist"] + " " + song["title"] + " " + song["album"]
-                                if song["artist"] != '' and track['name'] != '' and song["album"] != '' and song["title"] != '':
+                                if song["id"] in song_ids:
+                                    logging.info('Track with id "%s" already in playlist "%s"', song["id"], playlist_name)
+                                elif song["id"] not in song_ids and song["artist"] != '' and track['name'] != '' and song["album"] != '' and song["title"] != '':
                                     album_name = track["album"]["name"] if ("album" in track and "name" in track["album"] and track["album"]["name"]) is not None else ""
                                     logging.info('Comparing song "%s - %s - %s" with Spotify track "%s - %s - %s"', song["artist"], song["title"], song["album"], artist_name_spotify, track['name'], album_name)
                                     if has_isrc(track):
@@ -171,25 +175,24 @@ def write_playlist(sp, playlist_name, results):
                                             logging.info('Adding song "%s - %s - %s" to playlist "%s", matched by ISRC: "%s"', song["artist"], song["title"], song["album"], playlist_name, isrc)
                                             checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
                                             break
-                                    if song["id"] not in song_ids:
-                                        if (utils.compare_string_to_exclusion(song["title"], excluded_words)
-                                            or utils.compare_string_to_exclusion(song["album"], excluded_words)):
-                                            excluded = True
-                                        elif (utils.compare_strings(artist_name_spotify, song["artist"])
-                                            and utils.compare_strings(track['name'], song["title"])
-                                            and placeholder not in track_helper):
-                                            if (("album" in track and "name" in track["album"] and utils.compare_strings(track['album']['name'], song["album"]))
-                                                or ("album" not in track) 
-                                                or ("album" in track and "name" not in track["album"])):
-                                                    song_ids.append(song["id"])
-                                                    track_helper.append(placeholder)
-                                                    found = True
-                                                    database.insert_song(dbms, playlist_id, song, artist_spotify, track)
-                                                    logging.info('Adding song "%s - %s - %s" to playlist "%s", matched by text comparison', song["artist"], song["title"], song["album"], playlist_name)
-                                                    checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
-                                                    break
-                                            else:
-                                                skipped_songs.append(song)
+                                    if (utils.compare_string_to_exclusion(song["title"], excluded_words)
+                                        or utils.compare_string_to_exclusion(song["album"], excluded_words)):
+                                        excluded = True
+                                    elif (utils.compare_strings(artist_name_spotify, song["artist"])
+                                        and utils.compare_strings(track['name'], song["title"])
+                                        and placeholder not in track_helper):
+                                        if (("album" in track and "name" in track["album"] and utils.compare_strings(track['album']['name'], song["album"]))
+                                            or ("album" not in track) 
+                                            or ("album" in track and "name" not in track["album"])):
+                                                song_ids.append(song["id"])
+                                                track_helper.append(placeholder)
+                                                found = True
+                                                database.insert_song(dbms, playlist_id, song, artist_spotify, track)
+                                                logging.info('Adding song "%s - %s - %s" to playlist "%s", matched by text comparison', song["artist"], song["title"], song["album"], playlist_name)
+                                                checkPysonicConnection().createPlaylist(playlistId = playlist_id, songIds = song_ids)
+                                                break
+                                        else:
+                                            skipped_songs.append(song)
                             if found is False and excluded is False and len(skipped_songs) > 0:
                                 random.shuffle(skipped_songs)
                                 for skipped_song in skipped_songs:
@@ -262,12 +265,12 @@ def get_playlist_songs(missing=False):
                                 single_artist_search = artist_search["playlist"]
                                 missing["subsonic_playlist_name"] = single_artist_search["name"]
                         if "subsonic_song_id" in missing and missing["subsonic_song_id"] is not None:
-                            artist_search = checkPysonicConnection().getArtist(missing["subsonic_song_id"])
+                            song_search = checkPysonicConnection().getSong(missing["subsonic_song_id"])
                             if "song" in song_search:
                                 single_song_search = song_search["playlist"]
                                 missing["subsonic_song_title"] = single_song_search["title"]
-                                if "subsonic_artist_id" not in missing:
-                                    missing["subsonic_playlist_name"] = single_artist_search["artist"]
+                                if "subsonic_song_id" not in missing:
+                                    missing["subsonic_playlist_name"] = single_song_search["artist"]
 
                         if single_playlist_search["name"] not in unmatched_songs:
                             unmatched_songs[single_playlist_search["name"]] = []
@@ -275,6 +278,27 @@ def get_playlist_songs(missing=False):
                         unmatched_songs[single_playlist_search["name"]].append(missing)
 
     return unmatched_songs
+
+def get_playlist_songs_ids_by_id(id):
+    songs = []
+    playlist_search = None
+    try:
+        playlist_search = checkPysonicConnection().getPlaylist(id)
+    except SubsonicOfflineException as ex:
+        raise ex
+    except DataNotFoundError:
+        pass
+    if playlist_search is None:
+        logging.warning('Playlist id "%s" not found, may be you deleted this playlist from Subsonic?', key)
+        logging.warning('Deleting Playlist with id "%s" from spotisub database.', key)
+        database.delete_playlist_relation_by_id(dbms, key)
+    elif playlist_search is not None and "playlist" in playlist_search and "entry" in playlist_search["playlist"] and len(playlist_search["playlist"]["entry"]) > 0:
+        songs = playlist_search["playlist"]["entry"]
+        for entry in playlist_search["playlist"]["entry"]:
+            if "id" in entry and entry["id"] is not None and entry["id"].strip() != "":
+                songs.append(entry["id"])
+
+    return songs
 
 def remove_subsonic_deleted_playlist():
 
