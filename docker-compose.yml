@@ -20,9 +20,9 @@ services:
       - "./cache:/home/user/spotisub/cache"
     entrypoint: ./entrypoint.sh
     ports:
-      - 50811:50811
+      - 5183:5183
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:50811/utils/healthcheck"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5183/utils/healthcheck"]
       interval: 15s
       timeout: 5s
       retries: 12
