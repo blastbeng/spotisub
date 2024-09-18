@@ -60,7 +60,7 @@ def search_artist(artist_name):
     for index in checkPysonicConnection().getArtists()["artists"]["index"]:
         for artist in index["artist"]:
             if "name" in artist:
-                if artist_name.strip().lower() == artist["name"].strip().lower()
+                if artist_name.strip().lower() == artist["name"].strip().lower():
                     return artist["name"]
 
     return None
