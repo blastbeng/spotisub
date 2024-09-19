@@ -8,6 +8,7 @@ from sqlalchemy import Table
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy import MetaData
+from sqlalchemy import DateTime
 from sqlalchemy.sql import func
 
 SQLITE = 'sqlite'
@@ -225,14 +226,14 @@ def select_all_playlists(self, missing_only):
     return value
 
 
-def select_spotify_artists_by_uuid(self, conn, uuid: str):
+def select_spotify_artists_by_uuid(self, conn, c_uuid):
     """select spotify artists by uuid"""
     value = None
     stmt = select(
         self.spotify_artist.c.uuid,
         self.spotify_artist.c.name,
         self.spotify_artist.c.spotify_uri).where(
-        self.spotify_artist.c.uuid == uuid)
+        self.spotify_artist.c.uuid == c_uuid)
     stmt.compile()
     cursor = conn.execute(stmt)
     records = cursor.fetchall()
@@ -266,6 +267,7 @@ def insert_spotify_song(self, conn, artist_spotify, track_spotify):
             insert_spotify_song_artist_relation(
                 self, conn, song_uuid, artist_uuid)
             return song_uuid
+    return song_uuid
 
 
 def select_spotify_song_by_uri(self, conn, spotify_uri: str):
@@ -277,33 +279,31 @@ def select_spotify_song_by_uri(self, conn, spotify_uri: str):
         self.spotify_song.c.title).where(
         self.spotify_song.c.spotify_uri == spotify_uri)
     stmt.compile()
-    with self.db_engine.connect() as conn:
-        cursor = conn.execute(stmt)
-        records = cursor.fetchall()
+    cursor = conn.execute(stmt)
+    records = cursor.fetchall()
 
-        for row in records:
-            value = row
-            cursor.close()
+    for row in records:
+        value = row
+        cursor.close()
 
     return value
 
 
-def select_spotify_song_by_uuid(self, conn, uuid: str):
+def select_spotify_song_by_uuid(self, conn, c_uuid):
     """select spotify song by uuid"""
     value = None
     stmt = select(
         self.spotify_song.c.uuid,
         self.spotify_song.c.spotify_uri,
         self.spotify_song.c.title).where(
-        self.spotify_song.c.uuid == uuid)
+        self.spotify_song.c.uuid == c_uuid)
     stmt.compile()
-    with self.db_engine.connect() as conn:
-        cursor = conn.execute(stmt)
-        records = cursor.fetchall()
+    cursor = conn.execute(stmt)
+    records = cursor.fetchall()
 
-        for row in records:
-            value = row
-            cursor.close()
+    for row in records:
+        value = row
+        cursor.close()
 
     return value
 
@@ -321,8 +321,9 @@ def insert_spotify_artist(self, conn, artist_spotify):
         stmt.compile()
         conn.execute(stmt)
         return artist_uuid
-    elif artist_db is not None and artist_db.uuid is not None:
+    if artist_db is not None and artist_db.uuid is not None:
         return artist_db.uuid
+    return None
 
 
 def select_spotify_artist_by_uri(self, conn, spotify_uri: str):
