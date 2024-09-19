@@ -4,13 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'main'
+      - 'dev'
+      - 'latest'
     tags:
       - 'v*'
-      - 'latest'
   pull_request:
     branches:
-      - 'main'
 
 jobs:
   docker:
