@@ -9,7 +9,7 @@ RUN useradd -ms /bin/bash user
 USER user
 ENV HOME=/home/user
 WORKDIR $HOME
-RUN mkdir $HOME/.config && chmod -R 777 $HOME
+RUN mkdir -p $HOME/.config && chmod -R 777 $HOME
 ENV PATH="$HOME/.local/bin:$PATH"
         
 WORKDIR $HOME/spotisub
