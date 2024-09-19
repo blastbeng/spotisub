@@ -2,10 +2,7 @@ name: spotisub
 services:
   spotisub:
     container_name: spotisub
-    user: "1000:1000"
     environment:
-      - PUID=1000
-      - PGID=1000
       - TZ=Europe/Rome
       - SPOTIPY_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXX
       - SPOTIPY_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXX
@@ -18,7 +15,6 @@ services:
     restart: always
     volumes:
       - "./cache:/home/user/spotisub/cache"
-    entrypoint: ./entrypoint.sh
     ports:
       - 5183:5183
     healthcheck:
