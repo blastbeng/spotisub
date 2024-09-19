@@ -1,14 +1,11 @@
 FROM python:3.10-slim-bullseye
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         gcc \
         ffmpeg
 
-RUN groupadd --gid $GID user
-RUN useradd --no-log-init --create-home --shell /bin/bash --uid $UID --gid $GID user
+RUN useradd -ms /bin/bash user
 USER user
 ENV HOME=/home/user
 WORKDIR $HOME
