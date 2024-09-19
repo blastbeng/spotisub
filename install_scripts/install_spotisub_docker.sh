@@ -64,17 +64,12 @@ while true; do
 done
 
 TIMEZONE="$(cat /etc/timezone)"
-PUID=$(id -u $(whoami))
-PGID=$(getent group $(groups $(whoami) | awk '{print $3}') | cut -d: -f3)
 
 echo "name: spotisub" >> "${WORKDIR}/docker-compose.yml"
 echo "services:" >> "${WORKDIR}/docker-compose.yml"
 echo "  spotisub:" >> "${WORKDIR}/docker-compose.yml"
 echo "    container_name: spotisub" >> "${WORKDIR}/docker-compose.yml"
-echo "    user: \"${PUID}:${PGID}\"" >> "${WORKDIR}/docker-compose.yml"
 echo "    environment:" >> "${WORKDIR}/docker-compose.yml"
-echo "      - PUID=${PUID}" >> "${WORKDIR}/docker-compose.yml"
-echo "      - PGID=${PGID}" >> "${WORKDIR}/docker-compose.yml"
 echo "      - TZ=${TIMEZONE}" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SPOTIPY_CLIENT_ID=${SPOTIFY_CLIENT_ID}" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SPOTIPY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}" >> "${WORKDIR}/docker-compose.yml"
@@ -92,7 +87,6 @@ echo "    image: "blastbeng/spotisub:latest"" >> "${WORKDIR}/docker-compose.yml"
 echo "    restart: always" >> "${WORKDIR}/docker-compose.yml"
 echo "    volumes:" >> "${WORKDIR}/docker-compose.yml"
 echo "      - "./cache:/home/user/spotisub/cache"" >> "${WORKDIR}/docker-compose.yml"
-echo "    entrypoint: ./entrypoint.sh" >> "${WORKDIR}/docker-compose.yml"
 echo "    ports:" >> "${WORKDIR}/docker-compose.yml"
 echo "      - \"5183:5183\"" >> "${WORKDIR}/docker-compose.yml"
 echo "    healthcheck:" >> "${WORKDIR}/docker-compose.yml"
