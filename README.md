@@ -1,4 +1,4 @@
-# Spotisub
+## Spotisub
 ![image](https://github.com/user-attachments/assets/ad0740d9-e70c-4940-b98f-8d8b03deb200)
 
 Spotify to subsonic Playlist Generator and Importer
@@ -23,6 +23,8 @@ This is an example about what it generates using Navidrome:
 
 ![image](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
 
+## Getting Started
+
 For install instructions take a look at the WIKI: [https://github.com/blastbeng/spotisub/wiki](https://github.com/blastbeng/spotisub/wiki)
 
 
@@ -37,6 +39,7 @@ For install instructions take a look at the WIKI: [https://github.com/blastbeng/
 * Optional Lidarr integration, used altogether with spotdl to make decision about download a matching song or not
 
 Take a look at Spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
+
 Take a look at Lidarr here: [https://github.com/Lidarr/Lidarr](https://github.com/Lidarr/Lidarr)
 
 When both Spotdl and Lidarr integrations are enabled, if spotisub doesn't find a song in subsonic database, it tries to search the artist returned from the spotify APIs inside the Lidarr database (via Lidarr APIs).
