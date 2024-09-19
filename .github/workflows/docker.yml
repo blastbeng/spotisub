@@ -24,7 +24,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: name/app
+          images: blastbeng/spotisub
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
