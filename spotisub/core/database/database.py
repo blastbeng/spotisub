@@ -8,6 +8,7 @@ from sqlalchemy import Table
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy import MetaData
+from sqlalchemy import DateTime
 from sqlalchemy.sql import func
 
 SQLITE = 'sqlite'
