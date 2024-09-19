@@ -31,7 +31,7 @@ creds = SpotifyOAuth(
     open_browser=False,
     cache_path=os.path.dirname(
         os.path.abspath(__file__)) +
-    "/../../cache/spotipy_cache")
+    "/../cache/spotipy_cache")
 
 sp = spotipy.Spotify(auth_manager=creds)
 
