@@ -63,14 +63,11 @@ while true; do
     fi
 done
 
-TIMEZONE="$(cat /etc/timezone)"
-
 echo "name: spotisub" >> "${WORKDIR}/docker-compose.yml"
 echo "services:" >> "${WORKDIR}/docker-compose.yml"
 echo "  spotisub:" >> "${WORKDIR}/docker-compose.yml"
 echo "    container_name: spotisub" >> "${WORKDIR}/docker-compose.yml"
 echo "    environment:" >> "${WORKDIR}/docker-compose.yml"
-echo "      - TZ=${TIMEZONE}" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SPOTIPY_CLIENT_ID=${SPOTIFY_CLIENT_ID}" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SPOTIPY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SPOTIPY_REDIRECT_URI=http://127.0.0.1:8080" >> "${WORKDIR}/docker-compose.yml"

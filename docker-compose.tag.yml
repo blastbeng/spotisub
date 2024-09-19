@@ -7,7 +7,6 @@ services:
       network: host
     container_name: spotisub
     environment:
-      - TZ=Europe/Rome
       - SPOTIPY_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXX
       - SPOTIPY_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXX
       - SPOTIPY_REDIRECT_URI=http://127.0.0.1:8080/
