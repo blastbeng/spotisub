@@ -179,6 +179,7 @@ def match_with_subsonic_track(track, artist_spotify, found, excluded, song_ids, 
         placeholder = song["artist"] + " " + song["title"] + " " + song["album"]
         if song["id"] in song_ids:
             logging.info('Track with id "%s" already in playlist "%s"', song["id"], playlist_name)
+            found = True
         elif song["id"] not in song_ids and song["artist"] != '' and track['name'] != '' and song["album"] != '' and song["title"] != '':
             album_name = track["album"]["name"] if ("album" in track and "name" in track["album"] and track["album"]["name"]) is not None else ""
             logging.info('Comparing song "%s - %s - %s" with Spotify track "%s - %s - %s"', song["artist"], song["title"], song["album"], artist_spotify["name"], track['name'], album_name)
