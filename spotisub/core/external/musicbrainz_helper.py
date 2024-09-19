@@ -1,18 +1,13 @@
-# loading in modules
-import os
+"""Musicbrainz helper"""
 import time
-
-from dotenv import load_dotenv
-from os.path import dirname
-from os.path import join
-from spotdl import Spotdl
-from spotdl.types.options import DownloaderOptions
-from spotdl.types.song import Song
-from .utils.constants import constants
-from .utils import utils
-import musicbrainzngs
 import logging
 
+
+from os.path import dirname
+from os.path import join
+from dotenv import load_dotenv
+import musicbrainzngs
+from .utils import utils
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
@@ -29,14 +24,19 @@ musicbrainzngs.set_useragent(
 
 
 def get_isrc_by_id(song):
+    """get isrc by id"""
     try:
-        if "musicBrainzId" in song and song["musicBrainzId"] is not None and song["musicBrainzId"] != "":
+        if ("musicBrainzId" in song
+            and song["musicBrainzId"] is not None
+            and song["musicBrainzId"] != ""):
             song = musicbrainzngs.get_recording_by_id(
                 song["musicBrainzId"], includes=["isrcs"])
             time.sleep(1)
             if (song is not None and "recording" in song
-                and song["recording"] is not None and "isrc-list" in song["recording"]
-                    and song["recording"]["isrc-list"] is not None and len(song["recording"]["isrc-list"])) > 0:
+                and song["recording"] is not None
+                and "isrc-list" in song["recording"]
+                and song["recording"]["isrc-list"] is not None
+                and len(song["recording"]["isrc-list"])) > 0:
                 return song["recording"]["isrc-list"]
         return []
     except BaseException:
