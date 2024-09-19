@@ -22,6 +22,7 @@ ENV PATH="/home/uwsgi/.local/bin:${PATH}"
 
 COPY main.py init.py entrypoint.sh first_run.sh uwsgi.ini requirements.txt ./
 COPY spotisub spotisub/
+COPY templates templates/
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 USER root
