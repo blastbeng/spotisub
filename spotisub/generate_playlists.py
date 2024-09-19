@@ -1,17 +1,15 @@
-import libsonic
+"""Subsonic helper"""
 import logging
 import os
 import random
-import spotipy
-import sys
 import time
 import re
-from .core.external.utils.constants import constants
-
-from dotenv import load_dotenv
+import spotipy
 from os.path import dirname
 from os.path import join
+from dotenv import load_dotenv
 from spotipy import SpotifyOAuth
+from .core.external.utils.constants import constants
 from .core import subsonic_helper
 
 dotenv_path = join(dirname(__file__), '.env')
@@ -21,10 +19,10 @@ load_dotenv(dotenv_path)
 client_id = os.environ.get(constants.SPOTIPY_CLIENT_ID)
 client_secret = os.environ.get(constants.SPOTIPY_CLIENT_SECRET)
 redirect_uri = os.environ.get(constants.SPOTIPY_REDIRECT_URI)
-scope = "user-top-read,user-library-read,user-read-recently-played"
+SCOPE = "user-top-read,user-library-read,user-read-recently-played"
 
 creds = SpotifyOAuth(
-    scope=scope,
+    scope=SCOPE,
     client_id=client_id,
     client_secret=client_secret,
     redirect_uri=redirect_uri,
@@ -37,6 +35,7 @@ sp = spotipy.Spotify(auth_manager=creds)
 
 
 def artist_top_tracks(query):
+    """artist top tracks"""
     results = sp.search(query)
     artists_uri = {}
     if "tracks" in results and "items" in results["tracks"] and len(
@@ -48,8 +47,12 @@ def artist_top_tracks(query):
                         r'[^\w\s]', '', artist["name"])
                     query_no_punct = re.sub(r'[^\w\s]', '', query)
                     if ("uri" in artist and "name" in artist
-                        and ((query.lower() == artist["name"].lower() or query.lower() in artist["name"].lower() or artist["name"].lower() in query.lower())
-                             or (query_no_punct.lower() == artist_name_no_punct.lower() or query_no_punct.lower() in artist_name_no_punct.lower() or artist_name_no_punct.lower() in query_no_punct.lower()))):
+                        and ((query.lower() == artist["name"].lower()
+                            or query.lower() in artist["name"].lower()
+                            or artist["name"].lower() in query.lower())
+                            or (query_no_punct.lower() == artist_name_no_punct.lower()
+                            or query_no_punct.lower() in artist_name_no_punct.lower()
+                            or artist_name_no_punct.lower() in query_no_punct.lower()))):
                         artists_uri[artist["name"]] = artist["uri"]
 
     for artist_name in artists_uri:
@@ -59,6 +62,7 @@ def artist_top_tracks(query):
 
 
 def my_recommendations(count=None):
+    """my recommendations"""
     top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
     logging.info('Loaded your custom top tracks')
     time.sleep(2)
@@ -91,15 +95,16 @@ def my_recommendations(count=None):
 
 
 def get_artist(name):
+    """get artist"""
     results = sp.search(q='artist:' + name, type='artist')
     items = results['artists']['items']
     if len(items) > 0:
         return items[0]
-    else:
-        return None
+    return None
 
 
 def show_recommendations_for_artist(name):
+    """show recommendations for artist"""
     logging.info('Searching recommendations for: %s', name)
     artist = get_artist(name)
     if artist is not None:
@@ -117,6 +122,7 @@ def show_recommendations_for_artist(name):
 
 
 def get_playlist_tracks(item, result, offset_tracks=0):
+    """get playlist tracks"""
     response_tracks = sp.playlist_items(item['id'],
                                         offset=offset_tracks,
                                         fields='items.track.id,items.track.name,items.track.artists,total',
@@ -139,14 +145,17 @@ def get_playlist_tracks(item, result, offset_tracks=0):
 
 
 def get_user_playlist_by_name(playlist_name, offset=0):
+    """get user playlist by name"""
 
     playlist_result = sp.current_user_playlists(limit=50, offset=offset)
 
     name_found = None
 
     for item in playlist_result['items']:
-        if item['name'] is not None and item['name'].strip() != '' and (playlist_name is None or (
-                playlist_name is not None and item['name'].lower().strip() == playlist_name.lower().strip())):
+        if (item['name'] is not None and item['name'].strip() != ''
+            and (playlist_name is None
+            or (playlist_name is not None
+            and item['name'].lower().strip() == playlist_name.lower().strip()))):
             name_found = item['name'].strip()
     if name_found is None and len(playlist_result['items']) != 0:
         name_found = get_user_playlist_by_name(
@@ -155,6 +164,7 @@ def get_user_playlist_by_name(playlist_name, offset=0):
 
 
 def get_user_playlists(offset=0, single_execution=False, playlist_name=None):
+    """get user playlists"""
 
     playlist_result = sp.current_user_playlists(
         limit=(50 if single_execution is False else 1), offset=offset)
@@ -174,6 +184,7 @@ def get_user_playlists(offset=0, single_execution=False, playlist_name=None):
 
 
 def count_user_playlists(count, offset=0):
+    """count user playlists"""
     playlist_result = sp.current_user_playlists(limit=50, offset=offset)
     count = count + len(playlist_result['items'])
 
@@ -183,6 +194,7 @@ def count_user_playlists(count, offset=0):
 
 
 def all_artists_recommendations(artist_names):
+    """all artists recommendations"""
     if len(artist_names) > 0:
         random.shuffle(artist_names)
         for artist_name in artist_names:
@@ -190,6 +202,7 @@ def all_artists_recommendations(artist_names):
 
 
 def all_artists_top_tracks(artist_names):
+    """all artists top tracks"""
     if len(artist_names) > 0:
         random.shuffle(artist_names)
         for artist_name in artist_names:
@@ -197,11 +210,13 @@ def all_artists_top_tracks(artist_names):
 
 
 def get_user_saved_tracks(result):
+    """get user saved tracks"""
     result = get_user_saved_tracks_playlist(result)
     subsonic_helper.write_playlist(sp, "Saved Tracks", result)
 
 
 def get_user_saved_tracks_playlist(result, offset_tracks=0):
+    """get user saved tracks playlist"""
     response_tracks = sp.current_user_saved_tracks(
         offset=offset_tracks,
         limit=50)

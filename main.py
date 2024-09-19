@@ -92,7 +92,7 @@ class ArtistRecommendationsClass(Resource):
     def get(self, artist_name=None):
         """Artist reccomendations endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             if artist_name is None:
                 artist_name = random.choice(
                     subsonic_helper.get_artists_array_names())
@@ -137,7 +137,7 @@ class ArtistRecommendationsAllClass(Resource):
     def get(self):
         """All Artists reccomendations endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists
                     .all_artists_recommendations(subsonic_helper
@@ -163,7 +163,7 @@ class ArtistTopTracksClass(Resource):
     def get(self, artist_name=None):
         """Artist top tracks endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             if artist_name is None:
                 artist_name = random.choice(
                     subsonic_helper.get_artists_array_names())
@@ -207,7 +207,7 @@ class ArtistTopTracksAllClass(Resource):
     def get(self):
         """All Artists top tracks endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists
                     .all_artists_top_tracks(subsonic_helper
@@ -231,7 +231,7 @@ class RecommendationsClass(Resource):
     def get(self):
         """Recommendations endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists.my_recommendations(
                     count=random.randrange(
@@ -263,7 +263,7 @@ class UserPlaylistsClass(Resource):
     def get(self, playlist_name=None):
         """User playlists endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             if playlist_name is None:
                 count = generate_playlists.count_user_playlists(0)
                 threading.Thread(
@@ -312,7 +312,7 @@ class UserPlaylistsAllClass(Resource):
     def get(self):
         """All User playlists endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists.get_user_playlists(0)).start()
             return get_response_json(
@@ -335,7 +335,7 @@ class SavedTracksClass(Resource):
     def get(self):
         """Saved tracks endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists
                     .get_user_saved_tracks(dict({'tracks': []}))).start()
@@ -359,7 +359,7 @@ class PlaylistUnmatchedClass(Resource):
     def get(self):
         """Unmatched playlist songs endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             missing_songs = subsonic_helper.get_playlist_songs(
                 missing_only=True)
             return get_response_json(json.dumps(missing_songs), 200)
@@ -381,7 +381,7 @@ class PlaylistAllClass(Resource):
     def get(self):
         """All playlist songs endpoint"""
         try:
-            subsonic_helper.checkPysonicConnection()
+            subsonic_helper.check_pysonic_connection()
             missing_songs = subsonic_helper.get_playlist_songs(
                 missing_only=False)
             return get_response_json(json.dumps(missing_songs), 200)
