@@ -112,8 +112,6 @@ def add_missing_values_to_track(sp, track):
     else:
         return None
 
-
-# TODO: This method is very ugly and needs a big code refactoring
 def write_playlist(sp, playlist_name, results):
     try:
         playlist_name = os.environ.get(constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace("\"", "") + playlist_name
@@ -137,11 +135,6 @@ def write_playlist(sp, playlist_name, results):
                     excluded = False
                     if artist_spotify != '' and "name" in artist_spotify:
                         logging.info('Searching %s - %s in your music library', artist_spotify["name"], track['name'])
-                        #REMOVED: Do we really need to check for exclusions on Spotify Tracks?
-                        #if ("name" in track and utils.compare_string_to_exclusion(track['name'], excluded_words)
-                        #    or ("album" in track and "name" in track["album"] and utils.compare_string_to_exclusion(track["album"]["name"], excluded_words))):
-                        #    excluded = True
-                        #elif "name" in track:
                         if "name" in track:
                             track, artist_spotify, found, excluded, song_ids, track_helper = match_with_subsonic_track(track, artist_spotify, found, excluded, song_ids, track_helper, playlist_id, playlist_name)
                     if not excluded:
@@ -328,4 +321,7 @@ def remove_subsonic_deleted_playlist():
             logging.warning('Deleting Playlist with id "%s" from spotisub database.', key)
             database.delete_playlist_relation_by_id(dbms, key)
 
-    database.clean_spotify_songs(dbms)
+    # TODO 
+    # DO we really need to remove spotify songs even if they are not related to any playlist?
+    # This can cause errors when an import process is running
+    # I will just leave spotify songs saved in Spotisub database for now
