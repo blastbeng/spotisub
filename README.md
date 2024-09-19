@@ -102,6 +102,10 @@ For any help contact me on Discord blastbong#9151
 
 Fabio Valentino - [blastbeng](https://github.com/blastbeng)
 
+## Contributors
+
+Caleb Contreras - [Aerglonus](https://github.com/Aerglonus)
+
 ## Acknowledgments
 
 A big thanks to the developers and maintaners of these libraries\softwares:
