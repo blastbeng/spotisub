@@ -179,8 +179,8 @@ def select_all_playlists(self, missing_only):
                 self.subsonic_spotify_relation.c.subsonic_artist_id,
                 self.subsonic_spotify_relation.c.subsonic_playlist_id,
                 self.subsonic_spotify_relation.c.spotify_song_uuid).where(
-                self.subsonic_spotify_relation.c.subsonic_song_id is None,
-                self.subsonic_spotify_relation.c.subsonic_artist_id is None)
+                self.subsonic_spotify_relation.c.subsonic_song_id == None,
+                self.subsonic_spotify_relation.c.subsonic_artist_id == None)
         else:
             stmt = select(
                 self.subsonic_spotify_relation.c.uuid,
