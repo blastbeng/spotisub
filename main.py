@@ -16,8 +16,8 @@ from flask import render_template
 from flask_restx import Api
 from flask_restx import Resource
 from flask_apscheduler import APScheduler
-from spotisub.core.constants import constants
-from spotisub.core.utils import utils
+from spotisub.core.external.utils.constants import constants
+from spotisub.core.external.utils import utils
 from spotisub.core import subsonic_helper
 from spotisub import generate_playlists
 from spotisub.core.exceptions.exceptions import SubsonicOfflineException

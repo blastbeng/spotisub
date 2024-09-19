@@ -6,7 +6,7 @@ from os.path import join
 from dotenv import load_dotenv
 import spotipy
 from spotipy import SpotifyOAuth
-from spotisub.constants import constants
+from spotisub.core.external.utils.constants import constants
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)

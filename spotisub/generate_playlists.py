@@ -6,7 +6,7 @@ import spotipy
 import sys
 import time
 import re
-from .constants import constants
+from .core.external.utils.constants import constants
 
 from dotenv import load_dotenv
 from os.path import dirname

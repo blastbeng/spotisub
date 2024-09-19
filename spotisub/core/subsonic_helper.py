@@ -3,8 +3,8 @@ import logging
 import os
 import random
 import time
-from .constants import constants
-from .utils import utils
+from .external.utils.constants import constants
+from .external.utils import utils
 from .exceptions.exceptions import SubsonicOfflineException
 import sys
 from .database import database

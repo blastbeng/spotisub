@@ -8,7 +8,7 @@ from os.path import join
 from spotdl import Spotdl
 from spotdl.types.options import DownloaderOptions
 from spotdl.types.song import Song
-from .constants import constants
+from .utils.constants import constants
 from .utils import utils
 import musicbrainzngs
 import logging

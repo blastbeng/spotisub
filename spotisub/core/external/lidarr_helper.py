@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from pyarr import LidarrAPI
 from expiringdict import ExpiringDict
 from .utils import utils
-from .constants import constants
+from .utils.constants import constants
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
