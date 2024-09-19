@@ -76,3 +76,11 @@ def compare(stringsa, stringsb, log_excluded=False):
                     logging.warning("Found excluded word: %s. Skipping...", stringb)
                 return True    
     return False
+
+def get_excluded_words_array():
+    excluded_words = []
+    excluded_words_string = os.environ.get(constants.EXCLUDED_WORDS, constants.EXCLUDED_WORDS_DEFAULT_VALUE).replace("\"","")
+    if excluded_words_string is not None and excluded_words_string != "":
+        excluded_words = excluded_words_string.split(",")
+
+    return excluded_words

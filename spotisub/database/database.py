@@ -74,7 +74,7 @@ def insert_song(self, playlist_id, subsonic_track, artist_spotify, track_spotify
         if "id" in subsonic_track:
           track_id = subsonic_track["id"]
         if "artistId" in subsonic_track:
-          artist_id = subsonic_track["id"]
+          artist_id = subsonic_track["artistId"]
         insert_playlist_relation(self, conn, track_id, artist_id, playlist_id, spotify_song_uuid)
       conn.commit()      
     else:
@@ -127,11 +127,11 @@ def insert_playlist_relation(self, conn, subsonic_song_id, subsonic_artist_id, s
   stmt.compile()
   conn.execute(stmt)
 
-def select_all_playlists(self, missing):
+def select_all_playlists(self, missing_only):
   value = {}
   stmt = None
   with self.db_engine.connect() as conn:
-    if missing:
+    if missing_only:
       stmt = select(self.subsonic_spotify_relation.c.uuid,self.subsonic_spotify_relation.c.subsonic_song_id,self.subsonic_spotify_relation.c.subsonic_artist_id,self.subsonic_spotify_relation.c.subsonic_playlist_id,self.subsonic_spotify_relation.c.spotify_song_uuid).where(self.subsonic_spotify_relation.c.subsonic_song_id==None,self.subsonic_spotify_relation.c.subsonic_artist_id==None)
     else:
       stmt = select(self.subsonic_spotify_relation.c.uuid,self.subsonic_spotify_relation.c.subsonic_song_id,self.subsonic_spotify_relation.c.subsonic_artist_id,self.subsonic_spotify_relation.c.subsonic_playlist_id,self.subsonic_spotify_relation.c.spotify_song_uuid)

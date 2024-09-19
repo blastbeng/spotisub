@@ -216,12 +216,27 @@ class SavedTracksClass(Resource):
       g.request_error = str(e)
 
 nsdatabase = api.namespace('database', 'Database APIs')
-@nsdatabase.route('/unmatched_songs')
-class UnmatchedSongsClass(Resource):
+@nsdatabase.route('/playlist/unmatched')
+class PlaylistUnmatchedClass(Resource):
   def get (self):
     try:
       subsonic_helper.checkPysonicConnection()
-      missing_songs = subsonic_helper.get_playlist_songs(missing=True)
+      missing_songs = subsonic_helper.get_playlist_songs(missing_only=True)
+      return get_response_json(json.dumps(missing_songs), 200)   
+    except SubsonicOfflineException:
+      utils.write_exception()
+      return get_response_json(get_json_message("Unable to communicate with Subsonic", False), 400) 
+    except Exception as e:
+      utils.write_exception()
+      g.request_error = str(e)
+
+nsdatabase = api.namespace('database', 'Database APIs')
+@nsdatabase.route('/playlist/all')
+class PlaylistAllClass(Resource):
+  def get (self):
+    try:
+      subsonic_helper.checkPysonicConnection()
+      missing_songs = subsonic_helper.get_playlist_songs(missing_only=False)
       return get_response_json(json.dumps(missing_songs), 200)   
     except SubsonicOfflineException:
       utils.write_exception()

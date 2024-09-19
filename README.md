@@ -7,6 +7,8 @@ Since I haven't found an app to import my Spotify playlists, I started this proj
 
 !!! WORK IN PROGRESS !!!
 
+Note that this is a work in progress, some things may be subject to changes. Like endpoints paths.
+
 The current release has all the base features, but it is still a work in progress, so expect bugs.
 
 ## Description
