@@ -74,45 +74,12 @@ def insert_song(self, playlist_id, subsonic_track, artist_spotify, track_spotify
         if "id" in subsonic_track:
           track_id = subsonic_track["id"]
         if "artistId" in subsonic_track:
-          artist_id = subsonic_track["id"]
+          artist_id = subsonic_track["artistId"]
         insert_playlist_relation(self, conn, track_id, artist_id, playlist_id, spotify_song_uuid)
       conn.commit()      
     else:
       conn.rollback()
     conn.close()
-
-
-### TODO IMPLEMENT A METHOD TO CLEAN SPOTIFY DATABASE IF SONG IS NOT RELATED TO ANY PLAYLIST
-def clean_spotify_songs(self):
-  stmt = select(self.spotify_song.c.uuid)
-  compiled = stmt.compile()
-  
-  with self.db_engine.connect() as conn:
-
-    song_uuids_to_delete = []
-
-    cursor = conn.execute(stmt)
-    records = cursor.fetchall()
-
-    for row in records:
-      stmt_songs = select(self.subsonic_spotify_relation.c.uuid).where(self.subsonic_spotify_relation.c.spotify_song_uuid==row.uuid)
-      cursor_songs = conn.execute(stmt_songs)
-      records_songs = cursor_songs.fetchall()
-
-      found = False
-      for row_songs in records_songs:
-        found = True
-        break
-      if found is False:
-        song_uuids_to_delete.append(row.uuid)
-    
-    for song_uuid in song_uuids_to_delete:
-      artists_relation = select_spotify_song_artists_relation_by_song_uuid(self, conn, song_uuid)
-      
-  
-    conn.close()
-### TODO IMPLEMENT A METHOD TO CLEAN SPOTIFY DATABASE IF SONG IS NOT RELATED TO ANY PLAYLIST
-
 
 def delete_playlist_relation_by_id(self, playlist_id: str):
   stmt = delete(self.subsonic_spotify_relation).where(self.subsonic_spotify_relation.c.subsonic_playlist_id==playlist_id)
@@ -127,11 +94,11 @@ def insert_playlist_relation(self, conn, subsonic_song_id, subsonic_artist_id, s
   stmt.compile()
   conn.execute(stmt)
 
-def select_all_playlists(self, missing):
+def select_all_playlists(self, missing_only):
   value = {}
   stmt = None
   with self.db_engine.connect() as conn:
-    if missing:
+    if missing_only:
       stmt = select(self.subsonic_spotify_relation.c.uuid,self.subsonic_spotify_relation.c.subsonic_song_id,self.subsonic_spotify_relation.c.subsonic_artist_id,self.subsonic_spotify_relation.c.subsonic_playlist_id,self.subsonic_spotify_relation.c.spotify_song_uuid).where(self.subsonic_spotify_relation.c.subsonic_song_id==None,self.subsonic_spotify_relation.c.subsonic_artist_id==None)
     else:
       stmt = select(self.subsonic_spotify_relation.c.uuid,self.subsonic_spotify_relation.c.subsonic_song_id,self.subsonic_spotify_relation.c.subsonic_artist_id,self.subsonic_spotify_relation.c.subsonic_playlist_id,self.subsonic_spotify_relation.c.spotify_song_uuid)
