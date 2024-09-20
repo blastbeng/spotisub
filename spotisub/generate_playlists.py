@@ -200,6 +200,7 @@ def all_artists_top_tracks(artist_names):
 
 def get_user_saved_tracks(result):
     """get user saved tracks"""
+    sp = spotipy_helper.get_spotipy_client()
     result = get_user_saved_tracks_playlist(result)
     subsonic_helper.write_playlist(sp, "Saved Tracks", result)
 
