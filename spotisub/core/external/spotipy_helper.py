@@ -1,9 +1,9 @@
 """Spotipy helper"""
-import spotipy
 import os
 from os.path import dirname
 from os.path import join
 from dotenv import load_dotenv
+import spotipy
 from spotipy import SpotifyOAuth
 from .utils import utils
 from .utils.constants import constants
@@ -55,8 +55,6 @@ def create_sp_client():
     
 def get_spotipy_client():
     """Get the previously created spotipy client"""
-    global sp
-    if sp is None:
-        sp = create_sp_client()
     return sp
 
+sp = create_sp_client()
