@@ -10,7 +10,7 @@ import libsonic
 from libsonic.errors import DataNotFoundError
 from .external.utils.constants import constants
 from .external.utils import utils
-from .exceptions.exceptions import SubsonicOfflineException
+from .external.exceptions.exceptions import SubsonicOfflineException
 from .database import database
 from .external import musicbrainz_helper
 

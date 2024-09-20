@@ -16,11 +16,13 @@ from flask import render_template
 from flask_restx import Api
 from flask_restx import Resource
 from flask_apscheduler import APScheduler
-from spotisub.core.external.utils.constants import constants
 from spotisub.core.external.utils import utils
+from spotisub.core.external.utils.constants import constants
+from spotisub.core.external import spotipy_helper
 from spotisub.core import subsonic_helper
 from spotisub import generate_playlists
-from spotisub.core.exceptions.exceptions import SubsonicOfflineException
+from spotisub.core.external.exceptions.exceptions import SubsonicOfflineException
+from spotisub.core.external.exceptions.exceptions import SpotifyApiException
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -40,7 +42,6 @@ log.setLevel(int(os.environ.get(constants.LOG_LEVEL,
 app = Flask(__name__)
 
 scheduler = APScheduler()
-
 
 @app.after_request
 def after_request(response):
@@ -92,6 +93,7 @@ class ArtistRecommendationsClass(Resource):
     def get(self, artist_name=None):
         """Artist reccomendations endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             if artist_name is None:
                 artist_name = random.choice(
@@ -126,7 +128,14 @@ class ArtistRecommendationsClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -137,6 +146,7 @@ class ArtistRecommendationsAllClass(Resource):
     def get(self):
         """All Artists reccomendations endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists
@@ -151,7 +161,14 @@ class ArtistRecommendationsAllClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -163,6 +180,7 @@ class ArtistTopTracksClass(Resource):
     def get(self, artist_name=None):
         """Artist top tracks endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             if artist_name is None:
                 artist_name = random.choice(
@@ -196,7 +214,14 @@ class ArtistTopTracksClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -207,6 +232,7 @@ class ArtistTopTracksAllClass(Resource):
     def get(self):
         """All Artists top tracks endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists
@@ -221,7 +247,14 @@ class ArtistTopTracksAllClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -231,6 +264,7 @@ class RecommendationsClass(Resource):
     def get(self):
         """Recommendations endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists.my_recommendations(
@@ -248,7 +282,14 @@ class RecommendationsClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -263,6 +304,7 @@ class UserPlaylistsClass(Resource):
     def get(self, playlist_name=None):
         """User playlists endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             if playlist_name is None:
                 count = generate_playlists.count_user_playlists(0)
@@ -301,7 +343,14 @@ class UserPlaylistsClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -312,6 +361,7 @@ class UserPlaylistsAllClass(Resource):
     def get(self):
         """All User playlists endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists.get_user_playlists(0)).start()
@@ -324,7 +374,14 @@ class UserPlaylistsAllClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -335,6 +392,7 @@ class SavedTracksClass(Resource):
     def get(self):
         """Saved tracks endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generate_playlists
@@ -345,7 +403,14 @@ class SavedTracksClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -359,6 +424,7 @@ class PlaylistUnmatchedClass(Resource):
     def get(self):
         """Unmatched playlist songs endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             missing_songs = subsonic_helper.get_playlist_songs(
                 missing_only=True)
@@ -367,7 +433,14 @@ class PlaylistUnmatchedClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
@@ -381,6 +454,7 @@ class PlaylistAllClass(Resource):
     def get(self):
         """All playlist songs endpoint"""
         try:
+            spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             missing_songs = subsonic_helper.get_playlist_songs(
                 missing_only=False)
@@ -389,7 +463,14 @@ class PlaylistAllClass(Resource):
             utils.write_exception()
             return get_response_json(
                 get_json_message(
-                    "Unable to communicate with Subsonic",
+                    "Unable to communicate with Subsonic.",
+                    False),
+                400)
+        except SpotifyApiException:
+            utils.write_exception()
+            return get_response_json(
+                get_json_message(
+                    "Spotify API Error. Please check your configuruation.",
                     False),
                 400)
 
