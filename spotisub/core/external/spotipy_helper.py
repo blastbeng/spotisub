@@ -1,3 +1,4 @@
+"""Spotipy helper"""
 import spotipy
 import os
 from os.path import dirname
@@ -15,6 +16,7 @@ load_dotenv(dotenv_path)
 sp = None
 
 def get_secrets():
+    """Get Spotify api keys from env vars"""
     client_id = os.environ.get(
         constants.SPOTIPY_CLIENT_ID,
         constants.SPOTIPY_CLIENT_ID_DEFAULT_VALUE)
@@ -36,6 +38,7 @@ def get_secrets():
     raise SpotifyApiException()
 
 def create_sp_client():
+    """Creates the spotipy client"""
     secrets = get_secrets()
     SCOPE = "user-top-read,user-library-read,user-read-recently-played"
     creds = spotipy.SpotifyOAuth(
@@ -51,6 +54,7 @@ def create_sp_client():
     return spotipy.Spotify(auth_manager=creds)
     
 def get_spotipy_client():
+    """Get the previously created spotipy client"""
     global sp
     if sp is None:
         sp = create_sp_client()
