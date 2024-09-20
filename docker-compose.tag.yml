@@ -21,7 +21,7 @@ services:
     ports:
       - 5183:5183
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:5183/utils/healthcheck"]
-      interval: 15s
-      timeout: 5s
-      retries: 12
+      test: curl -s http://127.0.0.1:5183/utils/healthcheck | grep -q 'Ok!' || exit 1
+      interval: 30s
+      retries: 20
+      start_period: 30s
