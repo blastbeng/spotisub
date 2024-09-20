@@ -1,4 +1,4 @@
-VERSION                                     = "0.2.3"
+VERSION                                     = "0.2.4"
 SPLIT_TOKENS                                = ["(", "-", "feat"]
 
 ARTIST_GEN_SCHED                            = "ARTIST_GEN_SCHED"
