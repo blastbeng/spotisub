@@ -151,6 +151,27 @@ def delete_playlist_relation_by_id(self, playlist_id: str):
         conn.commit()
     conn.close()
 
+def delete_song_relation(self, playlist_id: str, subsonic_track):
+    """delete playlist from database"""
+    
+    if "id" in subsonic_track:
+        stmt = None
+        if "artistId" in subsonic_track:
+            stmt = delete(self.subsonic_spotify_relation).where(
+                self.subsonic_spotify_relation.c.subsonic_playlist_id == playlist_id,
+                self.subsonic_spotify_relation.c.subsonic_song_id == subsonic_track["id"],
+                self.subsonic_spotify_relation.c.subsonic_artist_id == subsonic_track["artistId"])
+        else:
+            stmt = delete(self.subsonic_spotify_relation).where(
+                self.subsonic_spotify_relation.c.subsonic_playlist_id == playlist_id,
+                self.subsonic_spotify_relation.c.subsonic_song_id == subsonic_track["id"])
+
+        stmt.compile()
+        with self.db_engine.connect() as conn:
+            conn.execute(stmt)
+            conn.commit()
+        conn.close()
+
 
 def insert_playlist_relation(self, conn, subsonic_song_id,
                              subsonic_artist_id, subsonic_playlist_id, spotify_song_uuid):
