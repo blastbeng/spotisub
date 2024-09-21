@@ -34,7 +34,13 @@ def write_exception():
     """write exception"""
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-    logging.error("%s %s %s %s", exc_type, fname, exc_tb.tb_lineno, exc_obj, exc_info=1)
+    logging.error(
+        "%s %s %s %s",
+        exc_type,
+        fname,
+        exc_tb.tb_lineno,
+        exc_obj,
+        exc_info=1)
 
 
 def generate_compare_array(strings):

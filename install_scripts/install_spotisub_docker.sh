@@ -87,10 +87,10 @@ echo "      - "./cache:/home/user/spotisub/cache"" >> "${WORKDIR}/docker-compose
 echo "    ports:" >> "${WORKDIR}/docker-compose.yml"
 echo "      - \"5183:5183\"" >> "${WORKDIR}/docker-compose.yml"
 echo "    healthcheck:" >> "${WORKDIR}/docker-compose.yml"
-echo "      test: [\"CMD\", \"curl\", \"-f\", \"http://127.0.0.1:5183/utils/healthcheck\"]" >> "${WORKDIR}/docker-compose.yml"
-echo "      interval: 15s" >> "${WORKDIR}/docker-compose.yml"
-echo "      timeout: 5s" >> "${WORKDIR}/docker-compose.yml"
-echo "      retries: 12" >> "${WORKDIR}/docker-compose.yml"
+echo "      test: curl -s http://127.0.0.1:5183/utils/healthcheck | grep -q 'Ok!' || exit 1" >> "${WORKDIR}/docker-compose.yml"
+echo "      interval: 30s" >> "${WORKDIR}/docker-compose.yml"
+echo "      retries: 20" >> "${WORKDIR}/docker-compose.yml"
+echo "      start_period: 30s" >> "${WORKDIR}/docker-compose.yml"
 
 cd "$WORKDIR"
 

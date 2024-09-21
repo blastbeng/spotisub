@@ -4,38 +4,20 @@ import os
 import random
 import time
 import re
-import spotipy
 from os.path import dirname
 from os.path import join
 from dotenv import load_dotenv
-from spotipy import SpotifyOAuth
 from .core.external.utils.constants import constants
+from .core.external import spotipy_helper
 from .core import subsonic_helper
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 
-client_id = os.environ.get(constants.SPOTIPY_CLIENT_ID)
-client_secret = os.environ.get(constants.SPOTIPY_CLIENT_SECRET)
-redirect_uri = os.environ.get(constants.SPOTIPY_REDIRECT_URI)
-SCOPE = "user-top-read,user-library-read,user-read-recently-played"
-
-creds = SpotifyOAuth(
-    scope=SCOPE,
-    client_id=client_id,
-    client_secret=client_secret,
-    redirect_uri=redirect_uri,
-    open_browser=False,
-    cache_path=os.path.dirname(
-        os.path.abspath(__file__)) +
-    "/../cache/spotipy_cache")
-
-sp = spotipy.Spotify(auth_manager=creds)
-
-
 def artist_top_tracks(query):
     """artist top tracks"""
+    sp = spotipy_helper.get_spotipy_client()
     results = sp.search(query)
     artists_uri = {}
     if "tracks" in results and "items" in results["tracks"] and len(
@@ -48,11 +30,11 @@ def artist_top_tracks(query):
                     query_no_punct = re.sub(r'[^\w\s]', '', query)
                     if ("uri" in artist and "name" in artist
                         and ((query.lower() == artist["name"].lower()
-                            or query.lower() in artist["name"].lower()
-                            or artist["name"].lower() in query.lower())
-                            or (query_no_punct.lower() == artist_name_no_punct.lower()
-                            or query_no_punct.lower() in artist_name_no_punct.lower()
-                            or artist_name_no_punct.lower() in query_no_punct.lower()))):
+                              or query.lower() in artist["name"].lower()
+                              or artist["name"].lower() in query.lower())
+                             or (query_no_punct.lower() == artist_name_no_punct.lower()
+                                 or query_no_punct.lower() in artist_name_no_punct.lower()
+                                 or artist_name_no_punct.lower() in query_no_punct.lower()))):
                         artists_uri[artist["name"]] = artist["uri"]
 
     for artist_name in artists_uri:
@@ -63,6 +45,7 @@ def artist_top_tracks(query):
 
 def my_recommendations(count=None):
     """my recommendations"""
+    sp = spotipy_helper.get_spotipy_client()
     top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
     logging.info('Loaded your custom top tracks')
     time.sleep(2)
@@ -85,10 +68,11 @@ def my_recommendations(count=None):
                                  for track in history['items']]
             seed_track_ids = top_track_ids + liked_track_ids + history_track_ids
             random.shuffle(seed_track_ids)
-            results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(os.environ.get(
-                constants.ITEMS_PER_PLAYLIST, constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
+            results = sp.recommendations(seed_tracks=seed_track_ids[0:5], limit=int(
+                os.environ.get(constants.ITEMS_PER_PLAYLIST, constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
             playlist_name = "My Recommendations " + str(i + 1)
-            subsonic_helper.write_playlist(sp, playlist_name, results)
+            subsonic_helper.write_playlist(
+                sp, playlist_name, results)
             if count is not None:
                 break
         time.sleep(10)
@@ -96,6 +80,7 @@ def my_recommendations(count=None):
 
 def get_artist(name):
     """get artist"""
+    sp = spotipy_helper.get_spotipy_client()
     results = sp.search(q='artist:' + name, type='artist')
     items = results['artists']['items']
     if len(items) > 0:
@@ -105,6 +90,7 @@ def get_artist(name):
 
 def show_recommendations_for_artist(name):
     """show recommendations for artist"""
+    sp = spotipy_helper.get_spotipy_client()
     logging.info('Searching recommendations for: %s', name)
     artist = get_artist(name)
     if artist is not None:
@@ -123,6 +109,7 @@ def show_recommendations_for_artist(name):
 
 def get_playlist_tracks(item, result, offset_tracks=0):
     """get playlist tracks"""
+    sp = spotipy_helper.get_spotipy_client()
     response_tracks = sp.playlist_items(item['id'],
                                         offset=offset_tracks,
                                         fields='items.track.id,items.track.name,items.track.artists,total',
@@ -146,7 +133,7 @@ def get_playlist_tracks(item, result, offset_tracks=0):
 
 def get_user_playlist_by_name(playlist_name, offset=0):
     """get user playlist by name"""
-
+    sp = spotipy_helper.get_spotipy_client()
     playlist_result = sp.current_user_playlists(limit=50, offset=offset)
 
     name_found = None
@@ -155,7 +142,7 @@ def get_user_playlist_by_name(playlist_name, offset=0):
         if (item['name'] is not None and item['name'].strip() != ''
             and (playlist_name is None
             or (playlist_name is not None
-            and item['name'].lower().strip() == playlist_name.lower().strip()))):
+                and item['name'].lower().strip() == playlist_name.lower().strip()))):
             name_found = item['name'].strip()
     if name_found is None and len(playlist_result['items']) != 0:
         name_found = get_user_playlist_by_name(
@@ -165,6 +152,7 @@ def get_user_playlist_by_name(playlist_name, offset=0):
 
 def get_user_playlists(offset=0, single_execution=False, playlist_name=None):
     """get user playlists"""
+    sp = spotipy_helper.get_spotipy_client()
 
     playlist_result = sp.current_user_playlists(
         limit=(50 if single_execution is False else 1), offset=offset)
@@ -185,6 +173,7 @@ def get_user_playlists(offset=0, single_execution=False, playlist_name=None):
 
 def count_user_playlists(count, offset=0):
     """count user playlists"""
+    sp = spotipy_helper.get_spotipy_client()
     playlist_result = sp.current_user_playlists(limit=50, offset=offset)
     count = count + len(playlist_result['items'])
 
@@ -211,12 +200,14 @@ def all_artists_top_tracks(artist_names):
 
 def get_user_saved_tracks(result):
     """get user saved tracks"""
+    sp = spotipy_helper.get_spotipy_client()
     result = get_user_saved_tracks_playlist(result)
     subsonic_helper.write_playlist(sp, "Saved Tracks", result)
 
 
 def get_user_saved_tracks_playlist(result, offset_tracks=0):
     """get user saved tracks playlist"""
+    sp = spotipy_helper.get_spotipy_client()
     response_tracks = sp.current_user_saved_tracks(
         offset=offset_tracks,
         limit=50)
