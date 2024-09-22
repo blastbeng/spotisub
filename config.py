@@ -10,6 +10,8 @@ class Config(object):
 
     # Secret key
     SECRET_KEY = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(128))
+    SCHEDULER_API_ENABLED = True
+    SCHEDULER_API_PREFIX = "/api/v1/scheduler"
 
     # Database configurations
     SQLALCHEMY_DATABASE_NAME = 'spotisub.sqlite3'
