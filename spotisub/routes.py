@@ -19,9 +19,12 @@ from flask_login import login_user
 from flask_login import logout_user
 from flask_login import login_required
 from flask_apscheduler import APScheduler
-from spotisub import spotisub, configuration_db
+from spotisub import spotisub
+from spotisub import configuration_db
 from spotisub.forms import LoginForm
 from spotisub.forms import RegistrationForm
+from spotisub import classes
+from spotisub import database
 from spotisub.classes import User
 from spotisub import utils
 from spotisub import constants
@@ -96,12 +99,16 @@ def register():
         return redirect(url_for('profile'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data)
-        user.set_password(form.password.data)
-        configuration_db.session.add(user)
-        configuration_db.session.commit()
-        flash('Registered successfully. Please log in to continue')
-        return redirect(url_for('login'))
+        if database.user_exists():
+            flash('Spotisub user already exists. Please log in to continue')
+            return redirect(url_for('login'))
+        else:
+            user = User(username=form.username.data)
+            user.set_password(form.password.data)
+            configuration_db.session.add(user)
+            configuration_db.session.commit()
+            flash('Spotisub user successfully. Please log in to continue')
+            return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
 @spotisub.route('/logout')
@@ -528,64 +535,58 @@ class Healthcheck(Resource):
 
 scheduler = APScheduler()
 
-if os.environ.get(constants.SCHEDULER_ENABLED,
-                  constants.SCHEDULER_ENABLED_DEFAULT_VALUE) == "1":
 
-    if os.environ.get(constants.ARTIST_GEN_SCHED,
-                      constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) != "0":
-        @scheduler.task('interval',
-                        id='artist_recommendations',
-                        hours=int(os.environ.get(constants.ARTIST_GEN_SCHED,
-                                                 constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)))
-        def artist_recommendations():
-            """artist_recommendations task"""
-            generator.show_recommendations_for_artist(
-                random.choice(subsonic_helper.get_artists_array_names()))
-
-    if os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
-                      constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
-        @scheduler.task('interval',
-                        id='artist_top_tracks',
-                        hours=int(os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
-                                                 constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE)))
-        def artist_top_tracks():
-            """artist_top_tracks task"""
-            generator.artist_top_tracks(
-                random.choice(subsonic_helper.get_artists_array_names()))
-
-    if os.environ.get(constants.RECOMEND_GEN_SCHED,
-                      constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
-        @scheduler.task('interval',
-                        id='my_recommendations',
-                        hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED,
-                                                 constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)))
-        def my_recommendations():
-            """my_recommendations task"""
-            generator.my_recommendations(count=random.randrange(int(os.environ.get(
-                constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))
-
-    if os.environ.get(constants.PLAYLIST_GEN_SCHED,
-                      constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
-        @scheduler.task('interval',
-                        id='user_playlists',
-                        hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED,
-                                                 constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)))
-        def user_playlists():
-            """user_playlists task"""
-            generator.get_user_playlists(
-                random.randrange(
-                    generator.count_user_playlists(0)),
-                single_execution=True)
-
-    if os.environ.get(constants.SAVED_GEN_SCHED,
-                      constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
-        @scheduler.task('interval',
-                        id='saved_tracks',
-                        hours=int(os.environ.get(constants.SAVED_GEN_SCHED,
-                                                 constants.SAVED_GEN_SCHED_DEFAULT_VALUE)))
-        def saved_tracks():
-            """saved_tracks task"""
-            generator.get_user_saved_tracks(dict({'tracks': []}))
+if os.environ.get(constants.ARTIST_GEN_SCHED,
+                  constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) != "0":
+    @scheduler.task('interval',
+                    id='artist_recommendations',
+                    hours=int(os.environ.get(constants.ARTIST_GEN_SCHED,
+                                             constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)))
+    def artist_recommendations():
+        """artist_recommendations task"""
+        generator.show_recommendations_for_artist(
+            random.choice(subsonic_helper.get_artists_array_names()))
+if os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
+                  constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
+    @scheduler.task('interval',
+                    id='artist_top_tracks',
+                    hours=int(os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
+                                             constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE)))
+    def artist_top_tracks():
+        """artist_top_tracks task"""
+        generator.artist_top_tracks(
+            random.choice(subsonic_helper.get_artists_array_names()))
+if os.environ.get(constants.RECOMEND_GEN_SCHED,
+                  constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
+    @scheduler.task('interval',
+                    id='my_recommendations',
+                    hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED,
+                                             constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)))
+    def my_recommendations():
+        """my_recommendations task"""
+        generator.my_recommendations(count=random.randrange(int(os.environ.get(
+            constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))
+if os.environ.get(constants.PLAYLIST_GEN_SCHED,
+                  constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
+    @scheduler.task('interval',
+                    id='user_playlists',
+                    hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED,
+                                             constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)))
+    def user_playlists():
+        """user_playlists task"""
+        generator.get_user_playlists(
+            random.randrange(
+                generator.count_user_playlists(0)),
+            single_execution=True)
+if os.environ.get(constants.SAVED_GEN_SCHED,
+                  constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
+    @scheduler.task('interval',
+                    id='saved_tracks',
+                    hours=int(os.environ.get(constants.SAVED_GEN_SCHED,
+                                             constants.SAVED_GEN_SCHED_DEFAULT_VALUE)))
+    def saved_tracks():
+        """saved_tracks task"""
+        generator.get_user_saved_tracks(dict({'tracks': []}))
 
 
 @scheduler.task('interval', id='remove_subsonic_deleted_playlist', hours=12)
@@ -595,4 +596,5 @@ def remove_subsonic_deleted_playlist():
 
 
 scheduler.init_app(spotisub)
-scheduler.start()
+scheduler.start(paused=(os.environ.get(constants.SCHEDULER_ENABLED,
+    constants.SCHEDULER_ENABLED_DEFAULT_VALUE) != "1"))

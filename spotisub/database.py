@@ -40,7 +40,7 @@ class Database:
 
     user = Table(USER, metadata,
                  Column(
-                     'id', Integer, primary_key=True, nullable=False),
+                     'id', Integer, primary_key=True, autoincrement=True),
                  Column(
                      'username', String(36), unique=True, index=True, nullable=False),
                  Column(
@@ -117,6 +117,21 @@ class Database:
 def create_db_tables():
     """Create tables"""
     dbms.metadata.create_all(dbms.db_engine)
+
+def user_exists():
+    """Check if user exists"""
+    with dbms.db_engine.connect() as conn:
+        stmt = select(dbms.user.c.id)
+        stmt.compile()
+        cursor = conn.execute(stmt)
+        records = cursor.fetchall()
+
+        for row in records:
+            cursor.close()
+            conn.close()
+            return True
+
+    return False
 
 
 def insert_song(playlist_id, subsonic_track,
