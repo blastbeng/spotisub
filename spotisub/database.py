@@ -15,10 +15,6 @@ from sqlalchemy.sql import func
 
 SQLITE = 'sqlite'
 USER = 'user'
-SUBSONIC_PLAYLIST = 'subsonic_playlist'
-SUBSONIC_SONG = 'subsonic_song'
-SUBSONIC_ARTIST = 'subsonic_artist'
-SUBSONIC_SONG_ARTIST_RELATION = 'subsonic_song_artist_relation'
 SUBSONIC_SPOTIFY_RELATION = 'subsonic_spotify_relation'
 SPOTIFY_SONG = 'spotify_song'
 SPOTIFY_ARTIST = 'spotify_artist'
