@@ -35,7 +35,7 @@ from spotisub.exceptions import SpotifyApiException
 @spotisub.after_request
 def after_request(response):
     """Excluding healthcheck endpoint from logging"""
-    if not request.path.startswith('/utils/healthcheck'):
+    if not request.path.startswith('/api/v1/utils/healthcheck'):
         timestamp = strftime('[%Y-%b-%d %H:%M]')
         logging.info('%s %s %s %s %s %s',
                      timestamp,
@@ -534,7 +534,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED,
     if os.environ.get(constants.ARTIST_GEN_SCHED,
                       constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) != "0":
         @scheduler.task('interval',
-                        id='artist_recommendations',
+                        id=constants.JOB_AR_ID,
                         hours=int(os.environ.get(constants.ARTIST_GEN_SCHED,
                                                  constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)))
         def artist_recommendations():
@@ -545,7 +545,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED,
     if os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
                       constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
         @scheduler.task('interval',
-                        id='artist_top_tracks',
+                        id=constants.JOB_ATT_ID,
                         hours=int(os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
                                                  constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE)))
         def artist_top_tracks():
@@ -556,7 +556,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED,
     if os.environ.get(constants.RECOMEND_GEN_SCHED,
                       constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
         @scheduler.task('interval',
-                        id='my_recommendations',
+                        id=constants.JOB_MR_ID,
                         hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED,
                                                  constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)))
         def my_recommendations():
@@ -567,7 +567,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED,
     if os.environ.get(constants.PLAYLIST_GEN_SCHED,
                       constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
         @scheduler.task('interval',
-                        id='user_playlists',
+                        id=constants.JOB_UP_ID,
                         hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED,
                                                  constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)))
         def user_playlists():
@@ -580,7 +580,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED,
     if os.environ.get(constants.SAVED_GEN_SCHED,
                       constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
         @scheduler.task('interval',
-                        id='saved_tracks',
+                        id=constants.JOB_ST_ID,
                         hours=int(os.environ.get(constants.SAVED_GEN_SCHED,
                                                  constants.SAVED_GEN_SCHED_DEFAULT_VALUE)))
         def saved_tracks():
