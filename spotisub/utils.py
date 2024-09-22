@@ -3,13 +3,7 @@ import os
 import re
 import sys
 import logging
-from os.path import dirname
-from os.path import join
-from dotenv import load_dotenv
-from .constants import constants
-
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+from spotisub import constants
 
 
 def print_logo(version):

@@ -3,13 +3,8 @@ import time
 import logging
 
 
-from os.path import dirname
-from os.path import join
-from dotenv import load_dotenv
 import musicbrainzngs
-from .utils import utils
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+from spotisub import utils
 
 
 # Disabling musicbrainz INFO log as we don't want to see ugly infos in the
@@ -28,7 +23,7 @@ def get_isrc_by_id(song):
     try:
         if ("musicBrainzId" in song
             and song["musicBrainzId"] is not None
-            and song["musicBrainzId"] != ""):
+                and song["musicBrainzId"] != ""):
             song = musicbrainzngs.get_recording_by_id(
                 song["musicBrainzId"], includes=["isrcs"])
             time.sleep(1)
@@ -36,7 +31,7 @@ def get_isrc_by_id(song):
                 and song["recording"] is not None
                 and "isrc-list" in song["recording"]
                 and song["recording"]["isrc-list"] is not None
-                and len(song["recording"]["isrc-list"])) > 0:
+                    and len(song["recording"]["isrc-list"])) > 0:
                 return song["recording"]["isrc-list"]
         return []
     except BaseException:

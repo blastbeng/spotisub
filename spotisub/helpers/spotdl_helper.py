@@ -1,15 +1,10 @@
 """Spotdl helper"""
 import os
 
-from os.path import dirname
-from os.path import join
-from dotenv import load_dotenv
 from spotdl import Spotdl
 from spotdl.types.song import Song
-from .utils.constants import constants
+from spotisub import constants
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
 
 client_id = os.environ.get(constants.SPOTIPY_CLIENT_ID)
 client_secret = os.environ.get(constants.SPOTIPY_CLIENT_SECRET)
