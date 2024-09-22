@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% if current_user.is_authenticated %}
+    {% block current_user_content %}
+        <h1>{{ title }}</h1>
+        <p>
+            <a href="{{ url_for('dashboard') }}">Return to the home page</a>
+        </p>
+    {% endblock %}
+{% else %}
+    {% block app_context %}
+        <div class="row">
+            <div class="col-md-12">
+                <h1>{{ title }}</h1>
+                <p>
+                    <a href="{{ url_for('dashboard') }}">Return to the home page</a>
+                </p>
+            </div>  
+        </div>
+    {% endblock %}
+{% endif %}
