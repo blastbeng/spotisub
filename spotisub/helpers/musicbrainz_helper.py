@@ -4,6 +4,7 @@ import logging
 
 
 import musicbrainzngs
+from spotisub import spotisub
 from spotisub import utils
 
 

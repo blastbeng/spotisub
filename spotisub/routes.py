@@ -15,8 +15,8 @@ from spotisub import spotisub
 from spotisub import utils
 from spotisub import constants
 from spotisub import generator
-from spotisub.generator import get_subsonic_helper
-from spotisub.generator import get_spotipy_helper
+from spotisub.generator import subsonic_helper
+from spotisub.generator import spotipy_helper
 from spotisub.exceptions import SubsonicOfflineException
 from spotisub.exceptions import SpotifyApiException
 
@@ -72,13 +72,13 @@ class ArtistRecommendationsClass(Resource):
     def get(self, artist_name=None):
         """Artist reccomendations endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
             if artist_name is None:
                 artist_name = random.choice(
-                    get_subsonic_helper().get_artists_array_names())
+                    subsonic_helper.get_artists_array_names())
             else:
-                search_result_name = get_subsonic_helper().search_artist(artist_name)
+                search_result_name = subsonic_helper.search_artist(artist_name)
                 if search_result_name is None:
                     return get_response_json(
                         get_json_message(
@@ -126,8 +126,8 @@ class ArtistRecommendationsAllClass(Resource):
     def get(self):
         """All Artists reccomendations endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generator
                 .all_artists_recommendations(get_subsonic_helper()
@@ -161,13 +161,13 @@ class ArtistTopTracksClass(Resource):
     def get(self, artist_name=None):
         """Artist top tracks endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
             if artist_name is None:
                 artist_name = random.choice(
-                    get_subsonic_helper().get_artists_array_names())
+                    subsonic_helper.get_artists_array_names())
             else:
-                search_result_name = get_subsonic_helper().search_artist(artist_name)
+                search_result_name = subsonic_helper.search_artist(artist_name)
                 if search_result_name is None:
                     return get_response_json(
                         get_json_message(
@@ -214,8 +214,8 @@ class ArtistTopTracksAllClass(Resource):
     def get(self):
         """All Artists top tracks endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generator
                 .all_artists_top_tracks(get_subsonic_helper()
@@ -248,8 +248,8 @@ class RecommendationsClass(Resource):
     def get(self):
         """Recommendations endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generator.my_recommendations(
                     count=random.randrange(
@@ -289,8 +289,8 @@ class UserPlaylistsClass(Resource):
     def get(self, playlist_name=None):
         """User playlists endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
             if playlist_name is None:
                 count = generator.count_user_playlists(0)
                 threading.Thread(
@@ -347,8 +347,8 @@ class UserPlaylistsAllClass(Resource):
     def get(self):
         """All User playlists endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generator.get_user_playlists(0)).start()
             return get_response_json(
@@ -379,8 +379,8 @@ class SavedTracksClass(Resource):
     def get(self):
         """Saved tracks endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generator
                 .get_user_saved_tracks(dict({'tracks': []}))).start()
@@ -412,9 +412,9 @@ class PlaylistUnmatchedClass(Resource):
     def get(self):
         """Unmatched playlist songs endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
-            missing_songs = get_subsonic_helper().get_playlist_songs(
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
+            missing_songs = subsonic_helper.get_playlist_songs(
                 missing_only=True)
             return get_response_json(json.dumps(missing_songs), 200)
         except SubsonicOfflineException:
@@ -443,9 +443,9 @@ class PlaylistAllClass(Resource):
     def get(self):
         """All playlist songs endpoint"""
         try:
-            get_spotipy_helper().get_secrets()
-            get_subsonic_helper().check_pysonic_connection()
-            missing_songs = get_subsonic_helper().get_playlist_songs(
+            spotipy_helper.get_secrets()
+            subsonic_helper.check_pysonic_connection()
+            missing_songs = subsonic_helper.get_playlist_songs(
                 missing_only=False)
             return get_response_json(json.dumps(missing_songs), 200)
         except SubsonicOfflineException:
@@ -490,7 +490,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED,
         def artist_recommendations():
             """artist_recommendations task"""
             generator.show_recommendations_for_artist(
-                random.choice(get_subsonic_helper().get_artists_array_names()))
+                random.choice(subsonic_helper.get_artists_array_names()))
 
     if os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
                       constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
@@ -501,7 +501,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED,
         def artist_top_tracks():
             """artist_top_tracks task"""
             generator.artist_top_tracks(
-                random.choice(get_subsonic_helper().get_artists_array_names()))
+                random.choice(subsonic_helper.get_artists_array_names()))
 
     if os.environ.get(constants.RECOMEND_GEN_SCHED,
                       constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
@@ -541,7 +541,7 @@ if os.environ.get(constants.SCHEDULER_ENABLED,
 @scheduler.task('interval', id='remove_subsonic_deleted_playlist', hours=12)
 def remove_subsonic_deleted_playlist():
     """remove_subsonic_deleted_playlist task"""
-    get_subsonic_helper().remove_subsonic_deleted_playlist()
+    subsonic_helper.remove_subsonic_deleted_playlist()
 
 
 scheduler.init_app(spotisub)

@@ -5,10 +5,11 @@ import random
 import time
 import libsonic
 from libsonic.errors import DataNotFoundError
+from spotisub import spotisub
+from spotisub import database
 from spotisub import constants
 from spotisub import utils
 from spotisub.exceptions import SubsonicOfflineException
-from spotisub import database
 from spotisub.classes import ComparisonHelper
 from spotisub.helpers import musicbrainz_helper
 
@@ -29,10 +30,6 @@ if os.environ.get(constants.LIDARR_ENABLED,
         "You have enabled LIDARR integration, " +
         "if an artist won't be found inside the " +
         "lidarr database, the download process will be skipped.")
-
-
-dbms = database.Database(database.SQLITE, dbname='spotisub.sqlite3')
-database.create_db_tables(dbms)
 
 pysonic = libsonic.Connection(
     os.environ.get(
@@ -155,7 +152,7 @@ def write_playlist(sp, playlist_name, results):
             check_pysonic_connection().createPlaylist(name=playlist_name, songIds=[])
             logging.info('Creating playlist %s', playlist_name)
             playlist_id = get_playlist_id_by_name(playlist_name)
-            database.delete_playlist_relation_by_id(dbms, playlist_id)
+            database.delete_playlist_relation_by_id(playlist_id)
         else:
             old_song_ids = get_playlist_songs_ids_by_id(playlist_id)
 
@@ -226,7 +223,7 @@ def write_playlist(sp, playlist_name, results):
                                 artist_spotify["name"],
                                 track['name'])
                             database.insert_song(
-                                dbms, playlist_id, None, artist_spotify, track)
+                                playlist_id, None, artist_spotify, track)
         if playlist_id is not None:
 
             if len(song_ids) > 0:
@@ -296,7 +293,7 @@ def match_with_subsonic_track(
                     comparison_helper.track_helper.append(placeholder)
                     comparison_helper.found = True
                     database.insert_song(
-                        dbms, playlist_id, song, comparison_helper.artist_spotify, comparison_helper.track)
+                        playlist_id, song, comparison_helper.artist_spotify, comparison_helper.track)
                     logging.info(
                         'Adding song "%s - %s - %s" to playlist "%s", matched by ISRC: "%s"',
                         song["artist"],
@@ -323,7 +320,7 @@ def match_with_subsonic_track(
                     comparison_helper.track_helper.append(placeholder)
                     comparison_helper.found = True
                     database.insert_song(
-                        dbms, playlist_id, song, comparison_helper.artist_spotify, comparison_helper.track)
+                        playlist_id, song, comparison_helper.artist_spotify, comparison_helper.track)
                     logging.info(
                         'Adding song "%s - %s - %s" to playlist "%s", matched by text comparison',
                         song["artist"],
@@ -345,7 +342,7 @@ def match_with_subsonic_track(
                 comparison_helper.song_ids.append(skipped_song["id"])
                 comparison_helper.found = True
                 database.insert_song(
-                    dbms, playlist_id, skipped_song, comparison_helper.artist_spotify, comparison_helper.track)
+                    playlist_id, skipped_song, comparison_helper.artist_spotify, comparison_helper.track)
                 logging.warning(
                     'No matching album found for Subsonic search "%s", using a random one',
                     text_to_search)
@@ -362,7 +359,7 @@ def match_with_subsonic_track(
 
 def get_playlist_songs(missing_only=False):
     """get list of playlists and songs"""
-    playlist_songs_db = database.select_all_playlists(dbms, missing_only)
+    playlist_songs_db = database.select_all_playlists(missing_only)
     playlist_songs = {}
     for key in playlist_songs_db:
         playlist_search = None
@@ -378,7 +375,7 @@ def get_playlist_songs(missing_only=False):
                 key)
             logging.warning(
                 'Deleting Playlist with id "%s" from spotisub database.', key)
-            database.delete_playlist_relation_by_id(dbms, key)
+            database.delete_playlist_relation_by_id(key)
         elif playlist_search is not None:
             missings = playlist_songs_db[key]
             for missing in missings:
@@ -419,7 +416,7 @@ def get_playlist_songs(missing_only=False):
                                 'with an unmatched Subsonic entry. ' +
                                 'Deleting this playlist.',
                                 single_playlist_search["name"])
-                            database.delete_playlist_relation_by_id(dbms, key)
+                            database.delete_playlist_relation_by_id(key)
                             if single_playlist_search["name"] in playlist_songs:
                                 playlist_songs.pop(
                                     single_playlist_search["name"])
@@ -450,7 +447,7 @@ def get_playlist_songs_ids_by_id(key):
             key)
         logging.warning(
             'Deleting Playlist with id "%s" from spotisub database.', key)
-        database.delete_playlist_relation_by_id(dbms, key)
+        database.delete_playlist_relation_by_id(key)
     elif (playlist_search is not None
             and "playlist" in playlist_search
             and "entry" in playlist_search["playlist"]
@@ -467,7 +464,7 @@ def get_playlist_songs_ids_by_id(key):
 def remove_subsonic_deleted_playlist():
     """fix user manually deleted playlists"""
 
-    spotisub_playlists = database.select_all_playlists(dbms, False)
+    spotisub_playlists = database.select_all_playlists(False)
     for key in spotisub_playlists:
         playlist_search = None
         try:
@@ -483,7 +480,7 @@ def remove_subsonic_deleted_playlist():
                 key)
             logging.warning(
                 'Deleting Playlist with id "%s" from spotisub database.', key)
-            database.delete_playlist_relation_by_id(dbms, key)
+            database.delete_playlist_relation_by_id(key)
 
     # DO we really need to remove spotify songs even if they are not related to any playlist?
     # This can cause errors when an import process is running

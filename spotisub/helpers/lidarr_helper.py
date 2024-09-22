@@ -3,6 +3,7 @@ import os
 
 from pyarr import LidarrAPI
 from expiringdict import ExpiringDict
+from spotisub import spotisub
 from spotisub import utils
 from spotisub import constants
 

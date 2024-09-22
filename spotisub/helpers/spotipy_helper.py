@@ -2,6 +2,7 @@
 import os
 import spotipy
 from spotipy import SpotifyOAuth
+from spotisub import spotisub
 from spotisub import constants
 from spotisub.exceptions import SpotifyApiException
 

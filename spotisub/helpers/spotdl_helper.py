@@ -3,6 +3,7 @@ import os
 
 from spotdl import Spotdl
 from spotdl.types.song import Song
+from spotisub import spotisub
 from spotisub import constants
 
 

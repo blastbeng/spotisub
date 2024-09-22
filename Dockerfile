@@ -20,10 +20,10 @@ ENV PATH="$HOME/.local/bin:$PATH"
 WORKDIR $HOME/spotisub
 ENV PATH="/home/uwsgi/.local/bin:${PATH}"
 
-COPY main.py init.py entrypoint.sh first_run.sh uwsgi.ini requirements.txt ./
-COPY spotisub spotisub/
-COPY templates templates/
+COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt
+COPY main.py init.py entrypoint.sh first_run.sh uwsgi.ini ./
+COPY spotisub spotisub/
 
 USER root
 RUN chmod +x entrypoint.sh && \
