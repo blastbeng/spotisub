@@ -9,9 +9,9 @@
     <!-- The title of our application is defined here -->
     {% block title %}
         {% if title %}
-            <title>{{ title }} - Fixed Sidebar</title>
+            <title>{{ title }} - Spotisub</title>
         {% else %}
-            <title>Fixed Sidebar Dashboard</title>
+            <title>Spotisub Dashboard</title>
         {% endif %}
     {% endblock %}
 
@@ -32,68 +32,76 @@
         {% if current_user.is_authenticated %}
             <div class="wrapper">
                 <!-- Sidebar  -->
-                <nav id="sidebar">
-                    <div class="sidebar-header">
-                        <h3>Fixed Sidebar</h3>
-                    </div>
+                <nav id="sidebar">         
 
                     <ul class="list-unstyled components">
-                        <p>Menu</p>
                         <li class="active">
-                            <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                            <a href="#">
                                 <i class="fas fa-home"></i>
-                                Introduction</a>
-                            <ul class="collapse list-unstyled" id="homeSubmenu">
+                                Overview</a>
+                        </li>
+                        <li>
+                            <a href="#playlistsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                                <i class="fas fa-music"></i>
+                                Playlists</a>
+                            <ul class="collapse list-unstyled" id="playlistsSubMenu">
                                 <li>
-                                    <a href="#">Overview</a>
+                                    <a href="#">Managment</a>
                                 </li>
                                 <li>
-                                    <a href="#">Objectives</a>
-                                </li>
-                                <li>
-                                    <a href="#">Rating</a>
+                                    <a href="#">Unmatched Songs</a>
                                 </li>
                             </ul>
                         </li>
                         <li>
-                            <a href="#">
-                                <i class="fas fa-briefcase"></i>
-                                Chapter 2</a>
-                        </li>
-                        <li>
-                            <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                            <a href="#settingsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-copy"></i>
-                                Chapter 3</a>
-                            <ul class="collapse list-unstyled" id="pageSubmenu">
+                                Settings</a>
+                            <ul class="collapse list-unstyled" id="settingsSubMenu">
                                 <li>
-                                    <a href="#">Section 1</a>
+                                    <a href="#">Paths</a>
                                 </li>
                                 <li>
-                                    <a href="#">Section 2</a>
+                                    <a href="#">Scheduler</a>
                                 </li>
                                 <li>
-                                    <a href="#">Section 3</a>
+                                    <a href="#">Integrations</a>
+                                </li>
+                                <li>
+                                    <a href="#">General</a>
+                                </li>
+                                <li>
+                                    <a href="#">UI</a>
                                 </li>
                             </ul>
                         </li>
                         <li>
-                            <a href="#">
-                                <i class="fas fa-video"></i>
-                                Chapter 4</a>
-                        </li>
-                        <li>
-                            <a href="#">
+                            <a href="#systemSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-book"></i>
-                                Chapter 5</a>
+                                System</a>
+                            <ul class="collapse list-unstyled" id="systemSubMenu">
+                                <li>
+                                    <a href="#">Status</a>
+                                </li>
+                                <li>
+                                    <a href="#">Tasks</a>
+                                </li>
+                                <li>
+                                    <a href="#">Updates</a>
+                                </li>
+                                <li>
+                                    <a href="#">Log Files</a>
+                                </li>
+                            </ul>
                         </li>
                     </ul>
 
                     <ul class="list-unstyled CTAs">
                         <li>
-                            <a href="#" class="download">Delete Account</a>
+                            <a href="#" class="download">About</a>
                         </li>
                         <li>
-                            <a href="#" class="article">Explore</a>
+                            <a href="#" class="article">Support</a>
                         </li>
                     </ul>
                 </nav>
@@ -104,6 +112,7 @@
                     <nav class="navbar navbar-expand-lg navbar-light bg-light">
                         <div class="container-fluid">
 
+                            
                             <button type="button" id="sidebarCollapse" class="btn btn-info">
                                 <i class="fas fa-align-left"></i>
                                 <span>Toggle Sidebar</span>
@@ -111,14 +120,15 @@
                             <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                                 <i class="fas fa-align-justify"></i>
                             </button>
+                            
+                            <div id="search">
+                                <input type="text" placeholder="Search..">
+                            </div>
 
                             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                                 <ul class="nav navbar-nav ml-auto">
                                     <li class="nav-item active">
                                         <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="#">2FA</a>
                                     </li>
                                 </ul>
                             </div>

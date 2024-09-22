@@ -259,3 +259,21 @@ a.article:hover {
         display: none;
     }
 }
+
+#search {
+	display: block;
+	grid-area: search;
+	grid-template:
+		"search" 60px
+		/ 420px;
+	justify-content: center;
+	align-content: center;
+	justify-items: stretch;
+	align-items: stretch;
+	background: hsl(0, 0%, 99%);
+	padding: 0 30px 0 60px;
+	border: 1px;
+	border-radius: 100px;
+	font: 24px/1 system-ui, sans-serif;
+	outline-offset: -8px;
+}
