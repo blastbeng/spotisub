@@ -80,7 +80,9 @@ def dashboard():
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('profile'))
+        return redirect(url_for('dashboard'))
+    if not database.user_exists():
+        return redirect(url_for('register'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
@@ -96,20 +98,19 @@ def login():
 @spotisub.route('/register',methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('profile'))
+        return redirect(url_for('dashboard'))
+    if database.user_exists():
+        flash('Spotisub user already exists. Please log in to continue')
+        return redirect(url_for('login'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        if database.user_exists():
-            flash('Spotisub user already exists. Please log in to continue')
-            return redirect(url_for('login'))
-        else:
-            user = User(username=form.username.data)
-            user.set_password(form.password.data)
-            configuration_db.session.add(user)
-            configuration_db.session.commit()
-            flash('Spotisub user successfully. Please log in to continue')
-            return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
+        user = User(username=form.username.data)
+        user.set_password(form.password.data)
+        configuration_db.session.add(user)
+        configuration_db.session.commit()
+        flash('Spotisub user successfully. Please log in to continue')
+        return redirect(url_for('login'))
+    return render_template('register.html', title='Create Spotisub credentials', form=form)
 
 @spotisub.route('/logout')
 @login_required
