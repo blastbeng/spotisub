@@ -5,13 +5,24 @@ import random
 import threading
 import json
 from time import strftime
+from flask import Blueprint
 from flask import Response
 from flask import request
 from flask import render_template
+from flask import url_for
+from flask import redirect
+from flask import flash
 from flask_restx import Api
 from flask_restx import Resource
+from flask_login import current_user
+from flask_login import login_user
+from flask_login import logout_user
+from flask_login import login_required
 from flask_apscheduler import APScheduler
-from spotisub import spotisub
+from spotisub import spotisub, configuration_db
+from spotisub.forms import LoginForm
+from spotisub.forms import RegistrationForm
+from spotisub.classes import User
 from spotisub import utils
 from spotisub import constants
 from spotisub import generator
@@ -35,9 +46,9 @@ def after_request(response):
                      response.status)
     return response
 
-
-api = Api(spotisub)
-
+blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
+api = Api(blueprint, doc='/docs/')
+spotisub.register_blueprint(blueprint)
 
 def get_response_json(data, status):
     """Generates json response"""
@@ -56,10 +67,49 @@ def get_json_message(message, is_ok):
     return json.dumps(data)
 
 
+@spotisub.route('/')
 @spotisub.route('/dashboard')
+@login_required
 def dashboard():
-    """Dashboard path"""
-    return render_template('dashboard.html', data=[])
+    return render_template('dashboard.html', title='Dashboard')
+
+
+@spotisub.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('profile'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None or not user.check_password(form.password.data):
+            flash('Invalid username or password')
+            return redirect(url_for('login'))
+        login_user(user, remember=form.remember_me.data)
+        flash(f'Welcome {user.username}')
+        return redirect(url_for('dashboard'))
+    return render_template('login.html', title='Login', form=form)
+
+
+@spotisub.route('/register',methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('profile'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data)
+        user.set_password(form.password.data)
+        configuration_db.session.add(user)
+        configuration_db.session.commit()
+        flash('Registered successfully. Please log in to continue')
+        return redirect(url_for('login'))
+    return render_template('register.html', title='Register', form=form)
+
+@spotisub.route('/logout')
+@login_required
+def logout():
+    """Used to log out a user"""
+    logout_user()
+    return redirect(url_for('login'))
 
 
 nsgenerate = api.namespace('generate', 'Generate APIs')

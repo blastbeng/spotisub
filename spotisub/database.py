@@ -6,12 +6,14 @@ from sqlalchemy import select
 from sqlalchemy import delete
 from sqlalchemy import Table
 from sqlalchemy import Column
+from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import MetaData
 from sqlalchemy import DateTime
 from sqlalchemy.sql import func
 
 SQLITE = 'sqlite'
+USER = 'user'
 SUBSONIC_PLAYLIST = 'subsonic_playlist'
 SUBSONIC_SONG = 'subsonic_song'
 SUBSONIC_ARTIST = 'subsonic_artist'
@@ -38,6 +40,15 @@ class Database:
         self.db_engine = create_engine(engine_url, isolation_level=None)
 
     metadata = MetaData()
+
+    user = Table(USER, metadata,
+                 Column(
+                     'id', Integer, primary_key=True, nullable=False),
+                 Column(
+                     'username', String(36), unique=True, index=True, nullable=False),
+                 Column(
+                     'password_hash', String(128), nullable=False)
+                 )
 
     subsonic_spotify_relation = Table(SUBSONIC_SPOTIFY_RELATION, metadata,
                                       Column(
@@ -200,8 +211,8 @@ def select_all_playlists(missing_only):
                 dbms.subsonic_spotify_relation.c.subsonic_artist_id,
                 dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
                 dbms.subsonic_spotify_relation.c.spotify_song_uuid).where(
-                dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
-                dbms.subsonic_spotify_relation.c.subsonic_artist_id == None)
+                dbms.subsonic_spotify_relation.c.subsonic_song_id is None,
+                dbms.subsonic_spotify_relation.c.subsonic_artist_id is None)
         else:
             stmt = select(
                 dbms.subsonic_spotify_relation.c.uuid,

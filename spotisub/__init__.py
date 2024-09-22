@@ -33,4 +33,4 @@ configuration_db = SQLAlchemy(spotisub)
 login = LoginManager(spotisub)
 login.login_view = 'login'
 
-from spotisub import routes
+from spotisub import routes, classes, errors
