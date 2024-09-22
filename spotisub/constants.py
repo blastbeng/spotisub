@@ -1,5 +1,5 @@
 """Spotisub constants"""
-VERSION = "0.3.0-alpha"
+VERSION = "0.3.0-dashboard-alpha"
 SPLIT_TOKENS = ["(", "-", "feat"]
 
 ARTIST_GEN_SCHED = "ARTIST_GEN_SCHED"
