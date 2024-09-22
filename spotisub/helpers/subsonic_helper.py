@@ -356,10 +356,12 @@ def match_with_subsonic_track(
                     playlistId=playlist_id, songIds=comparison_helper.song_ids)
     return comparison_helper
 
+def count_playlists(missing_only=False):
+    return database.count_playlists(missing_only)
 
-def get_playlist_songs(missing_only=False):
+def get_playlist_songs(missing_only=False, page=None, limit=None):
     """get list of playlists and songs"""
-    playlist_songs_db = database.select_all_playlists(missing_only)
+    playlist_songs_db = database.select_all_playlists(missing_only, page, limit)
     playlist_songs = {}
     for key in playlist_songs_db:
         playlist_search = None

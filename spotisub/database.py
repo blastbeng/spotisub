@@ -11,6 +11,7 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import MetaData
 from sqlalchemy import DateTime
+from sqlalchemy import func
 from sqlalchemy.sql import func
 
 SQLITE = 'sqlite'
@@ -211,27 +212,24 @@ def insert_playlist_relation(conn, subsonic_song_id,
     conn.execute(stmt)
 
 
-def select_all_playlists(missing_only):
+def select_all_playlists(missing_only=False, page=None, limit=None):
     """select playlists from database"""
     value = {}
     stmt = None
-    with dbms.db_engine.connect() as conn:
+    with dbms.db_engine.connect() as conn:        
+        stmt = select(
+            dbms.subsonic_spotify_relation.c.uuid,
+            dbms.subsonic_spotify_relation.c.subsonic_song_id,
+            dbms.subsonic_spotify_relation.c.subsonic_artist_id,
+            dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
+            dbms.subsonic_spotify_relation.c.spotify_song_uuid)
         if missing_only:
-            stmt = select(
-                dbms.subsonic_spotify_relation.c.uuid,
-                dbms.subsonic_spotify_relation.c.subsonic_song_id,
-                dbms.subsonic_spotify_relation.c.subsonic_artist_id,
-                dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
-                dbms.subsonic_spotify_relation.c.spotify_song_uuid).where(
-                dbms.subsonic_spotify_relation.c.subsonic_song_id is None,
-                dbms.subsonic_spotify_relation.c.subsonic_artist_id is None)
-        else:
-            stmt = select(
-                dbms.subsonic_spotify_relation.c.uuid,
-                dbms.subsonic_spotify_relation.c.subsonic_song_id,
-                dbms.subsonic_spotify_relation.c.subsonic_artist_id,
-                dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
-                dbms.subsonic_spotify_relation.c.spotify_song_uuid)
+            stmt = stmt.where(
+                dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
+                dbms.subsonic_spotify_relation.c.subsonic_artist_id == None)
+        if page is not None and limit is not None:
+            stmt = stmt.limit(limit).offset(page*limit)
+        stmt.order_by(dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
         stmt.compile()
         cursor = conn.execute(stmt)
         records = cursor.fetchall()
@@ -269,6 +267,23 @@ def select_all_playlists(missing_only):
 
     return value
 
+
+
+def count_playlists(missing_only=False):
+    """select playlists from database"""
+    count = 0
+    with dbms.db_engine.connect() as conn:        
+        stmt = select(func.count(dbms.subsonic_spotify_relation.c.uuid))
+        
+        # Count query
+        if missing_only:
+            stmt = stmt.where(
+                dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
+                dbms.subsonic_spotify_relation.c.subsonic_artist_id == None)
+        stmt.compile()
+        count = conn.execute(stmt).scalar()
+
+    return count
 
 def select_spotify_artists_by_uuid(conn, c_uuid):
     """select spotify artists by uuid"""

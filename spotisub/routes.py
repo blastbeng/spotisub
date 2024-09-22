@@ -4,6 +4,7 @@ import os
 import random
 import threading
 import json
+import math
 from time import strftime
 from flask import Blueprint
 from flask import Response
@@ -29,6 +30,7 @@ from spotisub.classes import User
 from spotisub import utils
 from spotisub import constants
 from spotisub import generator
+from spotisub import database
 from spotisub.generator import subsonic_helper
 from spotisub.generator import spotipy_helper
 from spotisub.exceptions import SubsonicOfflineException
@@ -75,6 +77,28 @@ def get_json_message(message, is_ok):
 @login_required
 def dashboard():
     return render_template('dashboard.html', title='Dashboard')
+
+@spotisub.route('/unmatched/')
+@spotisub.route('/unmatched/<int:page>/')
+@login_required
+def unmatched(page = 1):
+    limit = 50
+    song_count = subsonic_helper.count_playlists(missing_only=True)
+    total_pages = math.ceil(song_count/limit)
+    playlists = subsonic_helper.get_playlist_songs(
+                missing_only=True, page=page-1, limit=50)
+    pagination_array = []
+    page_count = 1
+    while page_count <= total_pages:
+        cur = {}
+        cur["page"] = str(page_count)
+        if page_count == page:
+            cur["active"] = "1"
+        else:
+            cur["active"] = "0"
+        pagination_array.append(cur)
+        page_count = page_count + 1
+    return render_template('unmatched.html', title='Dashboard', playlists=playlists, pagination_array=pagination_array)
 
 
 @spotisub.route('/login', methods=['GET', 'POST'])

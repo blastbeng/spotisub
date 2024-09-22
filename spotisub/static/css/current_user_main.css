@@ -196,6 +196,12 @@ a.article:hover {
     color: #fff !important;
 }
 
+a.article-active,
+a.article-active:hover {
+    background: #17a2b8 !important;
+    color: #fff !important;
+}
+
 /* ---------------------------------------------------
     CONTENT STYLE
 ----------------------------------------------------- */
@@ -276,4 +282,15 @@ a.article:hover {
 	border-radius: 100px;
 	font: 24px/1 system-ui, sans-serif;
 	outline-offset: -8px;
+}
+
+.pagination {
+  display: flex;
+}
+
+.pagination a {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
 }
