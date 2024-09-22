@@ -200,8 +200,8 @@ def select_all_playlists(missing_only):
                 dbms.subsonic_spotify_relation.c.subsonic_artist_id,
                 dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
                 dbms.subsonic_spotify_relation.c.spotify_song_uuid).where(
-                dbms.subsonic_spotify_relation.c.subsonic_song_id is None,
-                dbms.subsonic_spotify_relation.c.subsonic_artist_id is None)
+                dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
+                dbms.subsonic_spotify_relation.c.subsonic_artist_id == None)
         else:
             stmt = select(
                 dbms.subsonic_spotify_relation.c.uuid,
