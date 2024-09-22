@@ -12,6 +12,7 @@ class Config(object):
     SECRET_KEY = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(128))
 
     # Database configurations
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'cache/spotisub.sqlite3')
+    SQLALCHEMY_DATABASE_NAME = 'spotisub.sqlite3'
+    SQLALCHEMY_DATABASE_PATH = 'sqlite:///' + os.path.join(basedir, 'cache')
+    SQLALCHEMY_DATABASE_URI = os.path.join(SQLALCHEMY_DATABASE_PATH, SQLALCHEMY_DATABASE_NAME) 
     SQLALCHEMY_TRACK_MODIFICATIONS = False

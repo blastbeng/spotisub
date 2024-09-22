@@ -1,5 +1,6 @@
 """Spotisub database"""
 import uuid
+from config import Config
 from sqlalchemy import create_engine
 from sqlalchemy import insert
 from sqlalchemy import select
@@ -27,7 +28,7 @@ SPOTIFY_SONG_ARTIST_RELATION = 'spotify_song_artist_relation'
 class Database:
     """Spotisub Database class"""
     DB_ENGINE = {
-        SQLITE: 'sqlite:///cache/{DB}'
+        SQLITE: Config.SQLALCHEMY_DATABASE_PATH + '/{DB}'
     }
 
     # Main DB Connection Ref Obj
@@ -427,5 +428,5 @@ def select_spotify_song_artists_relation_by_song_uuid(
 
     return value
 
-dbms = Database(SQLITE, dbname='spotisub.sqlite3')
+dbms = Database(SQLITE, dbname=Config.SQLALCHEMY_DATABASE_NAME)
 create_db_tables()
