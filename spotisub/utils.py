@@ -111,25 +111,25 @@ def get_pagination(page, total_pages):
     value = []
     value.append(page)
 
-    page_less = page - 5
-    page_plus = page + 5
+    page_less = page - 3
+    page_plus = page + 3
 
     page_num = page
     while page_num < page_plus:
         page_num = page_num + 1
-        if page_num > total_pages or len(value) >= 10:
+        if page_num > total_pages or len(value) >= 3:
             break
         value.append(page_num)
 
     page_num = page
     while page_num >= page_less:
         page_num = page_num - 1
-        if page_num <= 0 or len(value) >= 10:
+        if page_num <= 0 or len(value) >= 5:
             break
         value.append(page_num)    
 
     page_num = page
-    while len(value) < 10:
+    while len(value) < 3:
         page_num = page_num + 1
         if page_num > total_pages:
             break
@@ -137,7 +137,7 @@ def get_pagination(page, total_pages):
             value.append(page_num)
 
     page_num = page
-    while len(value) < 10:
+    while len(value) < 3:
         page_num = page_num - 1
         
         if page_num <= 0:
@@ -145,7 +145,7 @@ def get_pagination(page, total_pages):
         if page_num not in value:
             value.append(page_num)
 
-    prev_page = (page - 5) if (page - 5) > 0 else 1
-    next_page = (page + 5) if (page + 5) <= total_pages else total_pages
+    prev_page = (page - 1) if (page - 1) > 0 else 1
+    next_page = (page + 1) if (page + 1) <= total_pages else total_pages
 
     return sorted(value), prev_page, next_page

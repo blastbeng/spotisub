@@ -194,12 +194,16 @@ a.article,
 a.article:hover {
     background: #6d7fcc !important;
     color: #fff !important;
+    border: 2px solid;
+    border-color: #6d7fcc;
 }
 
 a.article-active,
 a.article-active:hover {
-    background: #17a2b8 !important;
+    background: #6d7fcc !important;
     color: #fff !important;
+    border: 2px solid;
+    border-color: black;
 }
 
 /* ---------------------------------------------------
@@ -208,7 +212,7 @@ a.article-active:hover {
 
 #content {
     width: 100%;
-    padding: 20px;
+    padding: 5px;
     min-height: 100vh;
     transition: all 0.3s;
 }
@@ -276,24 +280,44 @@ a.article-active:hover {
 	padding-right: 20px;
 	border: 1px;
 	border-radius: 0px;
-	font: 24px/1 system-ui, sans-serif;
+	font: 14px/1 system-ui, sans-serif;
 	outline-offset: -8px;
 }
 
 .pagination {
   display: flex;
-  overflow-x:auto;
+  font: 14px/1 system-ui, sans-serif;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .table-container{
     overflow-x:auto;
 }
 
+.table-striped{
+    font: 14px/1 system-ui, sans-serif;
+    font-weight: bold;
+    white-space:nowrap;
+}
+.table-striped th{
+    font: 14px/1 system-ui, sans-serif;
+    font-weight: bold;
+    white-space:nowrap;
+}
+
 .pagination a {
   color: black;
   float: right;
-  padding: 7px 16px;
+  padding: 7px;
   text-decoration: none;
+  overflow-x:auto;
+}
+.pagination  li {
+    display: inline-block;
+}
+.pagination  ul {
+    white-space: nowrap;
 }
 
 .title{
@@ -301,35 +325,37 @@ a.article-active:hover {
 }
 
 .logo{
-    margin-left:20px;
-    border-radius:100px;
-}
-.logo .active{
-    margin-left:0px;
-    border-radius:100px;
+    border-radius: 1000px;
+    border: 2px solid;
+    border-color: black;
+    cursor: pointer;
 }
 
-#limit{
-	display: inline;
-	justify-content: center;
-	align-content: center;
-	justify-items: stretch;
-	align-items: stretch;
-	background: hsl(0, 0%, 99%);
-	padding-left: 20px;
-    border: 0px;
-	border-radius: 100px;
-	font: 24px/1 system-ui, sans-serif;
-	outline-offset: -8px;
-}
 
 .text-limit{
-	display: inline;
-	width: 180px;
+	display: inline-block;
     border: 0px;
+    padding-left:10px;
+    padding-right:10px;
 }
 
 .search-submit{
-	display: inline;
-	margin-right: 20px;
+	display: inline-block;
+}
+
+.text-search{
+    margin-left: 8px;
+    width: 200px;
+    border: none;
+    border-bottom: solid 1px black;
+    border-radius: 0;
+    background-color: transparent;
+    box-shadow: none;
+    color: black;
+    transition: border 0.3s ease-out;
+    padding-block: 1px;
+    padding-inline: 2px;
+    margin-top:5px;
+	font: 16px/1 system-ui, sans-serif;
+    font-weight: bold;
 }

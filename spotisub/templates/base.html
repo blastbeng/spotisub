@@ -21,10 +21,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/current_user_main.css') }}">
     <!-- Scrollbar Custom CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
-
-    <!-- Font Awesome JS -->
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
@@ -36,11 +33,6 @@
                 <!-- Sidebar  -->
                 <nav id="sidebar">         
                     <ul class="list-unstyled components">
-                        <li>
-                                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Spotisub" width="40px" height="30px" id="logo" class="logo">  
-                                    Spotisub
-                                </img>
-                        </li>
                         <li>
                             <a href="#playlistsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-music"></i>
@@ -68,7 +60,7 @@
                         </li>
                         <li>
                             <a href="#settingsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
-                                <i class="fas fa-copy"></i>
+                                <i class="fas fa-cogs"></i>
                                 Settings</a>
                             {% if ((title == "Paths") or (title == "Jobs") or (title == "Addons") or (title == "General")  or (title == "UI")) %}
                             <ul class="show collapse list-unstyled" id="settingsSubMenu">
@@ -114,7 +106,7 @@
                         </li>
                         <li>
                             <a href="#systemSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
-                                <i class="fas fa-book"></i>
+                                <i class="fas fa-laptop"></i>
                                 System</a>
                             {% if ((title == "Status") or (title == "Tasks") or (title == "Updates") or (title == "Log Files")) %}
                             <ul class="show collapse list-unstyled" id="systemSubMenu">
@@ -165,30 +157,6 @@
 
                 <!-- Page Content  -->
                 <div id="content">
-
-                    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                        <div class="container-fluid">
-
-                            
-                            <button type="button" id="sidebarCollapse" class="btn btn-info">
-                                <i class="fas fa-align-left"></i>
-                                <span>Toggle Sidebar</span>
-                            </button>
-                            <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                                <i class="fas fa-align-justify"></i>
-                            </button>
-                            
-                            <div class="title"><h2>{{ title }}</h2></div>
-
-                            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                                <ul class="nav navbar-nav ml-auto">
-                                    <li class="nav-item active">
-                                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </nav>
 
                     {% block current_user_content %}
 

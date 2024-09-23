@@ -96,7 +96,8 @@ def playlists(missing_only = 0, page = 1, limit = 25, search = None):
             next_page=next_page,
             current_page=page,
             total_pages=total_pages,
-            limit=limit)
+            limit=limit,
+            result_size=song_count)
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,
