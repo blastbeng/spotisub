@@ -361,7 +361,7 @@ def count_playlists(missing_only=False):
 
 def get_playlist_songs(missing_only=False, page=None, limit=None):
     """get list of playlists and songs"""
-    playlist_songs_db = database.select_all_playlists(missing_only, page, limit)
+    playlist_songs_db = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit)
     playlist_songs = {}
     for key in playlist_songs_db:
         playlist_search = None

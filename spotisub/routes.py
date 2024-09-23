@@ -71,40 +71,41 @@ def get_json_message(message, is_ok):
     }
     return json.dumps(data)
 
-
 @spotisub.route('/')
-@spotisub.route('/dashboard')
+@spotisub.route('/playlists/')
+@spotisub.route('/playlists/<int:missing_only>/')
+@spotisub.route('/playlists/<int:missing_only>/<int:page>/')
+@spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/')
+@spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:search>/')
 @login_required
-def dashboard():
-    return render_template('dashboard.html', title='Dashboard')
-
-@spotisub.route('/unmatched/')
-@spotisub.route('/unmatched/<int:page>/')
-@login_required
-def unmatched(page = 1):
-    limit = 50
-    song_count = subsonic_helper.count_playlists(missing_only=True)
-    total_pages = math.ceil(song_count/limit)
-    playlists = subsonic_helper.get_playlist_songs(
-                missing_only=True, page=page-1, limit=50)
-    pagination_array = []
-    page_count = 1
-    while page_count <= total_pages:
-        cur = {}
-        cur["page"] = str(page_count)
-        if page_count == page:
-            cur["active"] = "1"
-        else:
-            cur["active"] = "0"
-        pagination_array.append(cur)
-        page_count = page_count + 1
-    return render_template('unmatched.html', title='Dashboard', playlists=playlists, pagination_array=pagination_array)
-
+def playlists(missing_only = 0, page = 1, limit = 25, search = None):
+    title = 'Missing' if missing_only == 1 else 'Manage'
+    try:
+        missing_bool = True if missing_only == 1 else False
+        song_count = subsonic_helper.count_playlists(missing_only=missing_bool)
+        total_pages = math.ceil(song_count/limit)
+        playlists = subsonic_helper.get_playlist_songs(
+                    missing_only=missing_bool, page=page-1, limit=limit)
+        pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
+        return render_template('playlists.html', 
+            title=title, 
+            playlists=playlists, 
+            missing_only=missing_only, 
+            pagination_array=pagination_array, 
+            prev_page=prev_page,
+            next_page=next_page,
+            current_page=page,
+            total_pages=total_pages,
+            limit=limit)
+    except SubsonicOfflineException:
+        return render_template('errors/404.html', 
+            title=title,
+            error="Unable to communicate with Subsonic.") 
 
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('playlists'))
     if not database.user_exists():
         return redirect(url_for('register'))
     form = LoginForm()
@@ -115,14 +116,14 @@ def login():
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         flash(f'Welcome {user.username}')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('playlists'))
     return render_template('login.html', title='Login', form=form)
 
 
 @spotisub.route('/register',methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('playlists'))
     if database.user_exists():
         flash('Spotisub user already exists. Please log in to continue')
         return redirect(url_for('login'))

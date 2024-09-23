@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block current_user_content %}
+    <!-- Flash message -->
+    {% include '_flash_message.html' %}
+    <!-- End of flash message -->
+
+    <div class="table-container">
+        <ul class="pagination">
+            <li>
+                <div id="search">
+                    <input id="text-search" type="text" placeholder="Search..."/>
+                    <a href="javascript:searchPlaylistsResults({{missing_only}},1,{{limit}});" class="article-active search-submit">Submit</a>
+                    <a href="{{ url_for('playlists', missing_only=missing_only, page=1, limit=limit) }}" class="article search-submit">Clear</a>
+                </div>
+            </li>
+            <li>
+                <a href="{{ url_for('playlists', missing_only=missing_only, page=1, limit=limit, filter=filter) }}" class="article"><<</a>
+            </li>
+            <li>
+                <a href="{{ url_for('playlists', missing_only=missing_only, page=prev_page, limit=limit, filter=filter) }}" class="article"><</a>
+            </li>
+            {% for page in pagination_array %}
+                <li>
+                    {% if page == current_page %}
+                        <a href="{{ url_for('playlists', missing_only=missing_only, page=page, limit=limit, filter=filter) }}" class="article-active">{{ page }}</a>
+                    {% else %}
+                        <a href="{{ url_for('playlists', missing_only=missing_only, page=page, limit=limit, filter=filter) }}" class="article">{{ page }}</a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+            <li>
+                <a href="{{ url_for('playlists', missing_only=missing_only, page=next_page, limit=limit, filter=filter) }}" class="article">></a>
+            </li>
+            <li>
+                <a href="{{ url_for('playlists', missing_only=missing_only, page=total_pages, limit=limit, filter=filter) }}" class="article">>></a>
+            </li>
+            <li>
+                <div id="limit">
+                    <input class="text-limit" type="text" placeholder="Items per page:"/>
+                    <select onchange="location = this.value;">
+                        <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=25, filter=filter) }}" {% if limit == 25 %} selected{% endif %}>25</option>
+                        <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=50, filter=filter) }}" {% if limit == 50 %} selected{% endif %}>50</option>
+                        <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=100, filter=filter) }}" {% if limit == 100 %} selected{% endif %}>100</option>
+                        <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=250, filter=filter) }}" {% if limit == 250 %} selected{% endif %}>250</option>
+                        <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=500, filter=filter) }}" {% if limit == 500 %} selected{% endif %}>500</option>
+                    </select>
+                </div>
+            </li>
+        </ul>
+
+        
+    
+        <table id="data" class="table table-striped">
+            <thead>
+            <tr>
+                <th>Spotify Song Title</th>
+                <th>Spotify Artist</th>
+                <th>Spotify Song URI</th>
+                <th>Playlist Name</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for playlist in playlists %}
+                {% for song in playlists[playlist] %}
+                <tr>
+                <td>{{ song["spotify_song_title"] }}</td>
+                <td>{% if song["spotify_artists"]|length > 0 %}
+                        {{ song["spotify_artists"][0]["name"] }}
+                    {% endif %}
+                </td>
+                <td>{{ song["spotify_song_uri"] }}</td>
+                <td>{{ playlist }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    
+{% endblock %}

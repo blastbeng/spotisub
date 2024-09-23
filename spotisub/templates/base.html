@@ -11,7 +11,7 @@
         {% if title %}
             <title>{{ title }} - Spotisub</title>
         {% else %}
-            <title>Spotisub Dashboard</title>
+            <title>Spotisub</title>
         {% endif %}
     {% endblock %}
 
@@ -26,6 +26,8 @@
     <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
     <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
 
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </head>
 <body>
     {% block navbar %}
@@ -33,23 +35,34 @@
             <div class="wrapper">
                 <!-- Sidebar  -->
                 <nav id="sidebar">         
-
                     <ul class="list-unstyled components">
-                        <li class="active">
-                            <a href="{{ url_for('dashboard') }}">
-                                <i class="fas fa-home"></i>
-                                Overview</a>
+                        <li>
+                                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Spotisub" width="40px" height="30px" id="logo" class="logo">  
+                                    Spotisub
+                                </img>
                         </li>
                         <li>
                             <a href="#playlistsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-music"></i>
                                 Playlists</a>
+                            {% if ((title == "Manage") or (title == "Missing")) %}
+                            <ul class="show collapse list-unstyled" id="playlistsSubMenu">
+                            {% else %}
                             <ul class="collapse list-unstyled" id="playlistsSubMenu">
+                            {% endif %}                            
+                                {% if title == "Manage" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
-                                    <a href="#">Managment</a>
+                                {% endif %}     
+                                    <a href="{{ url_for('playlists', missing_only=0, page=1) }}">Manage</a>
                                 </li>
+                                {% if title == "Missing" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
-                                    <a href="{{ url_for('unmatched') }}">Unmatched Songs</a>
+                                {% endif %}  
+                                    <a href="{{ url_for('playlists', missing_only=1, page=1) }}">Missing</a>
                                 </li>
                             </ul>
                         </li>
@@ -57,20 +70,44 @@
                             <a href="#settingsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-copy"></i>
                                 Settings</a>
+                            {% if ((title == "Paths") or (title == "Jobs") or (title == "Addons") or (title == "General")  or (title == "UI")) %}
+                            <ul class="show collapse list-unstyled" id="settingsSubMenu">
+                            {% else %}
                             <ul class="collapse list-unstyled" id="settingsSubMenu">
+                            {% endif %}               
+                                {% if title == "Paths" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
+                                {% endif %}  
                                     <a href="#">Paths</a>
                                 </li>
+                                {% if title == "Jobs" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
-                                    <a href="#">Scheduler</a>
+                                {% endif %}  
+                                    <a href="#">Jobs</a>
                                 </li>
+                                {% if title == "Addons" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
-                                    <a href="#">Integrations</a>
+                                {% endif %}  
+                                    <a href="#">Addons</a>
                                 </li>
+                                {% if title == "General" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
+                                {% endif %}  
                                     <a href="#">General</a>
                                 </li>
+                                {% if title == "UI" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
+                                {% endif %}  
                                     <a href="#">UI</a>
                                 </li>
                             </ul>
@@ -79,17 +116,37 @@
                             <a href="#systemSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-book"></i>
                                 System</a>
+                            {% if ((title == "Status") or (title == "Tasks") or (title == "Updates") or (title == "Log Files")) %}
+                            <ul class="show collapse list-unstyled" id="systemSubMenu">
+                            {% else %}
                             <ul class="collapse list-unstyled" id="systemSubMenu">
+                            {% endif %}  
+                                {% if title == "Status" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
+                                {% endif %}  
                                     <a href="#">Status</a>
                                 </li>
+                                {% if title == "Tasks" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
+                                {% endif %}  
                                     <a href="#">Tasks</a>
                                 </li>
+                                {% if title == "Updates" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
+                                {% endif %}  
                                     <a href="#">Updates</a>
                                 </li>
+                                {% if title == "Log Files" %}
+                                <li class="active">
+                                {% else %}
                                 <li>
+                                {% endif %}  
                                     <a href="#">Log Files</a>
                                 </li>
                             </ul>
@@ -121,9 +178,7 @@
                                 <i class="fas fa-align-justify"></i>
                             </button>
                             
-                            <div id="search">
-                                <input type="text" placeholder="Search..">
-                            </div>
+                            <div class="title"><h2>{{ title }}</h2></div>
 
                             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                                 <ul class="nav navbar-nav ml-auto">
@@ -143,7 +198,7 @@
         {% else %}
             <nav class="navbar navbar-expand-lg navbar-light bg-light">
                 <div class="container">
-                    <a class="navbar-brand" href=" {{ url_for('dashboard') }} ">Spotisub</a>
+                    <a class="navbar-brand" href=" {{ url_for('playlists') }} ">Spotisub</a>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="nav navbar-nav ml-auto">
                             <li class="nav-item">
