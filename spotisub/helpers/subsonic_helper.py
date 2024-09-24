@@ -94,7 +94,7 @@ def get_subsonic_search_results(text_to_search):
     result = {}
     set_searches = utils.generate_compare_array(text_to_search)
     for set_search in set_searches:
-        subsonic_search = check_pysonic_connection().search2(set_search)
+        subsonic_search = check_pysonic_connection().search2(set_search, songCount=500)
         if ("searchResult2" in subsonic_search
             and len(subsonic_search["searchResult2"]) > 0
                 and "song" in subsonic_search["searchResult2"]):
