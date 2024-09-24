@@ -5,21 +5,8 @@
     {% include '_flash_message.html' %}
     <!-- End of flash message -->
 
-        <ul class="pagination">
-            <li>
-                <img src="{{ url_for('static', filename='img/logo.png') }}" id="sidebarCollapse" alt="Spotisub" width="34px" height="34px" id="logo" class="logo">  
-                </img>
-            </li>
-            <li>
-                <input id="text-search" class="text-search"  type="text" placeholder="Search..."/>
-            </li>
-            <li>
-                <a href="javascript:searchPlaylistsResults({{missing_only}},1,{{limit}});" class="search-submit"><i class="fa fa-search"></i></a>
-            </li>
-            <li>
-                <a href="{{ url_for('playlists', missing_only=missing_only, page=1, limit=limit) }}" class="search-submit"><i class="fa fa-refresh"></i></a>
-            </li>
-        </ul>
+
+        {% include 'header.html' %}
 
         
         <div class="table-container">
@@ -29,50 +16,49 @@
                     <th></th>
                     <th>Spotify Song Title</th>
                     <th>Spotify Artist</th>
-                    <th>Spotify Song URI</th>
                     <th>Playlist Name</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for playlist in playlists %}
-                    {% for song in playlists[playlist] %}
                     <tr>
-                    {% if song["subsonic_song_id"] is none %}
+                    {% if playlist.subsonic_song_id is none %}
                         <td><i class="fa fa-exclamation-triangle" aria-hidden="true" title="Song is missing from Subsonic"></i></td>
                     {% else %}
                         <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
                     {% endif %}
-                    <td>{{ song["spotify_song_title"] }}</td>
-                    <td>{% if song["spotify_artists"]|length > 0 %}
-                            {{ song["spotify_artists"][0]["name"] }}
-                        {% endif %}
+                    <td><a href="{{ url_for('song', uuid=playlist.spotify_song_uuid) }}" class="normal-href">{{ playlist.spotify_song_title }}</a></td>
+                    <td>{% for name in (playlist.spotify_artist_names.split(",") | unique) %}
+                            <a href="javascript:gotoArtist('{{ playlist.spotify_song_uuid }}_artist_{{ loop.index }}');" class="normal-href">{{ name }}</a>
+                        {% endfor %}
+                        {% for uuid in (playlist.spotify_artist_uuids.split(",") | unique) %}
+                            <input type="hidden" id="{{ playlist.spotify_song_uuid }}_artist_{{ loop.index }}" value="{{ uuid }}" />
+                        {% endfor %}
                     </td>
-                    <td>{{ song["spotify_song_uri"] }}</td>
-                    <td>{{ playlist }}</td>
+                    <td><a href="{{ url_for('playlists', missing_only=missing_only, page=1, limit=limit) }}" class="normal-href">{{ playlist_cache[playlist.subsonic_playlist_id] }}</a></td>
                     </tr>
-                    {% endfor %}
                 {% endfor %}
                 </tbody>
             </table>
         </div>
-        <ul class="pagination">
+        <ul class="pagination footer">
             {% if current_page != 1 %}
             <li>
-                <a href="{{ url_for('playlists', missing_only=missing_only, page=prev_page, limit=limit, filter=filter) }}" class="article"><</a>
+                <a href="{{ url_for('playlists', missing_only=missing_only, page=prev_page, limit=limit) }}" class="article"><</a>
             </li>
             {% endif %}
             {% for page in pagination_array %}
                 <li>
                     {% if page == current_page %}
-                        <a href="{{ url_for('playlists', missing_only=missing_only, page=page, limit=limit, filter=filter) }}" class="article-active">{{ page }}</a>
+                        <a href="{{ url_for('playlists', missing_only=missing_only, page=page, limit=limit) }}" class="article-active">{{ page }}</a>
                     {% else %}
-                        <a href="{{ url_for('playlists', missing_only=missing_only, page=page, limit=limit, filter=filter) }}" class="article">{{ page }}</a>
+                        <a href="{{ url_for('playlists', missing_only=missing_only, page=page, limit=limit) }}" class="article">{{ page }}</a>
                     {% endif %}
                 </li>
             {% endfor %}
             {% if current_page != total_pages %}
             <li>
-                <a href="{{ url_for('playlists', missing_only=missing_only, page=next_page, limit=limit, filter=filter) }}" class="article">></a>
+                <a href="{{ url_for('playlists', missing_only=missing_only, page=next_page, limit=limit) }}" class="article">></a>
             </li>
             {% endif %}
             <li>
@@ -80,11 +66,11 @@
             </li>
             <li>
                 <select onchange="location = this.value;">
-                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=25, filter=filter) }}" {% if limit == 25 %} selected{% endif %}>25</option>
-                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=50, filter=filter) }}" {% if limit == 50 %} selected{% endif %}>50</option>
-                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=100, filter=filter) }}" {% if limit == 100 %} selected{% endif %}>100</option>
-                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=250, filter=filter) }}" {% if limit == 250 %} selected{% endif %}>250</option>
-                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=500, filter=filter) }}" {% if limit == 500 %} selected{% endif %}>500</option>
+                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=25) }}" {% if limit == 25 %} selected{% endif %}>25</option>
+                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=50) }}" {% if limit == 50 %} selected{% endif %}>50</option>
+                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=100) }}" {% if limit == 100 %} selected{% endif %}>100</option>
+                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=250) }}" {% if limit == 250 %} selected{% endif %}>250</option>
+                    <option value="{{ url_for('playlists', missing_only=missing_only, page=1, limit=500) }}" {% if limit == 500 %} selected{% endif %}>500</option>
                 </select>
             </li>
             <li>

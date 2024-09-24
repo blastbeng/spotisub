@@ -1,0 +1,15 @@
+<ul class="pagination">
+    <li>
+        <a href="{{ url_for('playlists', missing_only=0, page=1, limit=25) }}"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Spotisub" width="34px" height="34px" id="logo" class="logo">  
+        </img></a>
+    </li>
+    <li>
+        <a href="#" id="sidebarCollapse"><i class="fa fa-bars" aria-hidden="true"  ></i></a>
+    </li>
+    <li>
+        <input id="text-search" class="text-search"  type="text" placeholder="Search..."/>
+    </li>
+    <li>
+        <a href="javascript:searchPlaylistsResults({{missing_only}},1,25);" class="search-submit"><i class="fa fa-search"></i></a>
+    </li>
+</ul>

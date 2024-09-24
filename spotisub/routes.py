@@ -82,10 +82,10 @@ def playlists(missing_only = 0, page = 1, limit = 25, search = None):
     title = 'Missing' if missing_only == 1 else 'Manage'
     try:
         missing_bool = True if missing_only == 1 else False
+        playlists, playlist_cache = subsonic_helper.select_all_playlists(
+                    missing_only=missing_bool, page=page-1, limit=limit)
         song_count = subsonic_helper.count_playlists(missing_only=missing_bool)
         total_pages = math.ceil(song_count/limit)
-        playlists = subsonic_helper.get_playlist_songs(
-                    missing_only=missing_bool, page=page-1, limit=limit)
         pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
         return render_template('playlists.html', 
             title=title, 
@@ -97,7 +97,35 @@ def playlists(missing_only = 0, page = 1, limit = 25, search = None):
             current_page=page,
             total_pages=total_pages,
             limit=limit,
-            result_size=song_count)
+            result_size=song_count,
+            playlist_cache=playlist_cache)
+    except SubsonicOfflineException:
+        return render_template('errors/404.html', 
+            title=title,
+            error="Unable to communicate with Subsonic.") 
+
+
+@spotisub.route('/song/')
+@spotisub.route('/song/<string:uuid>/')
+@login_required
+def song(uuid = None):
+    try:
+        return render_template('song.html', 
+            title='Song', 
+            uuid=uuid)
+    except SubsonicOfflineException:
+        return render_template('errors/404.html', 
+            title=title,
+            error="Unable to communicate with Subsonic.") 
+
+@spotisub.route('/artist/')
+@spotisub.route('/artist/<string:uuid>/')
+@login_required
+def artist(uuid = None):
+    try:
+        return render_template('artist.html', 
+            title='Artist', 
+            uuid=uuid)
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,
@@ -470,68 +498,6 @@ class SavedTracksClass(Resource):
                 .get_user_saved_tracks(dict({'tracks': []}))).start()
             return get_response_json(get_json_message(
                 "Importing your saved tracks", True), 200)
-        except SubsonicOfflineException:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Unable to communicate with Subsonic.",
-                    False),
-                400)
-        except SpotifyApiException:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Spotify API Error. Please check your configuruation.",
-                    False),
-                400)
-
-
-nsdatabase = api.namespace('database', 'Database APIs')
-
-
-@nsdatabase.route('/playlist/unmatched')
-class PlaylistUnmatchedClass(Resource):
-    """Unmatched playlist songs class"""
-
-    def get(self):
-        """Unmatched playlist songs endpoint"""
-        try:
-            spotipy_helper.get_secrets()
-            subsonic_helper.check_pysonic_connection()
-            missing_songs = subsonic_helper.get_playlist_songs(
-                missing_only=True)
-            return get_response_json(json.dumps(missing_songs), 200)
-        except SubsonicOfflineException:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Unable to communicate with Subsonic.",
-                    False),
-                400)
-        except SpotifyApiException:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Spotify API Error. Please check your configuruation.",
-                    False),
-                400)
-
-
-nsdatabase = api.namespace('database', 'Database APIs')
-
-
-@nsdatabase.route('/playlist/all')
-class PlaylistAllClass(Resource):
-    """All playlist songs class"""
-
-    def get(self):
-        """All playlist songs endpoint"""
-        try:
-            spotipy_helper.get_secrets()
-            subsonic_helper.check_pysonic_connection()
-            missing_songs = subsonic_helper.get_playlist_songs(
-                missing_only=False)
-            return get_response_json(json.dumps(missing_songs), 200)
         except SubsonicOfflineException:
             utils.write_exception()
             return get_response_json(

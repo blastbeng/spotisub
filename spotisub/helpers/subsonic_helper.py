@@ -4,6 +4,7 @@ import os
 import random
 import time
 import libsonic
+from expiringdict import ExpiringDict
 from libsonic.errors import DataNotFoundError
 from spotisub import spotisub
 from spotisub import database
@@ -47,6 +48,7 @@ pysonic = libsonic.Connection(
         os.environ.get(
             constants.SUBSONIC_API_PORT)))
 
+playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""
@@ -359,77 +361,40 @@ def match_with_subsonic_track(
 def count_playlists(missing_only=False):
     return database.count_playlists(missing_only)
 
-def get_playlist_songs(missing_only=False, page=None, limit=None):
+def select_all_playlists(missing_only=False, page=None, limit=None):
     """get list of playlists and songs"""
-    playlist_songs_db = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit)
-    playlist_songs = {}
-    for key in playlist_songs_db:
-        playlist_search = None
-        try:
-            playlist_search = check_pysonic_connection().getPlaylist(key)
-        except SubsonicOfflineException as ex:
-            raise ex
-        except DataNotFoundError:
-            pass
-        if playlist_search is None:
-            logging.warning(
-                'Playlist id "%s" not found, may be you deleted this playlist from Subsonic?',
-                key)
-            logging.warning(
-                'Deleting Playlist with id "%s" from spotisub database.', key)
-            database.delete_playlist_relation_by_id(key)
-        elif playlist_search is not None:
-            missings = playlist_songs_db[key]
-            for missing in missings:
-                if ("subsonic_playlist_id" in missing
-                        and missing["subsonic_playlist_id"] is not None):
-                    if "playlist" in playlist_search:
-                        single_playlist_search = playlist_search["playlist"]
+    try:
+        playlist_songs = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit)
 
-                        found_error = False
+        has_been_deleted = False
 
-                        try:
-                            if ("subsonic_artist_id" in missing
-                                    and missing["subsonic_artist_id"] is not None):
-                                artist_search = check_pysonic_connection().getArtist(
-                                    missing["subsonic_artist_id"])
-                                if "artist" in artist_search:
-                                    single_artist_search = artist_search["artist"]
-                                    missing["subsonic_artist_name"] = single_artist_search["name"]
-                            if ("subsonic_song_id" in missing
-                                    and missing["subsonic_song_id"] is not None):
-                                song_search = check_pysonic_connection().getSong(
-                                    missing["subsonic_song_id"])
-                                if "song" in song_search:
-                                    single_song_search = song_search["song"]
-                                    missing["subsonic_song_name"] = single_song_search["title"]
-                            if single_playlist_search["name"] not in playlist_songs:
-                                playlist_songs[single_playlist_search["name"]] = [
-                                ]
-                            playlist_songs[single_playlist_search["name"]].append(
-                                missing)
-                        except DataNotFoundError:
-                            found_error = True
-                            pass
+        songs = []
 
-                        if found_error:
-                            logging.warning(
-                                'Found a song inside Spotisub playlist %s ' +
-                                'with an unmatched Subsonic entry. ' +
-                                'Deleting this playlist.',
-                                single_playlist_search["name"])
-                            database.delete_playlist_relation_by_id(key)
-                            if single_playlist_search["name"] in playlist_songs:
-                                playlist_songs.pop(
-                                    single_playlist_search["name"])
+        for row in playlist_songs:
+            playlist_search = None
+            if row.subsonic_playlist_id not in playlist_cache:
+                try:
+                    playlist_search = check_pysonic_connection().getPlaylist(row.subsonic_playlist_id)
+                    playlist_cache[row.subsonic_playlist_id] = playlist_search["playlist"]["name"]
+                except DataNotFoundError:
+                    pass
 
-                            try:
-                                check_pysonic_connection().deletePlaylist(key)
-                            except DataNotFoundError:
-                                pass
-                            break
+            if row.subsonic_playlist_id not in playlist_cache:
+                logging.warning(
+                    'Playlist id "%s" not found, may be you deleted this playlist from Subsonic?',
+                    row.subsonic_playlist_id)
+                logging.warning(
+                    'Deleting Playlist with id "%s" from spotisub database.', row.subsonic_playlist_id)
+                database.delete_playlist_relation_by_id(row.subsonic_playlist_id)
+                has_been_deleted = True
 
-    return playlist_songs
+
+        if has_been_deleted:
+            return select_all_playlists(missing_only=missing_only, page=page, limit=limit)
+
+        return playlist_songs, playlist_cache
+    except SubsonicOfflineException as ex:
+        raise ex
 
 
 def get_playlist_songs_ids_by_id(key):

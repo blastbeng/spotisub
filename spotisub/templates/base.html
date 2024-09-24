@@ -37,7 +37,7 @@
                             <a href="#playlistsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-music"></i>
                                 Playlists</a>
-                            {% if ((title == "Manage") or (title == "Missing")) %}
+                            {% if ((title == "Manage") or (title == "Missing") or (title == "Song") or (title == "Artist")) %}
                             <ul class="show collapse list-unstyled" id="playlistsSubMenu">
                             {% else %}
                             <ul class="collapse list-unstyled" id="playlistsSubMenu">
@@ -56,6 +56,16 @@
                                 {% endif %}  
                                     <a href="{{ url_for('playlists', missing_only=1, page=1) }}">Missing</a>
                                 </li>
+                                {% if title == "Song" %}
+                                <li class="active">
+                                    <a href="#">Song</a>
+                                </li>
+                                {% endif %} 
+                                {% if title == "Artist" %}
+                                <li class="active">
+                                    <a href="#">Artist</a>
+                                </li>
+                                {% endif %}  
                             </ul>
                         </li>
                         <li>
@@ -182,6 +192,7 @@
     {% block content %}
         <div class="container">      
             <!-- Contents of all our pages will go here -->
+
             {% block app_content %}{% endblock %}
         </div>
     {% endblock %}
