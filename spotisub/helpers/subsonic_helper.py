@@ -270,6 +270,8 @@ def match_with_subsonic_track(
                 playlist_name)
             comparison_helper.song_ids.append(song["id"])
             comparison_helper.found = True
+            database.insert_song(
+                playlist_id, song, comparison_helper.artist_spotify, comparison_helper.track)
         elif (song["id"] not in comparison_helper.song_ids
               and song["artist"] != ''
               and comparison_helper.track['name'] != ''
