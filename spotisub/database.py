@@ -273,6 +273,21 @@ def count_playlists(missing_only=False):
 
     return count
 
+def select_artist(c_uuid):
+    artist = None
+    songs = []
+    with dbms.db_engine.connect() as conn:   
+        artist = select_spotify_artists_by_uuid(conn, c_uuid)
+        relations = select_spotify_song_artists_relation_by_artist_uuid(conn, c_uuid)
+        for relation in relations:
+            songs_pl = select_spotify_song_pl_by_uuid(conn, relation.song_uuid)
+            for song_pl in songs_pl:
+                songs.append(song_pl)
+        conn.close()
+
+    return artist, songs
+
+
 def select_spotify_artists_by_uuid(conn, c_uuid):
     """select spotify artists by uuid"""
     value = None
@@ -287,7 +302,7 @@ def select_spotify_artists_by_uuid(conn, c_uuid):
 
     for row in records:
         value = row
-        cursor.close()
+    cursor.close()
 
     return value
 
@@ -331,28 +346,28 @@ def select_spotify_song_by_uri(conn, spotify_uri: str):
 
     for row in records:
         value = row
-        cursor.close()
+    cursor.close()
 
     return value
 
 
-def select_spotify_song_by_uuid(conn, c_uuid):
+def select_spotify_song_pl_by_uuid(conn, c_uuid):
     """select spotify song by uuid"""
-    value = None
+    songs = []
     stmt = select(
         dbms.spotify_song.c.uuid,
         dbms.spotify_song.c.spotify_uri,
-        dbms.spotify_song.c.title).where(
+        dbms.spotify_song.c.title,
+        dbms.subsonic_spotify_relation.c.subsonic_song_id,
+        dbms.subsonic_spotify_relation.c.subsonic_playlist_id).join(dbms.spotify_song, 
+        dbms.subsonic_spotify_relation.c.spotify_song_uuid == dbms.spotify_song.c.uuid).where(
         dbms.spotify_song.c.uuid == c_uuid)
     stmt.compile()
     cursor = conn.execute(stmt)
     records = cursor.fetchall()
+    cursor.close()
 
-    for row in records:
-        value = row
-        cursor.close()
-
-    return value
+    return records
 
 
 def insert_spotify_artist(conn, artist_spotify):
@@ -387,7 +402,7 @@ def select_spotify_artist_by_uri(conn, spotify_uri: str):
 
     for row in records:
         value = row
-        cursor.close()
+    cursor.close()
 
     return value
 
@@ -421,7 +436,7 @@ def select_spotify_song_artist_relation(
 
     for row in records:
         value = row
-        cursor.close()
+    cursor.close()
 
     return value
 
@@ -429,18 +444,28 @@ def select_spotify_song_artist_relation(
 def select_spotify_song_artists_relation_by_song_uuid(
         conn, song_uuid: int):
     """select spotify song artist relation by song uuid"""
-    value = []
     stmt = select(dbms.spotify_song_artist_relation.c.artist_uuid).where(
         dbms.spotify_song_artist_relation.c.song_uuid == song_uuid)
     stmt.compile()
     cursor = conn.execute(stmt)
     records = cursor.fetchall()
 
-    for row in records:
-        value.append(row)
-        cursor.close()
+    cursor.close()
 
-    return value
+    return records
+
+def select_spotify_song_artists_relation_by_artist_uuid(
+        conn, artist_uuid: int):
+    """select spotify song artist relation by artist uuid"""
+    stmt = select(dbms.spotify_song_artist_relation.c.song_uuid).where(
+        dbms.spotify_song_artist_relation.c.artist_uuid == artist_uuid)
+    stmt.compile()
+    cursor = conn.execute(stmt)
+    records = cursor.fetchall()
+
+    cursor.close()
+
+    return records
 
 dbms = Database(SQLITE, dbname=Config.SQLALCHEMY_DATABASE_NAME)
 create_db_tables()

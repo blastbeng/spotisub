@@ -11,6 +11,7 @@ from spotisub import database
 from spotisub import constants
 from spotisub import utils
 from spotisub.exceptions import SubsonicOfflineException
+from spotisub.exceptions import SpotifyApiException
 from spotisub.classes import ComparisonHelper
 from spotisub.helpers import musicbrainz_helper
 
@@ -48,7 +49,11 @@ pysonic = libsonic.Connection(
         os.environ.get(
             constants.SUBSONIC_API_PORT)))
 
+
+#caches
 playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
+spotify_artist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
+spotify_song_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""
@@ -371,23 +376,7 @@ def select_all_playlists(missing_only=False, page=None, limit=None):
         songs = []
 
         for row in playlist_songs:
-            playlist_search = None
-            if row.subsonic_playlist_id not in playlist_cache:
-                try:
-                    playlist_search = check_pysonic_connection().getPlaylist(row.subsonic_playlist_id)
-                    playlist_cache[row.subsonic_playlist_id] = playlist_search["playlist"]["name"]
-                except DataNotFoundError:
-                    pass
-
-            if row.subsonic_playlist_id not in playlist_cache:
-                logging.warning(
-                    'Playlist id "%s" not found, may be you deleted this playlist from Subsonic?',
-                    row.subsonic_playlist_id)
-                logging.warning(
-                    'Deleting Playlist with id "%s" from spotisub database.', row.subsonic_playlist_id)
-                database.delete_playlist_relation_by_id(row.subsonic_playlist_id)
-                has_been_deleted = True
-
+            playlist_search, has_been_deleted = get_playlist_from_cache(row.subsonic_playlist_id)
 
         if has_been_deleted:
             return select_all_playlists(missing_only=missing_only, page=page, limit=limit)
@@ -396,6 +385,25 @@ def select_all_playlists(missing_only=False, page=None, limit=None):
     except SubsonicOfflineException as ex:
         raise ex
 
+def get_playlist_from_cache(key):
+    has_been_deleted = False
+    if key not in playlist_cache:
+        try:
+            playlist_search = check_pysonic_connection().getPlaylist(key)
+            playlist_cache[key] = playlist_search["playlist"]["name"]
+        except DataNotFoundError:
+            pass
+
+    if key not in playlist_cache:
+        logging.warning(
+            'Playlist id "%s" not found, may be you deleted this playlist from Subsonic?',
+            key)
+        logging.warning(
+            'Deleting Playlist with id "%s" from spotisub database.', key)
+        database.delete_playlist_relation_by_id(key)
+        has_been_deleted = True
+
+    return playlist_cache[key], has_been_deleted
 
 def get_playlist_songs_ids_by_id(key):
     """get playlist songs ids by id"""
@@ -452,3 +460,53 @@ def remove_subsonic_deleted_playlist():
     # DO we really need to remove spotify songs even if they are not related to any playlist?
     # This can cause errors when an import process is running
     # I will just leave spotify songs saved in Spotisub database for now
+
+def load_artist(uuid, spotipy_helper):
+    artist_db, songs_db = database.select_artist(uuid)
+    songs = []
+    sp = None
+    for song_db in songs_db:
+        spotify_track = None
+        if song_db.spotify_song_uuid not in spotify_song_cache:
+            sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
+            spotify_track = sp.track(song_db.spotify_uri)
+            spotify_song_cache[song_db.spotify_song_uuid] = spotify_track
+        else:
+            spotify_track = spotify_song_cache[song_db.spotify_song_uuid]
+        if spotify_track is None:
+            raise SpotifyApiException
+
+        
+        get_playlist_from_cache(song_db.subsonic_playlist_id)
+        song = {}
+        song["subsonic_playlist_id"] = song_db.subsonic_playlist_id
+        song["title"] = song_db.title
+        song["spotify_song_uuid"] = song_db.spotify_song_uuid
+        if "album" in spotify_track and "name" in spotify_track["album"]:
+            song["spotify_album"] = spotify_track["album"]["name"]
+        else:
+            song["spotify_album"] = ""
+
+        songs.append(song)
+            
+
+    spotify_artist = None
+
+    if uuid not in spotify_artist_cache:
+        sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
+        spotify_artist = sp.artist(artist_db.spotify_uri)
+        spotify_artist_cache[uuid] = spotify_artist
+    else:
+        spotify_artist = spotify_artist_cache[uuid]
+
+    if spotify_artist is None:
+        raise SpotifyApiException
+    artist = {}
+    artist["name"] = artist_db.name
+    artist["genres"] = ""
+    if "genres" in spotify_artist:
+        artist["genres"] = ", ".join(spotify_artist["genres"])
+    artist["image"] = ""
+    if "images" in spotify_artist and len(spotify_artist["images"]) > 0:
+        artist["image"] = spotify_artist["images"][0]["url"]
+    return artist, songs, playlist_cache

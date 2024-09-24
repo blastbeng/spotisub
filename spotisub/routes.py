@@ -20,6 +20,7 @@ from flask_login import login_user
 from flask_login import logout_user
 from flask_login import login_required
 from flask_apscheduler import APScheduler
+from spotipy.exceptions import SpotifyException
 from spotisub import spotisub
 from spotisub import configuration_db
 from spotisub.forms import LoginForm
@@ -102,34 +103,46 @@ def playlists(missing_only = 0, page = 1, limit = 25, search = None):
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,
-            error="Unable to communicate with Subsonic.") 
+            errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
 
 
-@spotisub.route('/song/')
 @spotisub.route('/song/<string:uuid>/')
 @login_required
 def song(uuid = None):
+    title = 'Song'
     try:
         return render_template('song.html', 
-            title='Song', 
+            title=title, 
             uuid=uuid)
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,
-            error="Unable to communicate with Subsonic.") 
+            errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
+    except (SpotifyException, SpotifyApiException) as e:
+        return render_template('errors/404.html', 
+            title=title,
+            errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
 
-@spotisub.route('/artist/')
 @spotisub.route('/artist/<string:uuid>/')
 @login_required
 def artist(uuid = None):
+    title='Artist' 
     try:
+        spotipy_helper.get_secrets()
+        artist, songs, playlist_cache = subsonic_helper.load_artist(uuid, spotipy_helper)
         return render_template('artist.html', 
-            title='Artist', 
-            uuid=uuid)
+            title=title, 
+            artist=artist, 
+            songs=songs,
+            playlist_cache=playlist_cache)
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,
-            error="Unable to communicate with Subsonic.") 
+            errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
+    except (SpotifyException, SpotifyApiException) as e:
+        return render_template('errors/404.html', 
+            title=title,
+            errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
 
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
@@ -222,7 +235,7 @@ class ArtistRecommendationsClass(Resource):
                     "Unable to communicate with Subsonic.",
                     False),
                 400)
-        except SpotifyApiException:
+        except (SpotifyException, SpotifyApiException) as e:
             utils.write_exception()
             return get_response_json(
                 get_json_message(
@@ -242,7 +255,7 @@ class ArtistRecommendationsAllClass(Resource):
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generator
-                .all_artists_recommendations(get_subsonic_helper()
+                .all_artists_recommendations(subsonic_helper
                                              .get_artists_array_names())).start()
             return get_response_json(
                 get_json_message(
@@ -256,7 +269,7 @@ class ArtistRecommendationsAllClass(Resource):
                     "Unable to communicate with Subsonic.",
                     False),
                 400)
-        except SpotifyApiException:
+        except (SpotifyException, SpotifyApiException) as e:
             utils.write_exception()
             return get_response_json(
                 get_json_message(
@@ -310,7 +323,7 @@ class ArtistTopTracksClass(Resource):
                     "Unable to communicate with Subsonic.",
                     False),
                 400)
-        except SpotifyApiException:
+        except (SpotifyException, SpotifyApiException) as e:
             utils.write_exception()
             return get_response_json(
                 get_json_message(
@@ -330,7 +343,7 @@ class ArtistTopTracksAllClass(Resource):
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
                 target=lambda: generator
-                .all_artists_top_tracks(get_subsonic_helper()
+                .all_artists_top_tracks(subsonic_helper
                                         .get_artists_array_names())).start()
             return get_response_json(
                 get_json_message(
@@ -344,7 +357,7 @@ class ArtistTopTracksAllClass(Resource):
                     "Unable to communicate with Subsonic.",
                     False),
                 400)
-        except SpotifyApiException:
+        except (SpotifyException, SpotifyApiException) as e:
             utils.write_exception()
             return get_response_json(
                 get_json_message(
@@ -381,7 +394,7 @@ class RecommendationsClass(Resource):
                     "Unable to communicate with Subsonic.",
                     False),
                 400)
-        except SpotifyApiException:
+        except (SpotifyException, SpotifyApiException) as e:
             utils.write_exception()
             return get_response_json(
                 get_json_message(
@@ -443,7 +456,7 @@ class UserPlaylistsClass(Resource):
                     "Unable to communicate with Subsonic.",
                     False),
                 400)
-        except SpotifyApiException:
+        except (SpotifyException, SpotifyApiException) as e:
             utils.write_exception()
             return get_response_json(
                 get_json_message(
@@ -475,7 +488,7 @@ class UserPlaylistsAllClass(Resource):
                     "Unable to communicate with Subsonic.",
                     False),
                 400)
-        except SpotifyApiException:
+        except (SpotifyException, SpotifyApiException) as e:
             utils.write_exception()
             return get_response_json(
                 get_json_message(
@@ -505,7 +518,7 @@ class SavedTracksClass(Resource):
                     "Unable to communicate with Subsonic.",
                     False),
                 400)
-        except SpotifyApiException:
+        except (SpotifyException, SpotifyApiException) as e:
             utils.write_exception()
             return get_response_json(
                 get_json_message(

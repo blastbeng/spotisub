@@ -378,3 +378,44 @@ a.article-active:hover {
 .normal-href:hover {
     text-decoration: underline;
   }
+
+  .ArtistDetails {
+    display: flex;
+    padding: 15px;
+    color:black;
+}
+
+.ArtistDetails-poster {
+    flex-shrink: 0;
+    margin-right: 35px;
+    width: 110px;
+    height: 110px;
+    border: 1px inset;
+    border-color: #6d7fcc;
+}
+
+.ArtistDetails-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.ArtistDetails-titleRow {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    flex: 0 0 auto;
+}
+
+.ArtistDetails-titleContainer {
+    display: flex;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.ArtistDetails-title {
+    font-weight: 300;
+    font-size: 50px;
+    line-height: 50px;
+}

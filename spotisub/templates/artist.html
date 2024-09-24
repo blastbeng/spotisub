@@ -5,9 +5,46 @@
     {% include '_flash_message.html' %}
     <!-- End of flash message -->
         {% include 'header.html' %}
-
-        WORK IN PROGRESS
-        <br/>
-        {{ uuid }}
+        <div class="ArtistDetails">
+            <img class="ArtistDetails-poster" src="{{ artist["image"] }}">
+            <div class="ArtistDetails-info">
+               <div class="ArtistDetails-titleRow">
+                  <div class="ArtistDetails-titleContainer">
+                     <div class="ArtistDetails-title">{{ artist["name"] }}</div>
+                  </div>
+               </div>
+               <div class="ArtistDetails-details">
+                  <div>
+                     <span><span class="ArtistGenres-genres">{{ artist["genres"] }}</span></span>
+                  </div>
+               </div>
+            </div>
+         </div>
+         <div class="table-container">
+            <table id="data" class="table table-striped">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>Spotify Song Title</th>
+                    <th>Spotify Album Name</th>
+                    <th>Playlist Name</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for song in songs %}
+                    <tr>
+                    {% if song["subsonic_song_id"] is none %}
+                        <td><i class="fa fa-exclamation-triangle" aria-hidden="true" title="Song is missing from Subsonic"></i></td>
+                    {% else %}
+                        <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
+                    {% endif %}
+                    <td><a href="{{ url_for('song', uuid=song["spotify_song_uuid"]) }}" class="normal-href">{{ song["title"] }}</a></td>
+                    <td>{{ song["spotify_album"] }}</a></td>
+                    <td><a href="{{ url_for('playlists', page=1, limit=limit) }}" class="normal-href">{{ playlist_cache[song["subsonic_playlist_id"]] }}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     
 {% endblock %}
