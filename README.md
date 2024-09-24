@@ -98,7 +98,7 @@ To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
 
 For any help join the Official Discord Server 
 
-[https://discord.gg/jXQauuhy5w] (https://discord.gg/jXQauuhy5w)
+https://discord.gg/jXQauuhy5w
 
 ## Authors
 
