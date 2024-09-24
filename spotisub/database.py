@@ -362,6 +362,9 @@ def select_spotify_song_pl_by_uuid(conn, c_uuid):
         dbms.subsonic_spotify_relation.c.subsonic_playlist_id).join(dbms.spotify_song, 
         dbms.subsonic_spotify_relation.c.spotify_song_uuid == dbms.spotify_song.c.uuid).where(
         dbms.spotify_song.c.uuid == c_uuid)
+    
+    stmt = stmt.order_by(dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
+    stmt = stmt.group_by(dbms.subsonic_spotify_relation.c.spotify_song_uuid, dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
     stmt.compile()
     cursor = conn.execute(stmt)
     records = cursor.fetchall()

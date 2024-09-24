@@ -480,6 +480,7 @@ def load_artist(uuid, spotipy_helper):
         get_playlist_from_cache(song_db.subsonic_playlist_id)
         song = {}
         song["subsonic_playlist_id"] = song_db.subsonic_playlist_id
+        song["subsonic_song_id"] = song_db.subsonic_song_id
         song["title"] = song_db.title
         song["spotify_song_uuid"] = song_db.spotify_song_uuid
         if "album" in spotify_track and "name" in spotify_track["album"]:
