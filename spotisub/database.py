@@ -17,6 +17,7 @@ from sqlalchemy import func
 from sqlalchemy import text
 from sqlalchemy import desc
 from sqlalchemy import or_
+from sqlalchemy import collate
 
 
 VERSION = "0.3.0-alpha-01"
@@ -323,9 +324,9 @@ def select_all_playlists(missing_only=False, page=None, limit=None, order=None, 
         order_by = []
         if order is not None:
             if asc:
-                stmt = stmt.order_by(text(order))
+                stmt = stmt.order_by(collate(text(order), 'NOCASE'))
             else:
-                stmt = stmt.order_by(desc(text(order)))
+                stmt = stmt.order_by(desc(collate(text(order), 'NOCASE')))
 
         stmt = stmt.group_by(dbms.subsonic_spotify_relation.c.spotify_song_uuid, dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
         stmt.compile()
