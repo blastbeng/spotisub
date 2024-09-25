@@ -1,7 +1,14 @@
 function searchPlaylistsResults(missing, page, limit){
     searchValue = document.getElementById('text-search').value
     if( searchValue !== undefined && searchValue !== "" ){
-        this.location = "/playlists/" + missing + "/" + page + "/" + limit + "/" + searchValue + "/";
+        this.location = "/playlists/" + missing + "/" + page + "/" + limit + "/spotify_song.title/1/" + searchValue + "/";
+    }
+}
+
+function keypressPlaylistsResults(event, missing, page, limit){
+    if(event.keyCode === 13){
+        event.preventDefault();
+        searchPlaylistsResults(missing, page, limit);
     }
 }
 

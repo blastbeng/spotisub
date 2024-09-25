@@ -1,5 +1,6 @@
 """Spotisub database"""
 import uuid
+import logging
 from config import Config
 from sqlalchemy import create_engine
 from sqlalchemy import insert
@@ -14,9 +15,11 @@ from sqlalchemy import MetaData
 from sqlalchemy import DateTime
 from sqlalchemy import func
 from sqlalchemy import text
+from sqlalchemy import desc
+from sqlalchemy import or_
 
 
-VERSION = "0.3.0-alpha"
+VERSION = "0.3.0-alpha-01"
 
 SQLITE = 'sqlite'
 USER = 'user'
@@ -72,6 +75,8 @@ class Database:
                                           'subsonic_artist_id', String(36), nullable=True),
                                       Column(
                                           'subsonic_playlist_id', String(36), nullable=False),
+                                      Column(
+                                          'subsonic_playlist_name', String(500), nullable=False),
                                       Column(
                                           'spotify_song_uuid', String(36), nullable=False),
                                       )
@@ -203,7 +208,7 @@ def user_exists():
     return False
 
 
-def insert_song(playlist_id, subsonic_track,
+def insert_song(playlist_id, playlist_name, subsonic_track,
                 artist_spotify, track_spotify):
     """insert song into database"""
     with dbms.db_engine.connect() as conn:
@@ -212,7 +217,7 @@ def insert_song(playlist_id, subsonic_track,
         if spotify_song_uuid is not None:
             if subsonic_track is None:
                 insert_playlist_relation(
-                    conn, None, None, playlist_id, spotify_song_uuid)
+                    conn, None, None, playlist_id, playlist_name, spotify_song_uuid)
             else:
                 track_id = None
                 artist_id = None
@@ -225,6 +230,7 @@ def insert_song(playlist_id, subsonic_track,
                     track_id,
                     artist_id,
                     playlist_id,
+                    playlist_name,
                     spotify_song_uuid)
             conn.commit()
         else:
@@ -266,7 +272,7 @@ def delete_song_relation(playlist_id: str, subsonic_track):
 
 
 def insert_playlist_relation(conn, subsonic_song_id,
-                             subsonic_artist_id, subsonic_playlist_id, spotify_song_uuid):
+                             subsonic_artist_id, subsonic_playlist_id, subsonic_playlist_name, spotify_song_uuid):
     """insert playlist into database"""
     stmt = insert(
         dbms.subsonic_spotify_relation).values(
@@ -275,12 +281,13 @@ def insert_playlist_relation(conn, subsonic_song_id,
         subsonic_song_id=subsonic_song_id,
         subsonic_artist_id=subsonic_artist_id,
         subsonic_playlist_id=subsonic_playlist_id,
+        subsonic_playlist_name=subsonic_playlist_name,
         spotify_song_uuid=spotify_song_uuid).prefix_with('OR IGNORE')
     stmt.compile()
     conn.execute(stmt)
 
 
-def select_all_playlists(missing_only=False, page=None, limit=None, order=None, search=None):
+def select_all_playlists(missing_only=False, page=None, limit=None, order=None, search=None, asc=None):
     """select playlists from database"""
     records = []
     stmt = None
@@ -290,6 +297,7 @@ def select_all_playlists(missing_only=False, page=None, limit=None, order=None, 
             dbms.subsonic_spotify_relation.c.subsonic_song_id,
             dbms.subsonic_spotify_relation.c.subsonic_artist_id,
             dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
+            dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
             dbms.subsonic_spotify_relation.c.spotify_song_uuid,
             dbms.spotify_song.c.title.label('spotify_song_title'),
             dbms.spotify_song.c.album_uuid.label('spotify_album_uuid'),
@@ -305,11 +313,20 @@ def select_all_playlists(missing_only=False, page=None, limit=None, order=None, 
             stmt = stmt.where(
                 dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
                 dbms.subsonic_spotify_relation.c.subsonic_artist_id == None)
+        if search is not None:
+            stmt = stmt.filter(or_(dbms.spotify_song.c.title.ilike(f'%{search}%'), 
+                dbms.spotify_album.c.name.ilike(f'%{search}%'), 
+                dbms.spotify_artist.c.name.ilike(f'%{search}%'), 
+                dbms.subsonic_spotify_relation.c.subsonic_playlist_name.ilike(f'%{search}%')))
         if page is not None and limit is not None:
             stmt = stmt.limit(limit).offset(page*limit)
         order_by = []
         if order is not None:
-            stmt = stmt.order_by(text(order))
+            if asc:
+                stmt = stmt.order_by(text(order))
+            else:
+                stmt = stmt.order_by(desc(text(order)))
+
         stmt = stmt.group_by(dbms.subsonic_spotify_relation.c.spotify_song_uuid, dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
         stmt.compile()
         cursor = conn.execute(stmt)
@@ -322,7 +339,7 @@ def select_all_playlists(missing_only=False, page=None, limit=None, order=None, 
 
 
 
-def count_playlists(missing_only=False):
+def count_playlists(missing_only=False, search=None):
     """select playlists from database"""
     count = 0
     with dbms.db_engine.connect() as conn:   
@@ -337,9 +354,20 @@ def count_playlists(missing_only=False):
         on spotify_song.uuid = spotify_song_artist_relation.song_uuid 
         join spotify_artist 
         on spotify_song_artist_relation.artist_uuid = spotify_artist.uuid """    
+        if missing_only or search is not None:
+            query =  query + " WHERE "
         if missing_only:
-            query = query + """where subsonic_spotify_relation.subsonic_song_id is null 
+            query = query + """ subsonic_spotify_relation.subsonic_song_id is null 
             and subsonic_spotify_relation.subsonic_artist_id is null """
+        if search is not None:
+            if missing_only:
+                query =  query + " and "
+            query =  query + """ Lower(spotify_song.title) LIKE Lower('"""+ search +"""')
+                OR Lower(spotify_album.name) LIKE Lower('"""+ search +"""')
+                OR Lower(spotify_artist.name) LIKE Lower('"""+ search +"""')
+                OR Lower(subsonic_spotify_relation.subsonic_playlist_name) LIKE 
+                Lower('"""+ search +"""') """
+
         query = query + """group by subsonic_spotify_relation.spotify_song_uuid, 
         subsonic_spotify_relation.subsonic_playlist_id);"""
 

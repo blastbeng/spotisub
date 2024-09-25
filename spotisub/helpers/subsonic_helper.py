@@ -229,7 +229,7 @@ def write_playlist(sp, playlist_name, results):
                                 artist_spotify["name"],
                                 track['name'])
                             database.insert_song(
-                                playlist_id, None, artist_spotify, track)
+                                playlist_id, playlist_name, None, artist_spotify, track)
         if playlist_id is not None:
 
             if len(song_ids) > 0:
@@ -270,7 +270,7 @@ def match_with_subsonic_track(
             comparison_helper.song_ids.append(song["id"])
             comparison_helper.found = True
             database.insert_song(
-                playlist_id, song, comparison_helper.artist_spotify, comparison_helper.track)
+                playlist_id, playlist_name, song, comparison_helper.artist_spotify, comparison_helper.track)
         elif (song["id"] not in comparison_helper.song_ids
               and song["artist"] != ''
               and comparison_helper.track['name'] != ''
@@ -301,7 +301,7 @@ def match_with_subsonic_track(
                     comparison_helper.track_helper.append(placeholder)
                     comparison_helper.found = True
                     database.insert_song(
-                        playlist_id, song, comparison_helper.artist_spotify, comparison_helper.track)
+                        playlist_id, playlist_name, song, comparison_helper.artist_spotify, comparison_helper.track)
                     logging.info(
                         'Adding song "%s - %s - %s" to playlist "%s", matched by ISRC: "%s"',
                         song["artist"],
@@ -328,7 +328,7 @@ def match_with_subsonic_track(
                     comparison_helper.track_helper.append(placeholder)
                     comparison_helper.found = True
                     database.insert_song(
-                        playlist_id, song, comparison_helper.artist_spotify, comparison_helper.track)
+                        playlist_id, playlist_name, song, comparison_helper.artist_spotify, comparison_helper.track)
                     logging.info(
                         'Adding song "%s - %s - %s" to playlist "%s", matched by text comparison',
                         song["artist"],
@@ -350,7 +350,7 @@ def match_with_subsonic_track(
                 comparison_helper.song_ids.append(skipped_song["id"])
                 comparison_helper.found = True
                 database.insert_song(
-                    playlist_id, skipped_song, comparison_helper.artist_spotify, comparison_helper.track)
+                    playlist_id, playlist_name, skipped_song, comparison_helper.artist_spotify, comparison_helper.track)
                 logging.warning(
                     'No matching album found for Subsonic search "%s", using a random one',
                     text_to_search)
@@ -364,13 +364,13 @@ def match_with_subsonic_track(
                     playlistId=playlist_id, songIds=comparison_helper.song_ids)
     return comparison_helper
 
-def count_playlists(missing_only=False):
-    return database.count_playlists(missing_only)
+def count_playlists(missing_only=False, search=None):
+    return database.count_playlists(missing_only=missing_only, search=search)
 
-def select_all_playlists(missing_only=False, page=None, limit=None, order=None, search=None):
+def select_all_playlists(missing_only=False, page=None, limit=None, order=None, asc=None, search=None):
     """get list of playlists and songs"""
     try:
-        playlist_songs = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit, order=order, search=search)
+        playlist_songs = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit, order=order, asc=asc, search=search)
 
         has_been_deleted = False
 

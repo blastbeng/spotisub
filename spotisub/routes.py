@@ -78,15 +78,16 @@ def get_json_message(message, is_ok):
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/')
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/')
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:order>/')
-@spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:order>/<string:search>/')
+@spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
+@spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:order>/<int:asc>/<string:search>/')
 @login_required
-def playlists(missing_only = 0, page = 1, limit = 25, order = 'spotify_song.title', search = None):
+def playlists(missing_only = 0, page = 1, limit = 25, order = 'spotify_song.title', asc = 1, search = None):
     title = 'Missing' if missing_only == 1 else 'Manage'
     try:
         missing_bool = True if missing_only == 1 else False
         playlists, playlist_cache = subsonic_helper.select_all_playlists(
-                    missing_only=missing_bool, page=page-1, limit=limit, order=order, search=search)
-        song_count = subsonic_helper.count_playlists(missing_only=missing_bool)
+                    missing_only=missing_bool, page=page-1, limit=limit, order=order, asc=(asc==1), search=search)
+        song_count = subsonic_helper.count_playlists(missing_only=missing_bool, search=search)
         total_pages = math.ceil(song_count/limit)
         pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
         return render_template('playlists.html', 
@@ -101,7 +102,9 @@ def playlists(missing_only = 0, page = 1, limit = 25, order = 'spotify_song.titl
             limit=limit,
             result_size=song_count,
             playlist_cache=playlist_cache,
-            order=order)
+            order=order,
+            asc=asc,
+            search=search)
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,

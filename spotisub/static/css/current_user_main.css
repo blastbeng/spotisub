@@ -418,3 +418,7 @@ a.article-active:hover {
     font-size: 50px;
     line-height: 50px;
 }
+
+.sorting{
+    margin-left: 10px;
+}
