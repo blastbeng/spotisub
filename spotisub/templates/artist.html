@@ -38,8 +38,8 @@
                     {% else %}
                         <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
                     {% endif %}
-                    <td><a href="{{ url_for('song', uuid=song["spotify_song_uuid"]) }}" class="normal-href">{{ song["title"] }}</a></td>
-                    <td>{{ song["spotify_album"] }}</a></td>
+                    <td><a href="{{ url_for('song', uuid=song.uuid) }}" class="normal-href">{{ song.title }}</a></td>
+                    <td><a href="{{ url_for('album', uuid=song.album_uuid) }}" class="normal-href">{{ song.album_name }}</a></td>
                     <td><a href="{{ url_for('playlists', page=1, limit=limit) }}" class="normal-href">{{ playlist_cache[song["subsonic_playlist_id"]] }}</a></td>
                     </tr>
                 {% endfor %}

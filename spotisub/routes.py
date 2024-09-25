@@ -78,13 +78,14 @@ def get_json_message(message, is_ok):
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/')
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/')
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:search>/')
+@spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:search>/<string:order>/')
 @login_required
-def playlists(missing_only = 0, page = 1, limit = 25, search = None):
+def playlists(missing_only = 0, page = 1, limit = 25, search = None, order = None):
     title = 'Missing' if missing_only == 1 else 'Manage'
     try:
         missing_bool = True if missing_only == 1 else False
         playlists, playlist_cache = subsonic_helper.select_all_playlists(
-                    missing_only=missing_bool, page=page-1, limit=limit)
+                    missing_only=missing_bool, page=page-1, limit=limit, search=search, order=order)
         song_count = subsonic_helper.count_playlists(missing_only=missing_bool)
         total_pages = math.ceil(song_count/limit)
         pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
@@ -104,6 +105,10 @@ def playlists(missing_only = 0, page = 1, limit = 25, search = None):
         return render_template('errors/404.html', 
             title=title,
             errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
+    except (SpotifyException, SpotifyApiException) as e:
+        return render_template('errors/404.html', 
+            title=title,
+            errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
 
 
 @spotisub.route('/song/<string:uuid>/')
@@ -112,6 +117,24 @@ def song(uuid = None):
     title = 'Song'
     try:
         return render_template('song.html', 
+            title=title, 
+            uuid=uuid)
+    except SubsonicOfflineException:
+        return render_template('errors/404.html', 
+            title=title,
+            errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
+    except (SpotifyException, SpotifyApiException) as e:
+        return render_template('errors/404.html', 
+            title=title,
+            errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
+
+
+@spotisub.route('/album/<string:uuid>/')
+@login_required
+def album(uuid = None):
+    title = 'Album'
+    try:
+        return render_template('album.html', 
             title=title, 
             uuid=uuid)
     except SubsonicOfflineException:
@@ -609,3 +632,4 @@ def remove_subsonic_deleted_playlist():
 scheduler.init_app(spotisub)
 scheduler.start(paused=(os.environ.get(constants.SCHEDULER_ENABLED,
     constants.SCHEDULER_ENABLED_DEFAULT_VALUE) != "1"))
+

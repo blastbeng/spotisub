@@ -53,7 +53,6 @@ pysonic = libsonic.Connection(
 #caches
 playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 spotify_artist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
-spotify_song_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""
@@ -368,10 +367,10 @@ def match_with_subsonic_track(
 def count_playlists(missing_only=False):
     return database.count_playlists(missing_only)
 
-def select_all_playlists(missing_only=False, page=None, limit=None):
+def select_all_playlists(missing_only=False, page=None, limit=None, search=None, order=None):
     """get list of playlists and songs"""
     try:
-        playlist_songs = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit)
+        playlist_songs = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit, search=search, order=order)
 
         has_been_deleted = False
 
@@ -464,34 +463,8 @@ def remove_subsonic_deleted_playlist():
     # I will just leave spotify songs saved in Spotisub database for now
 
 def load_artist(uuid, spotipy_helper):
-    artist_db, songs_db = database.select_artist(uuid)
-    songs = []
+    artist_db, songs = database.select_artist(uuid)
     sp = None
-    for song_db in songs_db:
-        spotify_track = None
-        if song_db.spotify_song_uuid not in spotify_song_cache:
-            sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
-            spotify_track = sp.track(song_db.spotify_uri)
-            spotify_song_cache[song_db.spotify_song_uuid] = spotify_track
-        else:
-            spotify_track = spotify_song_cache[song_db.spotify_song_uuid]
-        if spotify_track is None:
-            raise SpotifyApiException
-
-        
-        get_playlist_from_cache(song_db.subsonic_playlist_id)
-        song = {}
-        song["subsonic_playlist_id"] = song_db.subsonic_playlist_id
-        song["subsonic_song_id"] = song_db.subsonic_song_id
-        song["title"] = song_db.title
-        song["spotify_song_uuid"] = song_db.spotify_song_uuid
-        if "album" in spotify_track and "name" in spotify_track["album"]:
-            song["spotify_album"] = spotify_track["album"]["name"]
-        else:
-            song["spotify_album"] = ""
-
-        songs.append(song)
-            
 
     spotify_artist = None
 
@@ -509,7 +482,10 @@ def load_artist(uuid, spotipy_helper):
     artist["genres"] = ""
     if "genres" in spotify_artist:
         artist["genres"] = ", ".join(spotify_artist["genres"])
-    artist["image"] = ""
+    else:
+        artist["genres"] = ""
     if "images" in spotify_artist and len(spotify_artist["images"]) > 0:
         artist["image"] = spotify_artist["images"][0]["url"]
+    else:
+        artist["image"] = ""
     return artist, songs, playlist_cache
