@@ -466,6 +466,7 @@ def select_spotify_song_pl_by_uuid(conn, c_uuid):
         dbms.spotify_song.c.album_uuid,
         dbms.spotify_album.c.name.label('album_name'),
         dbms.subsonic_spotify_relation.c.subsonic_song_id,
+        dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
         dbms.subsonic_spotify_relation.c.subsonic_playlist_id).join(dbms.spotify_song, 
         dbms.subsonic_spotify_relation.c.spotify_song_uuid == dbms.spotify_song.c.uuid).where(
         dbms.spotify_song.c.uuid == c_uuid)

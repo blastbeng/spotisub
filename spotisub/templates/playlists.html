@@ -87,7 +87,7 @@
                         {% endfor %}
                     </td>
                     <td><a href="{{ url_for('album', uuid=playlist.spotify_album_uuid) }}" class="normal-href">{{ playlist.spotify_album_name }}</a></td>
-                    <td><a href="{{ url_for('playlists', missing_only=missing_only, page=1, limit=limit, order=order, asc=asc, search=playlist_cache[playlist.subsonic_playlist_id]) }}" class="normal-href">{{ playlist_cache[playlist.subsonic_playlist_id] }}</a></td>
+                    <td><a href="{{ url_for('playlists', missing_only=missing_only, page=1, limit=limit, order=order, asc=asc, search=playlist.subsonic_playlist_name) }}" class="normal-href">{{ playlist.subsonic_playlist_name }}</a></td>
                     </tr>
                 {% endfor %}
                 </tbody>

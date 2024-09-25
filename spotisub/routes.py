@@ -85,7 +85,7 @@ def playlists(missing_only = 0, page = 1, limit = 25, order = 'spotify_song.titl
     title = 'Missing' if missing_only == 1 else 'Manage'
     try:
         missing_bool = True if missing_only == 1 else False
-        playlists, playlist_cache = subsonic_helper.select_all_playlists(
+        playlists = subsonic_helper.select_all_playlists(
                     missing_only=missing_bool, page=page-1, limit=limit, order=order, asc=(asc==1), search=search)
         song_count = subsonic_helper.count_playlists(missing_only=missing_bool, search=search)
         total_pages = math.ceil(song_count/limit)
@@ -101,7 +101,6 @@ def playlists(missing_only = 0, page = 1, limit = 25, order = 'spotify_song.titl
             total_pages=total_pages,
             limit=limit,
             result_size=song_count,
-            playlist_cache=playlist_cache,
             order=order,
             asc=asc,
             search=search)
@@ -156,12 +155,11 @@ def artist(uuid = None):
     title='Artist' 
     try:
         spotipy_helper.get_secrets()
-        artist, songs, playlist_cache = subsonic_helper.load_artist(uuid, spotipy_helper)
+        artist, songs = subsonic_helper.load_artist(uuid, spotipy_helper)
         return render_template('artist.html', 
             title=title, 
             artist=artist, 
-            songs=songs,
-            playlist_cache=playlist_cache)
+            songs=songs)
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,

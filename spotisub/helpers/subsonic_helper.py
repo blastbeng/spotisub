@@ -382,7 +382,7 @@ def select_all_playlists(missing_only=False, page=None, limit=None, order=None, 
         if has_been_deleted:
             return select_all_playlists(missing_only=missing_only, page=page, limit=limit)
 
-        return playlist_songs, playlist_cache
+        return playlist_songs
     except SubsonicOfflineException as ex:
         raise ex
 
@@ -488,4 +488,4 @@ def load_artist(uuid, spotipy_helper):
         artist["image"] = spotify_artist["images"][0]["url"]
     else:
         artist["image"] = ""
-    return artist, songs, playlist_cache
+    return artist, songs
