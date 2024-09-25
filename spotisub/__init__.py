@@ -11,7 +11,7 @@ from spotisub import database
 from spotisub import constants
 from spotisub import utils
 
-utils.print_logo(constants.VERSION)
+utils.print_logo(database.VERSION)
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -32,5 +32,6 @@ bootstrap = Bootstrap(spotisub)
 configuration_db = SQLAlchemy(spotisub)
 login = LoginManager(spotisub)
 login.login_view = 'login'
+
 
 from spotisub import routes, classes, errors

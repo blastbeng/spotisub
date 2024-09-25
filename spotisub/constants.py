@@ -1,5 +1,4 @@
 """Spotisub constants"""
-VERSION = "0.3.0-dashboard-alpha"
 SPLIT_TOKENS = ["(", "-", "feat"]
 
 

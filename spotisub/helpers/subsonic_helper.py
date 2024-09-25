@@ -367,10 +367,10 @@ def match_with_subsonic_track(
 def count_playlists(missing_only=False):
     return database.count_playlists(missing_only)
 
-def select_all_playlists(missing_only=False, page=None, limit=None, search=None, order=None):
+def select_all_playlists(missing_only=False, page=None, limit=None, order=None, search=None):
     """get list of playlists and songs"""
     try:
-        playlist_songs = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit, search=search, order=order)
+        playlist_songs = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit, order=order, search=search)
 
         has_been_deleted = False
 

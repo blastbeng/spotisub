@@ -3,6 +3,7 @@ import uuid
 from config import Config
 from sqlalchemy import create_engine
 from sqlalchemy import insert
+from sqlalchemy import update
 from sqlalchemy import select
 from sqlalchemy import delete
 from sqlalchemy import Table
@@ -14,8 +15,12 @@ from sqlalchemy import DateTime
 from sqlalchemy import func
 from sqlalchemy import text
 
+
+VERSION = "0.3.0-alpha"
+
 SQLITE = 'sqlite'
 USER = 'user'
+CONFIG_TABLE = 'config_table'
 SUBSONIC_SPOTIFY_RELATION = 'subsonic_spotify_relation'
 SPOTIFY_SONG = 'spotify_song'
 SPOTIFY_ARTIST = 'spotify_artist'
@@ -47,6 +52,15 @@ class Database:
                      'username', String(36), unique=True, index=True, nullable=False),
                  Column(
                      'password_hash', String(128), nullable=False)
+                 )
+
+    config_table = Table(CONFIG_TABLE, metadata,
+                 Column(
+                     'id', Integer, primary_key=True, autoincrement=True),
+                 Column(
+                     'name', String(500), unique=True, index=True, nullable=False),
+                 Column(
+                     'value', String(500), nullable=False)
                  )
 
     subsonic_spotify_relation = Table(SUBSONIC_SPOTIFY_RELATION, metadata,
@@ -144,6 +158,33 @@ class Database:
 def create_db_tables():
     """Create tables"""
     dbms.metadata.create_all(dbms.db_engine)
+    upgrade()
+
+def upgrade():
+    """Upgrade db"""
+    upgraded = False
+    with dbms.db_engine.connect() as conn: 
+        fconfig = select_config_by_name(conn, 'VERSION')
+        if fconfig is None or fconfig.value != VERSION:
+            ##FIRST RELEASE 3.0.0 DROPPING ENTIRE DATABASE
+            drop_table(conn, SPOTIFY_SONG)
+            drop_table(conn, SPOTIFY_ALBUM)
+            drop_table(conn, SPOTIFY_ARTIST)
+            drop_table(conn, SPOTIFY_SONG_ARTIST_RELATION)
+            drop_table(conn, SUBSONIC_SPOTIFY_RELATION)
+
+            insert_or_update_config(conn, 'VERSION', VERSION)
+            conn.commit()
+            upgraded = True
+        conn.close()
+    if upgraded:
+        dbms.metadata.create_all(dbms.db_engine)
+        
+def drop_table(conn, table_name):
+    """Drops single table"""
+    query = "DROP TABLE IF EXISTS " + table_name
+    conn.execute(text(query))
+
 
 def user_exists():
     """Check if user exists"""
@@ -157,6 +198,7 @@ def user_exists():
             cursor.close()
             conn.close()
             return True
+        conn.close()
 
     return False
 
@@ -198,7 +240,7 @@ def delete_playlist_relation_by_id(playlist_id: str):
     with dbms.db_engine.connect() as conn:
         conn.execute(stmt)
         conn.commit()
-    conn.close()
+        conn.close()
 
 
 def delete_song_relation(playlist_id: str, subsonic_track):
@@ -220,7 +262,7 @@ def delete_song_relation(playlist_id: str, subsonic_track):
         with dbms.db_engine.connect() as conn:
             conn.execute(stmt)
             conn.commit()
-        conn.close()
+            conn.close()
 
 
 def insert_playlist_relation(conn, subsonic_song_id,
@@ -238,7 +280,7 @@ def insert_playlist_relation(conn, subsonic_song_id,
     conn.execute(stmt)
 
 
-def select_all_playlists(missing_only=False, page=None, limit=None, search=None, order=None):
+def select_all_playlists(missing_only=False, page=None, limit=None, order=None, search=None):
     """select playlists from database"""
     records = []
     stmt = None
@@ -263,10 +305,11 @@ def select_all_playlists(missing_only=False, page=None, limit=None, search=None,
             stmt = stmt.where(
                 dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
                 dbms.subsonic_spotify_relation.c.subsonic_artist_id == None)
-        #if search is not None:
         if page is not None and limit is not None:
             stmt = stmt.limit(limit).offset(page*limit)
-        stmt = stmt.order_by(dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
+        order_by = []
+        if order is not None:
+            stmt = stmt.order_by(text(order))
         stmt = stmt.group_by(dbms.subsonic_spotify_relation.c.spotify_song_uuid, dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
         stmt.compile()
         cursor = conn.execute(stmt)
@@ -482,6 +525,37 @@ def select_spotify_artist_by_uri(conn, spotify_uri: str):
 
     return value
 
+
+def select_config_by_name(conn, name: str):
+    """select spotify artist by uri"""
+    value = None
+    stmt = select(
+        dbms.config_table.c.value).where(
+        dbms.config_table.c.name == name)
+    stmt.compile()
+    cursor = conn.execute(stmt)
+    records = cursor.fetchall()
+
+    for row in records:
+        value = row
+    cursor.close()
+
+    return value
+
+
+def insert_or_update_config(conn, name: str, value: str):
+    """select spotify artist by uri"""
+    fconfig = select_config_by_name(conn, name)
+    stmt = None
+    if fconfig is None:
+        stmt = insert(
+            dbms.config_table).values(
+            name=name,
+            value=value)
+    else:
+        stmt = update(dbms.config_table).where(dbms.config_table.c.name==name).values(value=value)
+    stmt.compile()
+    conn.execute(stmt)
 
 def insert_spotify_song_artist_relation(
         conn, song_uuid: int, artist_uuid: int):

@@ -130,8 +130,7 @@ span {
 }
 
 #sidebar ul.components {
-    padding: 20px 0;
-    border-bottom: 1px solid #47748b;
+    padding: 0px 0;
 }
 
 #sidebar ul li a {
