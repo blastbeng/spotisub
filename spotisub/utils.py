@@ -107,6 +107,7 @@ def get_excluded_words_array():
 
     return excluded_words
 
+
 def get_pagination(page, total_pages):
     value = []
     value.append(page)
@@ -126,7 +127,7 @@ def get_pagination(page, total_pages):
         page_num = page_num - 1
         if page_num <= 0 or len(value) >= 5:
             break
-        value.append(page_num)    
+        value.append(page_num)
 
     page_num = page
     while len(value) < 3:
@@ -139,7 +140,7 @@ def get_pagination(page, total_pages):
     page_num = page
     while len(value) < 3:
         page_num = page_num - 1
-        
+
         if page_num <= 0:
             break
         if page_num not in value:

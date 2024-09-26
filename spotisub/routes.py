@@ -52,9 +52,11 @@ def after_request(response):
                      response.status)
     return response
 
+
 blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
 api = Api(blueprint, doc='/docs/')
 spotisub.register_blueprint(blueprint)
+
 
 def get_response_json(data, status):
     """Generates json response"""
@@ -72,6 +74,7 @@ def get_json_message(message, is_ok):
     }
     return json.dumps(data)
 
+
 @spotisub.route('/')
 @spotisub.route('/playlists/')
 @spotisub.route('/playlists/<int:missing_only>/')
@@ -81,37 +84,40 @@ def get_json_message(message, is_ok):
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/<int:limit>/<string:order>/<int:asc>/<string:search>/')
 @login_required
-def playlists(missing_only = 0, page = 1, limit = 25, order = 'spotify_song.title', asc = 1, search = None):
+def playlists(missing_only=0, page=1, limit=25,
+              order='spotify_song.title', asc=1, search=None):
     title = 'Missing' if missing_only == 1 else 'Manage'
     try:
         missing_bool = True if missing_only == 1 else False
         playlists = subsonic_helper.select_all_playlists(
-                    missing_only=missing_bool, page=page-1, limit=limit, order=order, asc=(asc==1), search=search)
-        song_count = subsonic_helper.count_playlists(missing_only=missing_bool, search=search)
-        total_pages = math.ceil(song_count/limit)
-        pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
-        return render_template('playlists.html', 
-            title=title, 
-            playlists=playlists, 
-            missing_only=missing_only, 
-            pagination_array=pagination_array, 
-            prev_page=prev_page,
-            next_page=next_page,
-            current_page=page,
-            total_pages=total_pages,
-            limit=limit,
-            result_size=song_count,
-            order=order,
-            asc=asc,
-            search=search)
+            missing_only=missing_bool, page=page - 1, limit=limit, order=order, asc=(asc == 1), search=search)
+        song_count = subsonic_helper.count_playlists(
+            missing_only=missing_bool, search=search)
+        total_pages = math.ceil(song_count / limit)
+        pagination_array, prev_page, next_page = utils.get_pagination(
+            page, total_pages)
+        return render_template('playlists.html',
+                               title=title,
+                               playlists=playlists,
+                               missing_only=missing_only,
+                               pagination_array=pagination_array,
+                               prev_page=prev_page,
+                               next_page=next_page,
+                               current_page=page,
+                               total_pages=total_pages,
+                               limit=limit,
+                               result_size=song_count,
+                               order=order,
+                               asc=asc,
+                               search=search)
     except SubsonicOfflineException:
-        return render_template('errors/404.html', 
-            title=title,
-            errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
+        return render_template('errors/404.html',
+                               title=title,
+                               errors=["Unable to communicate with Subsonic.", "Please check your configuration and make sure your instance is online."])
     except (SpotifyException, SpotifyApiException) as e:
-        return render_template('errors/404.html', 
-            title=title,
-            errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
+        return render_template('errors/404.html',
+                               title=title,
+                               errors=["Unable to communicate with Spotify.", "Please check your configuration."])
 
 
 @spotisub.route('/album/<string:uuid>/')
@@ -120,35 +126,38 @@ def playlists(missing_only = 0, page = 1, limit = 25, order = 'spotify_song.titl
 @spotisub.route('/album/<string:uuid>/<int:page>/<int:limit>/<string:order>/')
 @spotisub.route('/album/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def album(uuid = None, page = 1, limit = 25, order = 'spotify_song.title', asc = 1):
+def album(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
     title = 'Album'
     try:
         spotipy_helper.get_secrets()
-        album, songs, song_count = subsonic_helper.load_album(uuid, spotipy_helper, page=page-1, limit=limit, order=order, asc=(asc==1))
-        total_pages = math.ceil(song_count/limit)
-        pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
-        return render_template('album.html', 
-            title=title, 
-            album=album, 
-            uuid=uuid,
-            songs=songs, 
-            pagination_array=pagination_array, 
-            prev_page=prev_page,
-            next_page=next_page,
-            current_page=page,
-            total_pages=total_pages,
-            limit=limit,
-            result_size=song_count,
-            order=order,
-            asc=asc)
+        album, songs, song_count = subsonic_helper.load_album(
+            uuid, spotipy_helper, page=page - 1, limit=limit, order=order, asc=(asc == 1))
+        total_pages = math.ceil(song_count / limit)
+        pagination_array, prev_page, next_page = utils.get_pagination(
+            page, total_pages)
+        return render_template('album.html',
+                               title=title,
+                               album=album,
+                               uuid=uuid,
+                               songs=songs,
+                               pagination_array=pagination_array,
+                               prev_page=prev_page,
+                               next_page=next_page,
+                               current_page=page,
+                               total_pages=total_pages,
+                               limit=limit,
+                               result_size=song_count,
+                               order=order,
+                               asc=asc)
     except SubsonicOfflineException:
-        return render_template('errors/404.html', 
-            title=title,
-            errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
+        return render_template('errors/404.html',
+                               title=title,
+                               errors=["Unable to communicate with Subsonic.", "Please check your configuration and make sure your instance is online."])
     except (SpotifyException, SpotifyApiException) as e:
-        return render_template('errors/404.html', 
-            title=title,
-            errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
+        return render_template('errors/404.html',
+                               title=title,
+                               errors=["Unable to communicate with Spotify.", "Please check your configuration."])
+
 
 @spotisub.route('/artist/<string:uuid>/')
 @spotisub.route('/artist/<string:uuid>/<int:page>/')
@@ -156,35 +165,38 @@ def album(uuid = None, page = 1, limit = 25, order = 'spotify_song.title', asc =
 @spotisub.route('/artist/<string:uuid>/<int:page>/<int:limit>/<string:order>/')
 @spotisub.route('/artist/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def artist(uuid = None, page = 1, limit = 25, order = 'spotify_song.title', asc = 1):
-    title='Artist' 
+def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
+    title = 'Artist'
     try:
         spotipy_helper.get_secrets()
-        artist, songs, song_count = subsonic_helper.load_artist(uuid, spotipy_helper, page=page-1, limit=limit, order=order, asc=(asc==1))
-        total_pages = math.ceil(song_count/limit)
-        pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
-        return render_template('artist.html', 
-            title=title, 
-            artist=artist, 
-            uuid=uuid,
-            songs=songs, 
-            pagination_array=pagination_array, 
-            prev_page=prev_page,
-            next_page=next_page,
-            current_page=page,
-            total_pages=total_pages,
-            limit=limit,
-            result_size=song_count,
-            order=order,
-            asc=asc)
+        artist, songs, song_count = subsonic_helper.load_artist(
+            uuid, spotipy_helper, page=page - 1, limit=limit, order=order, asc=(asc == 1))
+        total_pages = math.ceil(song_count / limit)
+        pagination_array, prev_page, next_page = utils.get_pagination(
+            page, total_pages)
+        return render_template('artist.html',
+                               title=title,
+                               artist=artist,
+                               uuid=uuid,
+                               songs=songs,
+                               pagination_array=pagination_array,
+                               prev_page=prev_page,
+                               next_page=next_page,
+                               current_page=page,
+                               total_pages=total_pages,
+                               limit=limit,
+                               result_size=song_count,
+                               order=order,
+                               asc=asc)
     except SubsonicOfflineException:
-        return render_template('errors/404.html', 
-            title=title,
-            errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
+        return render_template('errors/404.html',
+                               title=title,
+                               errors=["Unable to communicate with Subsonic.", "Please check your configuration and make sure your instance is online."])
     except (SpotifyException, SpotifyApiException) as e:
-        return render_template('errors/404.html', 
-            title=title,
-            errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
+        return render_template('errors/404.html',
+                               title=title,
+                               errors=["Unable to communicate with Spotify.", "Please check your configuration."])
+
 
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
@@ -204,7 +216,7 @@ def login():
     return render_template('login.html', title='Login', form=form)
 
 
-@spotisub.route('/register',methods=['GET', 'POST'])
+@spotisub.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('playlists'))
@@ -219,7 +231,9 @@ def register():
         configuration_db.session.commit()
         flash('Spotisub user successfully. Please log in to continue')
         return redirect(url_for('login'))
-    return render_template('register.html', title='Create Spotisub credentials', form=form)
+    return render_template(
+        'register.html', title='Create Spotisub credentials', form=form)
+
 
 @spotisub.route('/logout')
 @login_required
@@ -236,6 +250,7 @@ nsgenerate = api.namespace('generate', 'Generate APIs')
 @nsgenerate.route('/artist_recommendations/<string:artist_name>/')
 class ArtistRecommendationsClass(Resource):
     """Artist reccomendations class"""
+
     def get(self, artist_name=None):
         """Artist reccomendations endpoint"""
         try:
@@ -594,7 +609,7 @@ if os.environ.get(constants.ARTIST_GEN_SCHED,
         """artist_recommendations task"""
         generator.show_recommendations_for_artist(
             random.choice(subsonic_helper.get_artists_array_names()))
-            
+
 if os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
                   constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
     @scheduler.task('interval',
@@ -612,7 +627,6 @@ if os.environ.get(constants.RECOMEND_GEN_SCHED,
                     id=constants.JOB_MR_ID,
                     hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED,
                                              constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)))
-
     def my_recommendations():
         """my_recommendations task"""
         generator.my_recommendations(count=random.randrange(int(os.environ.get(
@@ -650,4 +664,4 @@ def remove_subsonic_deleted_playlist():
 
 scheduler.init_app(spotisub)
 scheduler.start(paused=(os.environ.get(constants.SCHEDULER_ENABLED,
-    constants.SCHEDULER_ENABLED_DEFAULT_VALUE) != "1"))
+                                       constants.SCHEDULER_ENABLED_DEFAULT_VALUE) != "1"))

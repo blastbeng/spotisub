@@ -50,10 +50,11 @@ pysonic = libsonic.Connection(
             constants.SUBSONIC_API_PORT)))
 
 
-#caches
+# caches
 playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 spotify_artist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 spotify_album_cache = ExpiringDict(max_len=500, max_age_seconds=300)
+
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""
@@ -365,27 +366,39 @@ def match_with_subsonic_track(
                     playlistId=playlist_id, songIds=comparison_helper.song_ids)
     return comparison_helper
 
+
 def count_playlists(missing_only=False, search=None):
     return database.count_playlists(missing_only=missing_only, search=search)
 
-def select_all_playlists(missing_only=False, page=None, limit=None, order=None, asc=None, search=None):
+
+def select_all_playlists(missing_only=False, page=None,
+                         limit=None, order=None, asc=None, search=None):
     """get list of playlists and songs"""
     try:
-        playlist_songs = database.select_all_playlists(missing_only=missing_only, page=page, limit=limit, order=order, asc=asc, search=search)
+        playlist_songs = database.select_all_playlists(
+            missing_only=missing_only,
+            page=page,
+            limit=limit,
+            order=order,
+            asc=asc,
+            search=search)
 
         has_been_deleted = False
 
         songs = []
 
         for row in playlist_songs:
-            playlist_search, has_been_deleted = get_playlist_from_cache(row.subsonic_playlist_id)
+            playlist_search, has_been_deleted = get_playlist_from_cache(
+                row.subsonic_playlist_id)
 
         if has_been_deleted:
-            return select_all_playlists(missing_only=missing_only, page=page, limit=limit)
+            return select_all_playlists(
+                missing_only=missing_only, page=page, limit=limit)
 
         return playlist_songs
     except SubsonicOfflineException as ex:
         raise ex
+
 
 def get_playlist_from_cache(key):
     has_been_deleted = False
@@ -406,8 +419,8 @@ def get_playlist_from_cache(key):
         has_been_deleted = True
         return None, has_been_deleted
 
-
     return playlist_cache[key], has_been_deleted
+
 
 def get_playlist_songs_ids_by_id(key):
     """get playlist songs ids by id"""
@@ -465,8 +478,11 @@ def remove_subsonic_deleted_playlist():
     # This can cause errors when an import process is running
     # I will just leave spotify songs saved in Spotisub database for now
 
-def load_artist(uuid, spotipy_helper, page=None, limit=None, order=None, asc=None):
-    artist_db, songs, count = database.get_artist_and_songs(uuid, page=page, limit=limit, order=order, asc=asc)
+
+def load_artist(uuid, spotipy_helper, page=None,
+                limit=None, order=None, asc=None):
+    artist_db, songs, count = database.get_artist_and_songs(
+        uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
     spotify_artist = None
@@ -493,8 +509,11 @@ def load_artist(uuid, spotipy_helper, page=None, limit=None, order=None, asc=Non
         artist["image"] = spotify_artist["images"][0]["url"]
     return artist, songs, count
 
-def load_album(uuid, spotipy_helper, page=None, limit=None, order=None, asc=None):
-    album_db, songs, count = database.get_album_and_songs(uuid, page=page, limit=limit, order=order, asc=asc)
+
+def load_album(uuid, spotipy_helper, page=None,
+               limit=None, order=None, asc=None):
+    album_db, songs, count = database.get_album_and_songs(
+        uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
     spotify_album = None
@@ -516,5 +535,5 @@ def load_album(uuid, spotipy_helper, page=None, limit=None, order=None, asc=None
         album["url"] = spotify_album["external_urls"]["spotify"]
     if "images" in spotify_album and len(spotify_album["images"]) > 0:
         album["image"] = spotify_album["images"][0]["url"]
-    
+
     return album, songs, count

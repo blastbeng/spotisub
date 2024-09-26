@@ -2,7 +2,7 @@
 SPLIT_TOKENS = ["(", "-", "feat"]
 
 
-#Configuration constants
+# Configuration constants
 ARTIST_GEN_SCHED = "ARTIST_GEN_SCHED"
 ARTIST_TOP_GEN_SCHED = "ARTIST_GEN_SCHED"
 EXCLUDED_WORDS = "EXCLUDED_WORDS"
@@ -31,7 +31,7 @@ SUBSONIC_API_USER = "SUBSONIC_API_USER"
 SUBSONIC_API_PASS = "SUBSONIC_API_PASS"
 SUBSONIC_API_PORT = "SUBSONIC_API_PORT"
 
-#Default configuration values constants
+# Default configuration values constants
 ARTIST_GEN_SCHED_DEFAULT_VALUE = "1"
 ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE = "1"
 EXCLUDED_WORDS_DEFAULT_VALUE = "acoustic,instrumental,demo"
@@ -54,9 +54,9 @@ SPOTIPY_REDIRECT_URI_DEFAULT_VALUE = "http://127.0.0.1:8080/"
 SUBSONIC_API_BASE_URL_DEFAULT_VALUE = ""
 
 
-#Scheduler constants
-JOB_AR_ID='artist_recommendations'
-JOB_ATT_ID='artist_top_tracks'
-JOB_MR_ID='my_recommendations'
-JOB_UP_ID='user_playlists'
-JOB_ST_ID='saved_tracks'
+# Scheduler constants
+JOB_AR_ID = 'artist_recommendations'
+JOB_ATT_ID = 'artist_top_tracks'
+JOB_MR_ID = 'my_recommendations'
+JOB_UP_ID = 'user_playlists'
+JOB_ST_ID = 'saved_tracks'
