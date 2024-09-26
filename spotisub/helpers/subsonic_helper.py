@@ -403,6 +403,8 @@ def get_playlist_from_cache(key):
             'Deleting Playlist with id "%s" from spotisub database.', key)
         database.delete_playlist_relation_by_id(key)
         has_been_deleted = True
+        return None, has_been_deleted
+
 
     return playlist_cache[key], has_been_deleted
 
