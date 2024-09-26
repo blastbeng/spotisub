@@ -378,11 +378,21 @@ a.article-active:hover {
     text-decoration: underline;
   }
 
-.InfoDetails {
-    display: flex;
-    padding: 15px;
-    color:black;
-}
+ .InfoDetails {
+     display: flex;
+     padding: 15px;
+     color:black;
+ }
+
+ .HeartRating-rating {
+    margin-right: 15px;
+ }
+
+ .InfoDescription {
+     display: flex;
+     padding: 10px;
+     color:black;
+ }
 
 .InfoDetails-poster {
     flex-shrink: 0;
@@ -409,20 +419,23 @@ a.article-active:hover {
 
 .InfoDetails-titleContainer {
     display: flex;
-    margin-top: 15px;
-    margin-bottom: 5px;
+    margin-top: 0px;
+    margin-bottom: 25px;
 }
 
 .InfoDetails-title {
-    font-weight: 300;
-    font-size: 50px;
-    line-height: 50px;
+    font-weight: 600;
+    font-size: 40px;
+    line-height: 30px;
 }
 
 .InfoDetails-details {
-    display: block;
+    display: inline-block;
 }
 
 .sorting{
     margin-left: 10px;
+}
+.fa-margin-right{
+    margin-right:4px;
 }

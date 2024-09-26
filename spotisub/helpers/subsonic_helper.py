@@ -13,6 +13,7 @@ from spotisub import constants
 from spotisub import utils
 from spotisub.exceptions import SubsonicOfflineException
 from spotisub.exceptions import SpotifyApiException
+from spotisub.exceptions import SpotifyDataException
 from spotisub.classes import ComparisonHelper
 from spotisub.helpers import musicbrainz_helper
 
@@ -55,6 +56,7 @@ pysonic = libsonic.Connection(
 playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 spotify_artist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 spotify_album_cache = ExpiringDict(max_len=500, max_age_seconds=300)
+spotify_song_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 
 
 def check_pysonic_connection():
@@ -383,15 +385,11 @@ def match_with_subsonic_track(
     return comparison_helper
 
 
-def count_playlists(missing_only=False, search=None):
-    return database.count_playlists(missing_only=missing_only, search=search)
-
-
 def select_all_playlists(missing_only=False, page=None,
                          limit=None, order=None, asc=None, search=None):
     """get list of playlists and songs"""
     try:
-        playlist_songs = database.select_all_playlists(
+        playlist_songs, count = database.select_all_playlists(
             missing_only=missing_only,
             page=page,
             limit=limit,
@@ -411,7 +409,7 @@ def select_all_playlists(missing_only=False, page=None,
             return select_all_playlists(
                 missing_only=missing_only, page=page, limit=limit)
 
-        return playlist_songs
+        return playlist_songs, count
     except SubsonicOfflineException as ex:
         raise ex
 
@@ -514,14 +512,17 @@ def load_artist(uuid, spotipy_helper, page=None,
         spotify_artist = spotify_artist_cache[uuid]
 
     if spotify_artist is None:
-        raise SpotifyApiException
+        raise SpotifyDataException
     artist = {}
     artist["name"] = artist_db.name
     artist["genres"] = ""
     artist["url"] = ""
     artist["image"] = ""
+    artist["popularity"] = ""
     if "genres" in spotify_artist:
         artist["genres"] = ", ".join(spotify_artist["genres"])
+    if "popularity" in spotify_artist:
+        artist["popularity"] = str(spotify_artist["popularity"]) + "%"
     if "external_urls" in spotify_artist and "spotify" in spotify_artist["external_urls"]:
         artist["url"] = spotify_artist["external_urls"]["spotify"]
     if "images" in spotify_artist and len(spotify_artist["images"]) > 0:
@@ -545,14 +546,67 @@ def load_album(uuid, spotipy_helper, page=None,
         spotify_album = spotify_album_cache[uuid]
 
     if spotify_album is None:
-        raise SpotifyApiException
+        raise SpotifyDataException
     album = {}
     album["name"] = album_db.name
     album["url"] = ""
     album["image"] = ""
+    album["release_date"] = ""
+    if "release_date" in spotify_album:
+        album["release_date"] = spotify_album["release_date"]
     if "external_urls" in spotify_album and "spotify" in spotify_album["external_urls"]:
         album["url"] = spotify_album["external_urls"]["spotify"]
     if "images" in spotify_album and len(spotify_album["images"]) > 0:
         album["image"] = spotify_album["images"][0]["url"]
 
     return album, songs, count
+
+
+def load_song(uuid, spotipy_helper, page=None,
+               limit=None, order=None, asc=None):
+    song_db, songs, count = database.get_song_and_playlists(
+        uuid, page=page, limit=limit, order=order, asc=asc)
+    sp = None
+
+    spotify_song = None
+
+    if uuid not in spotify_song_cache:
+        sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
+        spotify_song = sp.track(song_db.spotify_uri)
+        spotify_song_cache[uuid] = spotify_song
+    else:
+        spotify_song = spotify_song_cache[uuid]
+
+    if spotify_song is None:
+        raise SpotifyDataException
+
+    song = {}
+    song["name"] = song_db.title
+    song["url"] = ""
+    song["image"] = ""
+    song["popularity"] = ""
+    song["preview"] = ""
+    
+    if "preview_url" in spotify_song:
+        song["preview_url"] = spotify_song["preview_url"]
+    if "popularity" in spotify_song:
+        song["popularity"] = str(spotify_song["popularity"]) + "%"
+    if "external_urls" in spotify_song and "spotify" in spotify_song["external_urls"]:
+        song["url"] = spotify_song["external_urls"]["spotify"]
+
+    if len(songs) > 0:
+        spotify_album = None
+        if songs[0].spotify_album_uuid not in spotify_album_cache:
+            sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
+            spotify_album = sp.album(songs[0].spotify_album_uri)
+            spotify_album_cache[songs[0].spotify_album_uuid] = spotify_album
+        else:
+            spotify_album = spotify_album_cache[songs[0].spotify_album_uuid]
+
+        if spotify_album is None:
+            raise SpotifyDataException
+        
+        if "images" in spotify_album and len(spotify_album["images"]) > 0:
+            song["image"] = spotify_album["images"][0]["url"]
+
+    return song, songs, count

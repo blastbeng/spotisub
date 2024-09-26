@@ -9,12 +9,17 @@
         <div class="InfoDetails">
             <img class="InfoDetails-poster" src="{{ album["image"] }}">
             <div class="InfoDetails-info">
+               Album
                <div class="InfoDetails-titleRow">
                   <div class="InfoDetails-titleContainer">
                      <div class="InfoDetails-title">{{ album["name"] }}</div>
                   </div>
                </div>
                <div>
+
+               {% if album["release_date"] != '' %}
+                   <span class="InfoDetails-details"><i class="fa fa-calendar fa-margin-right" aria-hidden="true"></i><span class="HeartRating-rating">{{ album["release_date"] }}</span>
+               {% endif %}
                {% if album["url"] != '' %}
                    <span class="InfoDetails-details"><a href="{{ album["url"] }}" class="article normal-href" target="_blank">{{ album["name"] }} on Spotify</a></span>
                {% endif %}
@@ -90,7 +95,8 @@
                     {% else %}
                         <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
                     {% endif %}
-                    <td><a href="https://open.spotify.com/track/{{ song.spotify_uri.split(':')[2] }}" alt="{{ song.title }} on Spotify" class="normal-href" target="_blank">{{ song.title }}</a></td>
+                    <td><a href="{{ url_for('song', uuid=song.uuid, page=1, limit=25, order=order, asc=asc) }}" class="normal-href">{{ song.title }}</a></td>
+                    
                     <td>{% for name in (song.spotify_artist_names.split(",") | unique) %}
                         <a href="javascript:gotoArtist('{{ song.spotify_song_uuid }}_artist_{{ loop.index }}');" class="normal-href">{{ name }}</a>
                         {% endfor %}
