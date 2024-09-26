@@ -95,9 +95,10 @@ NOTE. Depending on your library size and your playlists number and size on Spoti
 To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
 
 
-For any help join the Official Discord Server 
+Official Spotisub communities
 
-https://discord.gg/jXQauuhy5w
+* Discord: https://discord.gg/jXQauuhy5w
+* Reddit: https://www.reddit.com/r/spotisub/
 
 ## Authors
 
