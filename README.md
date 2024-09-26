@@ -85,9 +85,8 @@ Same thing for artists top tracks playlists.
 ## Planned Features
 
 Dashboard
-* View which tracks are missing and decide to download trough spotdl or just ignore em
-* View which tracks are being matched with the Spotify playlists\recommendations, and decide to keep or exclude em
-* Configure some parameters of spotisub trough the dashboard instead of docker env variables
+* Ability to delete, skip or download matching tracks from spotify
+* Configure Spotisub trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard
 
 ## Help
@@ -96,7 +95,9 @@ NOTE. Depending on your library size and your playlists number and size on Spoti
 To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
 
 
-For any help contact me on Discord blastbong#9151
+For any help join the Official Discord Server 
+
+https://discord.gg/jXQauuhy5w
 
 ## Authors
 
