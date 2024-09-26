@@ -78,7 +78,7 @@
                     {% else %}
                         <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
                     {% endif %}
-                    <td><a href="{{ url_for('song', uuid=playlist.spotify_song_uuid) }}" class="normal-href">{{ playlist.spotify_song_title }}</a></td>
+                    <td><a href="https://open.spotify.com/track/{{ playlist.spotify_song_uri.split(':')[2] }}" alt="{{ playlist.spotify_song_title }} on Spotify" class="normal-href" target="_blank">{{ playlist.spotify_song_title }}</a></td>
                     <td>{% for name in (playlist.spotify_artist_names.split(",") | unique) %}
                             <a href="javascript:gotoArtist('{{ playlist.spotify_song_uuid }}_artist_{{ loop.index }}');" class="normal-href">{{ name }}</a>
                         {% endfor %}

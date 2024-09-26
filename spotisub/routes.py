@@ -114,32 +114,33 @@ def playlists(missing_only = 0, page = 1, limit = 25, order = 'spotify_song.titl
             errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
 
 
-@spotisub.route('/song/<string:uuid>/')
-@login_required
-def song(uuid = None):
-    title = 'Song'
-    try:
-        return render_template('song.html', 
-            title=title, 
-            uuid=uuid)
-    except SubsonicOfflineException:
-        return render_template('errors/404.html', 
-            title=title,
-            errors=["Unable to communicate with Subsonic." , "Please check your configuration and make sure your instance is online."]) 
-    except (SpotifyException, SpotifyApiException) as e:
-        return render_template('errors/404.html', 
-            title=title,
-            errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
-
-
 @spotisub.route('/album/<string:uuid>/')
+@spotisub.route('/album/<string:uuid>/<int:page>/')
+@spotisub.route('/album/<string:uuid>/<int:page>/<int:limit>/')
+@spotisub.route('/album/<string:uuid>/<int:page>/<int:limit>/<string:order>/')
+@spotisub.route('/album/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def album(uuid = None):
+def album(uuid = None, page = 1, limit = 25, order = 'spotify_song.title', asc = 1):
     title = 'Album'
     try:
+        spotipy_helper.get_secrets()
+        album, songs, song_count = subsonic_helper.load_album(uuid, spotipy_helper, page=page-1, limit=limit, order=order, asc=(asc==1))
+        total_pages = math.ceil(song_count/limit)
+        pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
         return render_template('album.html', 
             title=title, 
-            uuid=uuid)
+            album=album, 
+            uuid=uuid,
+            songs=songs, 
+            pagination_array=pagination_array, 
+            prev_page=prev_page,
+            next_page=next_page,
+            current_page=page,
+            total_pages=total_pages,
+            limit=limit,
+            result_size=song_count,
+            order=order,
+            asc=asc)
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,
@@ -150,16 +151,32 @@ def album(uuid = None):
             errors=["Unable to communicate with Spotify." , "Please check your configuration."]) 
 
 @spotisub.route('/artist/<string:uuid>/')
+@spotisub.route('/artist/<string:uuid>/<int:page>/')
+@spotisub.route('/artist/<string:uuid>/<int:page>/<int:limit>/')
+@spotisub.route('/artist/<string:uuid>/<int:page>/<int:limit>/<string:order>/')
+@spotisub.route('/artist/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def artist(uuid = None):
+def artist(uuid = None, page = 1, limit = 25, order = 'spotify_song.title', asc = 1):
     title='Artist' 
     try:
         spotipy_helper.get_secrets()
-        artist, songs = subsonic_helper.load_artist(uuid, spotipy_helper)
+        artist, songs, song_count = subsonic_helper.load_artist(uuid, spotipy_helper, page=page-1, limit=limit, order=order, asc=(asc==1))
+        total_pages = math.ceil(song_count/limit)
+        pagination_array, prev_page, next_page = utils.get_pagination(page, total_pages)
         return render_template('artist.html', 
             title=title, 
             artist=artist, 
-            songs=songs)
+            uuid=uuid,
+            songs=songs, 
+            pagination_array=pagination_array, 
+            prev_page=prev_page,
+            next_page=next_page,
+            current_page=page,
+            total_pages=total_pages,
+            limit=limit,
+            result_size=song_count,
+            order=order,
+            asc=asc)
     except SubsonicOfflineException:
         return render_template('errors/404.html', 
             title=title,

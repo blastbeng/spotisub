@@ -53,6 +53,7 @@ pysonic = libsonic.Connection(
 #caches
 playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 spotify_artist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
+spotify_album_cache = ExpiringDict(max_len=500, max_age_seconds=300)
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""
@@ -464,8 +465,8 @@ def remove_subsonic_deleted_playlist():
     # This can cause errors when an import process is running
     # I will just leave spotify songs saved in Spotisub database for now
 
-def load_artist(uuid, spotipy_helper):
-    artist_db, songs = database.select_artist(uuid)
+def load_artist(uuid, spotipy_helper, page=None, limit=None, order=None, asc=None):
+    artist_db, songs, count = database.get_artist_and_songs(uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
     spotify_artist = None
@@ -482,12 +483,38 @@ def load_artist(uuid, spotipy_helper):
     artist = {}
     artist["name"] = artist_db.name
     artist["genres"] = ""
+    artist["url"] = ""
+    artist["image"] = ""
     if "genres" in spotify_artist:
         artist["genres"] = ", ".join(spotify_artist["genres"])
-    else:
-        artist["genres"] = ""
+    if "external_urls" in spotify_artist and "spotify" in spotify_artist["external_urls"]:
+        artist["url"] = spotify_artist["external_urls"]["spotify"]
     if "images" in spotify_artist and len(spotify_artist["images"]) > 0:
         artist["image"] = spotify_artist["images"][0]["url"]
+    return artist, songs, count
+
+def load_album(uuid, spotipy_helper, page=None, limit=None, order=None, asc=None):
+    album_db, songs, count = database.get_album_and_songs(uuid, page=page, limit=limit, order=order, asc=asc)
+    sp = None
+
+    spotify_album = None
+
+    if uuid not in spotify_album_cache:
+        sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
+        spotify_album = sp.album(album_db.spotify_uri)
+        spotify_album_cache[uuid] = spotify_album
     else:
-        artist["image"] = ""
-    return artist, songs
+        spotify_album = spotify_album_cache[uuid]
+
+    if spotify_album is None:
+        raise SpotifyApiException
+    album = {}
+    album["name"] = album_db.name
+    album["url"] = ""
+    album["image"] = ""
+    if "external_urls" in spotify_album and "spotify" in spotify_album["external_urls"]:
+        album["url"] = spotify_album["external_urls"]["spotify"]
+    if "images" in spotify_album and len(spotify_album["images"]) > 0:
+        album["image"] = spotify_album["images"][0]["url"]
+    
+    return album, songs, count

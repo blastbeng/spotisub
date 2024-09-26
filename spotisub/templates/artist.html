@@ -5,18 +5,21 @@
     {% include '_flash_message.html' %}
     <!-- End of flash message -->
         {% include 'header.html' %}
-        <div class="ArtistDetails">
-            <img class="ArtistDetails-poster" src="{{ artist["image"] }}">
-            <div class="ArtistDetails-info">
-               <div class="ArtistDetails-titleRow">
-                  <div class="ArtistDetails-titleContainer">
-                     <div class="ArtistDetails-title">{{ artist["name"] }}</div>
+        <div class="InfoDetails">
+            <img class="InfoDetails-poster" src="{{ artist["image"] }}">
+            <div class="InfoDetails-info">
+               <div class="InfoDetails-titleRow">
+                  <div class="InfoDetails-titleContainer">
+                     <div class="InfoDetails-title">{{ artist["name"] }}</div>
                   </div>
                </div>
-               <div class="ArtistDetails-details">
-                  <div>
-                     <span><span class="ArtistGenres-genres">{{ artist["genres"] }}</span></span>
-                  </div>
+               <div>
+               {% if artist["genres"] != '' %}
+                   <span class="InfoDetails-details">Genres: {{ artist["genres"] }}</span>
+               {% endif %}
+               {% if artist["url"] != '' %}
+                   <span class="InfoDetails-details"><a href="{{ artist["url"] }}" class="article normal-href" target="_blank">{{ artist["name"] }} on Spotify</a></span>
+               {% endif %}
                </div>
             </div>
          </div>
@@ -24,10 +27,61 @@
             <table id="data" class="table table-striped">
                 <thead>
                 <tr>
-                    <th></th>
-                    <th>Spotify Song Title</th>
-                    <th>Spotify Album Name</th>
-                    <th>Playlist Name</th>
+                    <th>
+                        {% if order == 'subsonic_spotify_relation.subsonic_song_id' %}
+                            {% if asc == 1 %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_song_id', asc=0) }}" class="normal-href">Status<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
+                            {% else %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_song_id', asc=1) }}" class="normal-href">Status<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_song_id', asc=0) }}" class="normal-href">Status</a>   
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order == 'spotify_song.title' %}
+                            {% if asc == 1 %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_song.title', asc=0) }}" class="normal-href">Spotify Song Title<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
+                            {% else %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_song.title', asc=1) }}" class="normal-href">Spotify Song Title<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_song.title', asc=0) }}" class="normal-href">Spotify Song Title</a>   
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order == 'spotify_artist.name' %}
+                            {% if asc == 1 %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_artist.name', asc=0) }}" class="normal-href">Spotify Artist<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
+                            {% else %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_artist.name', asc=1) }}" class="normal-href">Spotify Artist<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_artist.name', asc=0) }}" class="normal-href">Spotify Artist</a>   
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order == 'spotify_album.name' %}
+                            {% if asc == 1 %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_album.name', asc=0) }}" class="normal-href">Spotify Album<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
+                            {% else %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_album.name', asc=1) }}" class="normal-href">Spotify Album<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='spotify_album.name', asc=0) }}" class="normal-href">Spotify Album</a>   
+                        {% endif %}
+                    </th>
+                    <th>
+                        {% if order == 'subsonic_spotify_relation.subsonic_playlist_name' %}
+                            {% if asc == 1 %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
+                            {% else %}
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name</a>   
+                        {% endif %}
+                    </th>
                 </tr>
                 </thead>
                 <tbody>
@@ -38,7 +92,14 @@
                     {% else %}
                         <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
                     {% endif %}
-                    <td><a href="{{ url_for('song', uuid=song.uuid) }}" class="normal-href">{{ song.title }}</a></td>
+                    <td><a href="https://open.spotify.com/track/{{ song.spotify_uri.split(':')[2] }}" alt="{{ song.title }} on Spotify" class="normal-href" target="_blank">{{ song.title }}</a></td>
+                    <td>{% for name in (song.spotify_artist_names.split(",") | unique) %}
+                        <a href="javascript:gotoArtist('{{ song.spotify_song_uuid }}_artist_{{ loop.index }}');" class="normal-href">{{ name }}</a>
+                        {% endfor %}
+                        {% for uuid in (song.spotify_artist_uuids.split(",") | unique) %}
+                            <input type="hidden" id="{{ song.spotify_song_uuid }}_artist_{{ loop.index }}" value="{{ uuid }}" />
+                        {% endfor %}
+                    </td>
                     <td><a href="{{ url_for('album', uuid=song.album_uuid) }}" class="normal-href">{{ song.album_name }}</a></td>
                     <td><a href="{{ url_for('playlists', missing_only=0, page=1, limit=25, order='spotify_song.title', asc=1, search=song.subsonic_playlist_name ) }}" class="normal-href">{{ song.subsonic_playlist_name }}</a></td>
                     </tr>
@@ -46,5 +107,41 @@
                 </tbody>
             </table>
         </div>
+        <ul class="pagination footer">
+            {% if current_page != 1 %}
+            <li>
+                <a href="{{ url_for('artist', uuid=uuid, page=prev_page, limit=limit, order=order, asc=asc) }}" class="article"><</a>
+            </li>
+            {% endif %}
+            {% for page in pagination_array %}
+                <li>
+                    {% if page == current_page %}
+                        <a href="{{ url_for('artist', uuid=uuid, page=page, limit=limit, order=order, asc=asc) }}" class="article-active">{{ page }}</a>
+                    {% else %}
+                        <a href="{{ url_for('artist', uuid=uuid, page=page, limit=limit, order=order, asc=asc) }}" class="article">{{ page }}</a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+            {% if current_page != total_pages %}
+            <li>
+                <a href="{{ url_for('artist', uuid=uuid, page=next_page, limit=limit, order=order, asc=asc) }}" class="article">></a>
+            </li>
+            {% endif %}
+            <li>
+                <span class="text-limit">Items per page:</span>
+            </li>
+            <li>
+                <select onchange="location = this.value;">
+                    <option value="{{ url_for('artist', uuid=uuid, page=1, limit=25, order=order, asc=asc) }}" {% if limit == 25 %} selected{% endif %}>25</option>
+                    <option value="{{ url_for('artist', uuid=uuid, page=1, limit=50, order=order, asc=asc) }}" {% if limit == 50 %} selected{% endif %}>50</option>
+                    <option value="{{ url_for('artist', uuid=uuid, page=1, limit=100, order=order, asc=asc) }}" {% if limit == 100 %} selected{% endif %}>100</option>
+                    <option value="{{ url_for('artist', uuid=uuid, page=1, limit=250, order=order, asc=asc) }}" {% if limit == 250 %} selected{% endif %}>250</option>
+                    <option value="{{ url_for('artist', uuid=uuid, page=1, limit=500, order=order, asc=asc) }}" {% if limit == 500 %} selected{% endif %}>500</option>
+                </select>
+            </li>
+            <li>
+                <span class="text-limit">{{ (current_page * limit) - limit + 1 }}-{{ (current_page * limit) - limit + (songs|length) }} of {{ result_size }}</span>
+            </li>
+        </ul>
     
 {% endblock %}
