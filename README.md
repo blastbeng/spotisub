@@ -85,7 +85,7 @@ Same thing for artists top tracks playlists.
 ## Planned Features
 
 Dashboard
-* Ability to delete, skip or download matching tracks from spotify
+* Ability to delete, skip or download matching tracks using spotdl
 * Configure Spotisub trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard
 
