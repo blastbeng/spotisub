@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import time
+import threading
 import libsonic
 from expiringdict import ExpiringDict
 from libsonic.errors import DataNotFoundError
@@ -158,7 +159,8 @@ def write_playlist(sp, playlist_name, results):
         old_song_ids = []
         if playlist_id is None:
             check_pysonic_connection().createPlaylist(name=playlist_name, songIds=[])
-            logging.info('Creating playlist %s', playlist_name)
+            logging.info('(%s) Creating playlist %s', 
+                str(threading.current_thread().ident), playlist_name)
             playlist_id = get_playlist_id_by_name(playlist_name)
             database.delete_playlist_relation_by_id(playlist_id)
         else:
@@ -173,7 +175,8 @@ def write_playlist(sp, playlist_name, results):
                     excluded = False
                     if artist_spotify != '' and "name" in artist_spotify:
                         logging.info(
-                            'Searching %s - %s in your music library',
+                            '(%s) earching %s - %s in your music library', 
+                            str(threading.current_thread().ident),
                             artist_spotify["name"],
                             track['name'])
                         if "name" in track:
@@ -207,27 +210,32 @@ def write_playlist(sp, playlist_name, results):
                                         artist_spotify["name"])
                                 if is_monitored:
                                     logging.warning(
-                                        'Track %s - %s not found in your music ' +
-                                        'library, using SPOTDL downloader',
+                                        '(%s) Track %s - %s not found in your music ' +
+                                        'library, using SPOTDL downloader', 
+                                        str(threading.current_thread().ident),
                                         artist_spotify["name"],
                                         track['name'])
                                     logging.warning(
-                                        'This track will be available after ' +
-                                        'navidrome rescans your music dir')
+                                        '(%s) This track will be available after ' +
+                                        'navidrome rescans your music dir', 
+                                        str(threading.current_thread().ident))
                                     spotdl_helper.download_track(
                                         track["external_urls"]["spotify"])
                                 else:
                                     logging.warning(
-                                        'Track %s - %s not found in your music library',
+                                        '(%s) Track %s - %s not found in your music library', 
+                                        str(threading.current_thread().ident),
                                         artist_spotify["name"],
                                         track['name'])
                                     logging.warning(
-                                        'This track hasn'
+                                        '(%s) This track hasn'
                                         't been found in your Lidarr database, ' +
-                                        'skipping download process')
+                                        'skipping download process', 
+                                        str(threading.current_thread().ident))
                         elif found is False:
                             logging.warning(
-                                'Track %s - %s not found in your music library',
+                                '(%s) Track %s - %s not found in your music library', 
+                                str(threading.current_thread().ident),
                                 artist_spotify["name"],
                                 track['name'])
                             database.insert_song(
@@ -237,19 +245,21 @@ def write_playlist(sp, playlist_name, results):
             if len(song_ids) > 0:
                 check_pysonic_connection().createPlaylist(
                     playlistId=playlist_id, songIds=song_ids)
-                logging.info('Success! Created playlist %s', playlist_name)
+                logging.info('(%s) Success! Created playlist %s', 
+                    str(threading.current_thread().ident), playlist_name)
             elif len(song_ids) == 0:
                 try:
                     check_pysonic_connection().deletePlaylist(playlist_id)
                     logging.info(
-                        'Fail! No songs found for playlist %s',
-                        playlist_name)
+                        '(%s) Fail! No songs found for playlist %s',
+                        str(threading.current_thread().ident), playlist_name)
                 except DataNotFoundError:
                     pass
 
     except SubsonicOfflineException:
         logging.error(
-            'There was an error creating a Playlist, perhaps is your Subsonic server offline?')
+            '(%s) There was an error creating a Playlist, perhaps is your Subsonic server offline?',
+            str(threading.current_thread().ident))
 
 
 def match_with_subsonic_track(
@@ -266,7 +276,8 @@ def match_with_subsonic_track(
             song["title"] + " " + song["album"]
         if song["id"] in old_song_ids:
             logging.info(
-                'Track with id "%s" already in playlist "%s"',
+                '(%s) Track with id "%s" already in playlist "%s"',
+                str(threading.current_thread().ident),
                 song["id"],
                 playlist_name)
             comparison_helper.song_ids.append(song["id"])
@@ -284,7 +295,8 @@ def match_with_subsonic_track(
                     and comparison_helper.track["album"]["name"] is not None):
                 album_name = comparison_helper.track["album"]["name"]
             logging.info(
-                'Comparing song "%s - %s - %s" with Spotify track "%s - %s - %s"',
+                '(%s) Comparing song "%s - %s - %s" with Spotify track "%s - %s - %s"',
+                str(threading.current_thread().ident),
                 song["artist"],
                 song["title"],
                 song["album"],
@@ -305,7 +317,8 @@ def match_with_subsonic_track(
                     database.insert_song(
                         playlist_id, playlist_name, song, comparison_helper.artist_spotify, comparison_helper.track)
                     logging.info(
-                        'Adding song "%s - %s - %s" to playlist "%s", matched by ISRC: "%s"',
+                        '(%s) Adding song "%s - %s - %s" to playlist "%s", matched by ISRC: "%s"',
+                        str(threading.current_thread().ident),
                         song["artist"],
                         song["title"],
                         song["album"],
@@ -332,7 +345,8 @@ def match_with_subsonic_track(
                     database.insert_song(
                         playlist_id, playlist_name, song, comparison_helper.artist_spotify, comparison_helper.track)
                     logging.info(
-                        'Adding song "%s - %s - %s" to playlist "%s", matched by text comparison',
+                        '(%s) Adding song "%s - %s - %s" to playlist "%s", matched by text comparison',
+                        str(threading.current_thread().ident),
                         song["artist"],
                         song["title"],
                         song["album"],
@@ -354,10 +368,12 @@ def match_with_subsonic_track(
                 database.insert_song(
                     playlist_id, playlist_name, skipped_song, comparison_helper.artist_spotify, comparison_helper.track)
                 logging.warning(
-                    'No matching album found for Subsonic search "%s", using a random one',
+                    '(%s) No matching album found for Subsonic search "%s", using a random one',
+                    str(threading.current_thread().ident),
                     text_to_search)
                 logging.info(
-                    'Adding song "%s - %s - %s" to playlist "%s", random match',
+                    '(%s) Adding song "%s - %s - %s" to playlist "%s", random match',
+                    str(threading.current_thread().ident),
                     skipped_song["artist"],
                     song["title"],
                     skipped_song["album"],
@@ -411,10 +427,11 @@ def get_playlist_from_cache(key):
 
     if key not in playlist_cache:
         logging.warning(
-            'Playlist id "%s" not found, may be you deleted this playlist from Subsonic?',
-            key)
+            '(%s) Playlist id "%s" not found, may be you deleted this playlist from Subsonic?',
+            str(threading.current_thread().ident), key)
         logging.warning(
-            'Deleting Playlist with id "%s" from spotisub database.', key)
+            '(%s) Deleting Playlist with id "%s" from spotisub database.',
+            str(threading.current_thread().ident), key)
         database.delete_playlist_relation_by_id(key)
         has_been_deleted = True
         return None, has_been_deleted
@@ -434,11 +451,12 @@ def get_playlist_songs_ids_by_id(key):
         pass
     if playlist_search is None:
         logging.warning(
-            'Playlist id "%s" not found, may be you ' +
+            '(%s) Playlist id "%s" not found, may be you ' +
             'deleted this playlist from Subsonic?',
-            key)
+            str(threading.current_thread().ident), key)
         logging.warning(
-            'Deleting Playlist with id "%s" from spotisub database.', key)
+            '(%s) Deleting Playlist with id "%s" from spotisub database.',
+            str(threading.current_thread().ident), key)
         database.delete_playlist_relation_by_id(key)
     elif (playlist_search is not None
             and "playlist" in playlist_search
@@ -467,11 +485,12 @@ def remove_subsonic_deleted_playlist():
             pass
         if playlist_search is None:
             logging.warning(
-                'Playlist id "%s" not found, may be you ' +
+                '(%s) Playlist id "%s" not found, may be you ' +
                 'deleted this playlist from Subsonic?',
-                key)
+                str(threading.current_thread().ident), key)
             logging.warning(
-                'Deleting Playlist with id "%s" from spotisub database.', key)
+                '(%s) Deleting Playlist with id "%s" from spotisub database.', 
+                str(threading.current_thread().ident), key)
             database.delete_playlist_relation_by_id(key)
 
     # DO we really need to remove spotify songs even if they are not related to any playlist?

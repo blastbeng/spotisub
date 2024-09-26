@@ -3,6 +3,7 @@ import os
 import re
 import sys
 import logging
+import threading
 from spotisub import constants
 
 
@@ -29,7 +30,8 @@ def write_exception():
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     logging.error(
-        "%s %s %s %s",
+        "%s %s %s %s %s",
+        str(threading.current_thread().ident),
         exc_type,
         fname,
         exc_tb.tb_lineno,
@@ -77,7 +79,8 @@ def compare_exact_word(stringsa, stringsb):
         for stringb in stringsb:
             if stringa != '' and stringb != '' and stringa == stringb:
                 logging.warning(
-                    "Found excluded word: %s. Skipping...", stringb)
+                    "(%s) Found excluded word: %s. Skipping...",
+                    str(threading.current_thread().ident), stringb)
                 return True
     return False
 
@@ -89,7 +92,8 @@ def compare(stringsa, stringsb, log_excluded=False):
             if stringa == stringb or stringb in stringa or stringa in stringb:
                 if log_excluded is True:
                     logging.warning(
-                        "Found excluded word: %s. Skipping...", stringb)
+                        "(%s) Found excluded word: %s. Skipping...",
+                        str(threading.current_thread().ident), stringb)
                 return True
     return False
 

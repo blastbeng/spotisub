@@ -246,77 +246,28 @@ def logout():
 nsgenerate = api.namespace('generate', 'Generate APIs')
 
 
-@nsgenerate.route('/artist_recommendations/')
-@nsgenerate.route('/artist_recommendations/<string:artist_name>/')
+@nsgenerate.route('/artist_recommendations')
 class ArtistRecommendationsClass(Resource):
     """Artist reccomendations class"""
 
-    def get(self, artist_name=None):
+    def get(self):
         """Artist reccomendations endpoint"""
         try:
             spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
-            if artist_name is None:
-                artist_name = random.choice(
-                    subsonic_helper.get_artists_array_names())
-            else:
-                search_result_name = subsonic_helper.search_artist(artist_name)
-                if search_result_name is None:
-                    return get_response_json(
+            artist_names = subsonic_helper.get_artists_array_names()
+            if len(artist_names) is None:
+                return get_response_json(
                         get_json_message(
-                            "Artist " +
-                            artist_name +
-                            " not found, maybe a misspelling error?",
+                            "No artists found in your library",
                             True),
                         206)
-                artist_name = search_result_name
-            if artist_name is not None:
-                threading.Thread(
-                    target=lambda: generator
-                    .show_recommendations_for_artist(artist_name)).start()
-                return get_response_json(
-                    get_json_message(
-                        "Generating recommendations playlist for artist " +
-                        artist_name,
-                        True),
-                    200)
-            return get_response_json(
-                get_json_message(
-                    "Bad request",
-                    False),
-                400)
-        except SubsonicOfflineException:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Unable to communicate with Subsonic.",
-                    False),
-                400)
-        except (SpotifyException, SpotifyApiException) as e:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Spotify API Error. Please check your configuruation.",
-                    False),
-                400)
-
-
-@nsgenerate.route('/artist_recommendations/all/')
-class ArtistRecommendationsAllClass(Resource):
-    """All Artists reccomendations class"""
-
-    def get(self):
-        """All Artists reccomendations endpoint"""
-        try:
-            spotipy_helper.get_secrets()
-            subsonic_helper.check_pysonic_connection()
             threading.Thread(
-                target=lambda: generator
-                .all_artists_recommendations(subsonic_helper
-                                             .get_artists_array_names())).start()
+                target=lambda: scheduler
+                    .run_job(constants.JOB_AR_ID)).start()
             return get_response_json(
                 get_json_message(
-                    "Generating recommendations playlist for all artists",
+                    "Generating a random artiist recommendations playlist",
                     True),
                 200)
         except SubsonicOfflineException:
@@ -335,76 +286,29 @@ class ArtistRecommendationsAllClass(Resource):
                 400)
 
 
-@nsgenerate.route('/artist_top_tracks/')
-@nsgenerate.route('/artist_top_tracks/<string:artist_name>/')
+@nsgenerate.route('/artist_top_tracks')
 class ArtistTopTracksClass(Resource):
     """Artist top tracks class"""
 
-    def get(self, artist_name=None):
+    def get(self):
         """Artist top tracks endpoint"""
         try:
             spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
-            if artist_name is None:
-                artist_name = random.choice(
-                    subsonic_helper.get_artists_array_names())
-            else:
-                search_result_name = subsonic_helper.search_artist(artist_name)
-                if search_result_name is None:
-                    return get_response_json(
+            artist_names = subsonic_helper.get_artists_array_names()
+            if len(artist_names) is None:
+                return get_response_json(
                         get_json_message(
-                            "Artist " +
-                            artist_name +
-                            " not found, maybe a misspelling error?",
+                            "No artists found in your library",
                             True),
                         206)
-                artist_name = search_result_name
-            if artist_name is not None:
-                threading.Thread(
-                    target=lambda: generator.artist_top_tracks(artist_name)).start()
-                return get_response_json(
-                    get_json_message(
-                        "Generating top tracks playlist for artist " +
-                        artist_name,
-                        True),
-                    200)
-            return get_response_json(
-                get_json_message(
-                    "Bad request",
-                    False),
-                400)
-        except SubsonicOfflineException:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Unable to communicate with Subsonic.",
-                    False),
-                400)
-        except (SpotifyException, SpotifyApiException) as e:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Spotify API Error. Please check your configuruation.",
-                    False),
-                400)
-
-
-@nsgenerate.route('/artist_top_tracks/all/')
-class ArtistTopTracksAllClass(Resource):
-    """All Artists top tracks class"""
-
-    def get(self):
-        """All Artists top tracks endpoint"""
-        try:
-            spotipy_helper.get_secrets()
-            subsonic_helper.check_pysonic_connection()
+            
             threading.Thread(
-                target=lambda: generator
-                .all_artists_top_tracks(subsonic_helper
-                                        .get_artists_array_names())).start()
+                target=lambda: scheduler
+                    .run_job(constants.JOB_ATT_ID)).start()
             return get_response_json(
                 get_json_message(
-                    "Generating top tracks playlist for all artists",
+                    "Generating a random artist top tracks playlist",
                     True),
                 200)
         except SubsonicOfflineException:
@@ -433,12 +337,8 @@ class RecommendationsClass(Resource):
             spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
-                target=lambda: generator.my_recommendations(
-                    count=random.randrange(
-                        int(
-                            os.environ.get(
-                                constants.NUM_USER_PLAYLISTS,
-                                constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))).start()
+                target=lambda: scheduler
+                    .run_job(constants.JOB_MR_ID)).start()
             return get_response_json(
                 get_json_message(
                     "Generating a reccommendation playlist",
@@ -463,81 +363,21 @@ class RecommendationsClass(Resource):
 nsimport = api.namespace('import', 'Generate APIs')
 
 
-@nsimport.route('/user_playlist/')
-@nsimport.route('/user_playlist/<string:playlist_name>/')
+@nsimport.route('/user_playlist')
 class UserPlaylistsClass(Resource):
     """User playlists class"""
 
-    def get(self, playlist_name=None):
+    def get(self):
         """User playlists endpoint"""
         try:
             spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
-            if playlist_name is None:
-                count = generator.count_user_playlists(0)
-                threading.Thread(
-                    target=lambda: generator.get_user_playlists(
-                        random.randrange(count),
-                        single_execution=True)).start()
-                return get_response_json(get_json_message(
-                    "Importing a random playlist", True), 200)
-            search_result_name = generator.get_user_playlist_by_name(
-                playlist_name)
-            if search_result_name is None:
-                return get_response_json(
-                    get_json_message(
-                        "Playlist " +
-                        playlist_name +
-                        " not found, maybe a misspelling error?",
-                        True),
-                    206)
-            playlist_name = search_result_name
-            if playlist_name is not None:
-                threading.Thread(target=lambda: generator.get_user_playlists(
-                    0, single_execution=False, playlist_name=playlist_name)).start()
-                return get_response_json(
-                    get_json_message(
-                        "Searching and importing your spotify account for playlist " +
-                        playlist_name,
-                        True),
-                    200)
-            return get_response_json(
-                get_json_message(
-                    "Bad request",
-                    False),
-                400)
-        except SubsonicOfflineException:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Unable to communicate with Subsonic.",
-                    False),
-                400)
-        except (SpotifyException, SpotifyApiException) as e:
-            utils.write_exception()
-            return get_response_json(
-                get_json_message(
-                    "Spotify API Error. Please check your configuruation.",
-                    False),
-                400)
-
-
-@nsimport.route('/user_playlist/all/')
-class UserPlaylistsAllClass(Resource):
-    """All User playlists class"""
-
-    def get(self):
-        """All User playlists endpoint"""
-        try:
-            spotipy_helper.get_secrets()
-            subsonic_helper.check_pysonic_connection()
+            count = generator.count_user_playlists(0)
             threading.Thread(
-                target=lambda: generator.get_user_playlists(0)).start()
-            return get_response_json(
-                get_json_message(
-                    "Importing all your spotify playlists",
-                    True),
-                200)
+                target=lambda: scheduler
+                    .run_job(constants.JOB_UP_ID)).start()
+            return get_response_json(get_json_message(
+                "Importing a random playlist", True), 200)
         except SubsonicOfflineException:
             utils.write_exception()
             return get_response_json(
@@ -564,8 +404,8 @@ class SavedTracksClass(Resource):
             spotipy_helper.get_secrets()
             subsonic_helper.check_pysonic_connection()
             threading.Thread(
-                target=lambda: generator
-                .get_user_saved_tracks(dict({'tracks': []}))).start()
+                target=lambda: scheduler
+                    .run_job(constants.JOB_ST_ID)).start()
             return get_response_json(get_json_message(
                 "Importing your saved tracks", True), 200)
         except SubsonicOfflineException:
@@ -594,6 +434,7 @@ class Healthcheck(Resource):
     def get(self):
         """Healthcheck endpoint"""
         return "Ok!"
+
 
 
 scheduler = APScheduler()
