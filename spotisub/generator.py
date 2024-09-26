@@ -1,18 +1,19 @@
-"""Subsonic helper"""
+"""Subsonic generator"""
 import logging
 import os
 import random
 import time
 import re
-from os.path import dirname
-from os.path import join
-from dotenv import load_dotenv
-from .core.external.utils.constants import constants
-from .core.external import spotipy_helper
-from .core import subsonic_helper
+import threading
+from spotisub import spotisub
+from spotisub import constants
+from spotisub.helpers import spotipy_helper
+from spotisub.helpers import subsonic_helper
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+
+def prechecks():
+    spotipy_helper.get_secrets()
+    subsonic_helper.check_pysonic_connection()
 
 
 def artist_top_tracks(query):
@@ -47,19 +48,23 @@ def my_recommendations(count=None):
     """my recommendations"""
     sp = spotipy_helper.get_spotipy_client()
     top_tracks = sp.current_user_top_tracks(limit=50, time_range='long_term')
-    logging.info('Loaded your custom top tracks')
+    logging.info('(%s) Loaded your custom top tracks',
+        str(threading.current_thread().ident))
     time.sleep(2)
     liked_tracks = sp.current_user_saved_tracks(limit=50)
-    logging.info('Loaded your top liked tracks')
+    logging.info('(%s) Loaded your top liked tracks',
+        str(threading.current_thread().ident))
     time.sleep(2)
     history = sp.current_user_recently_played(limit=50)
-    logging.info('Loaded your played tracks')
+    logging.info('(%s) Loaded your played tracks',
+        str(threading.current_thread().ident))
     time.sleep(2)
     for i in range(int(os.environ.get(constants.NUM_USER_PLAYLISTS,
                    constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))):
         if count is None or (count is not None and count == i):
             logging.info(
-                'Searching your recommendations (playlist %s)', str(
+                '(%s) Searching your recommendations (playlist %s)',
+                    str(threading.current_thread().ident), str(
                     i + 1))
             top_track_ids = [track['id'] for track in top_tracks['items']]
             liked_track_ids = [track['track']['id']
@@ -91,7 +96,8 @@ def get_artist(name):
 def show_recommendations_for_artist(name):
     """show recommendations for artist"""
     sp = spotipy_helper.get_spotipy_client()
-    logging.info('Searching recommendations for: %s', name)
+    logging.info('(%s) Searching recommendations for: %s',
+        str(threading.current_thread().ident), name)
     artist = get_artist(name)
     if artist is not None:
         results = sp.recommendations(
@@ -104,7 +110,8 @@ def show_recommendations_for_artist(name):
         playlist_name = name + " - Recommendations"
         subsonic_helper.write_playlist(sp, playlist_name, results)
     else:
-        logging.warning('Artist: %s Not found!', name)
+        logging.warning('(%s) Artist: %s Not found!',
+            str(threading.current_thread().ident), name)
 
 
 def get_playlist_tracks(item, result, offset_tracks=0):
@@ -118,7 +125,8 @@ def get_playlist_tracks(item, result, offset_tracks=0):
     for track_item in response_tracks['items']:
         track = track_item['track']
         logging.info(
-            'Found %s - %s inside playlist %s',
+            '(%s) Found %s - %s inside playlist %s',
+            str(threading.current_thread().ident),
             track['artists'][0]['name'],
             track['name'],
             item['name'])
@@ -160,7 +168,8 @@ def get_user_playlists(offset=0, single_execution=False, playlist_name=None):
     for item in playlist_result['items']:
         if item['name'] is not None and item['name'].strip() != '' and (playlist_name is None or (
                 playlist_name is not None and item['name'].lower().strip() == playlist_name.lower().strip())):
-            logging.info('Importing playlist: %s', item['name'])
+            logging.info('(%s) Importing playlist: %s',
+                str(threading.current_thread().ident), item['name'])
             result = dict({'tracks': []})
             result = get_playlist_tracks(item, result)
             subsonic_helper.write_playlist(sp, item['name'].strip(), result)
@@ -216,7 +225,8 @@ def get_user_saved_tracks_playlist(result, offset_tracks=0):
             track = track_item['track']
             if track is not None:
                 logging.info(
-                    'Found %s - %s inside your saved tracks',
+                    '(%s) Found %s - %s inside your saved tracks',
+                    str(threading.current_thread().ident),
                     track['artists'][0]['name'],
                     track['name'])
                 if track is not None:

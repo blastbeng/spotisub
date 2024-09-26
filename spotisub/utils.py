@@ -3,13 +3,8 @@ import os
 import re
 import sys
 import logging
-from os.path import dirname
-from os.path import join
-from dotenv import load_dotenv
-from .constants import constants
-
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+import threading
+from spotisub import constants
 
 
 def print_logo(version):
@@ -35,7 +30,8 @@ def write_exception():
     exc_type, exc_obj, exc_tb = sys.exc_info()
     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
     logging.error(
-        "%s %s %s %s",
+        "%s %s %s %s %s",
+        str(threading.current_thread().ident),
         exc_type,
         fname,
         exc_tb.tb_lineno,
@@ -83,7 +79,8 @@ def compare_exact_word(stringsa, stringsb):
         for stringb in stringsb:
             if stringa != '' and stringb != '' and stringa == stringb:
                 logging.warning(
-                    "Found excluded word: %s. Skipping...", stringb)
+                    "(%s) Found excluded word: %s. Skipping...",
+                    str(threading.current_thread().ident), stringb)
                 return True
     return False
 
@@ -95,7 +92,8 @@ def compare(stringsa, stringsb, log_excluded=False):
             if stringa == stringb or stringb in stringa or stringa in stringb:
                 if log_excluded is True:
                     logging.warning(
-                        "Found excluded word: %s. Skipping...", stringb)
+                        "(%s) Found excluded word: %s. Skipping...",
+                        str(threading.current_thread().ident), stringb)
                 return True
     return False
 
@@ -112,3 +110,47 @@ def get_excluded_words_array():
         excluded_words = excluded_words_string.split(",")
 
     return excluded_words
+
+
+def get_pagination(page, total_pages):
+    value = []
+    value.append(page)
+
+    page_less = page - 3
+    page_plus = page + 3
+
+    page_num = page
+    while page_num < page_plus:
+        page_num = page_num + 1
+        if page_num > total_pages or len(value) >= 3:
+            break
+        value.append(page_num)
+
+    page_num = page
+    while page_num >= page_less:
+        page_num = page_num - 1
+        if page_num <= 0 or len(value) >= 5:
+            break
+        value.append(page_num)
+
+    page_num = page
+    while len(value) < 3:
+        page_num = page_num + 1
+        if page_num > total_pages:
+            break
+        if page_num not in value:
+            value.append(page_num)
+
+    page_num = page
+    while len(value) < 3:
+        page_num = page_num - 1
+
+        if page_num <= 0:
+            break
+        if page_num not in value:
+            value.append(page_num)
+
+    prev_page = (page - 1) if (page - 1) > 0 else 1
+    next_page = (page + 1) if (page + 1) <= total_pages else total_pages
+
+    return sorted(value), prev_page, next_page

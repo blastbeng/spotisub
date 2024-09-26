@@ -17,7 +17,7 @@ services:
     ports:
       - 5183:5183
     healthcheck:
-      test: curl -s http://127.0.0.1:5183/utils/healthcheck | grep -q 'Ok!' || exit 1
+      test: curl -s http://127.0.0.1:5183/api/v1/utils/healthcheck | grep -q 'Ok!' || exit 1
       interval: 30s
       retries: 20
       start_period: 30s

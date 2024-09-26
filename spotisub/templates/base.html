@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- The title of our application is defined here -->
+    {% block title %}
+        {% if title %}
+            <title>{{ title }} - Spotisub</title>
+        {% else %}
+            <title>Spotisub</title>
+        {% endif %}
+    {% endblock %}
+
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <!-- Our Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/current_user_main.css') }}">
+    <!-- Scrollbar Custom CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</head>
+<body>
+    {% block navbar %}
+        {% if current_user.is_authenticated %}
+            <div class="wrapper">
+                <!-- Sidebar  -->
+                <nav id="sidebar">         
+                    <ul class="list-unstyled components">
+                        <li>
+                            <a href="#playlistsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                                <i class="fas fa-music"></i>
+                                Playlists</a>
+                            {% if ((title == "Manage") or (title == "Missing") or (title == "Song") or (title == "Artist")  or (title == "Album")) %}
+                            <ul class="show collapse list-unstyled" id="playlistsSubMenu">
+                            {% else %}
+                            <ul class="collapse list-unstyled" id="playlistsSubMenu">
+                            {% endif %}                            
+                                {% if title == "Manage" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}     
+                                    <a href="{{ url_for('playlists', missing_only=0, page=1) }}">Manage</a>
+                                </li>
+                                {% if title == "Missing" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="{{ url_for('playlists', missing_only=1, page=1) }}">Missing</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <!--
+                        <li>
+                            <a href="#settingsSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                                <i class="fas fa-cogs"></i>
+                                Settings</a>
+                            {% if ((title == "Paths") or (title == "Jobs") or (title == "Addons") or (title == "General")  or (title == "UI")) %}
+                            <ul class="show collapse list-unstyled" id="settingsSubMenu">
+                            {% else %}
+                            <ul class="collapse list-unstyled" id="settingsSubMenu">
+                            {% endif %}               
+                                {% if title == "Paths" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">Paths</a>
+                                </li>
+                                {% if title == "Jobs" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">Jobs</a>
+                                </li>
+                                {% if title == "Addons" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">Addons</a>
+                                </li>
+                                {% if title == "General" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">General</a>
+                                </li>
+                                {% if title == "UI" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">UI</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#systemSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                                <i class="fas fa-laptop"></i>
+                                System</a>
+                            {% if ((title == "Status") or (title == "Tasks") or (title == "Updates") or (title == "Log Files")) %}
+                            <ul class="show collapse list-unstyled" id="systemSubMenu">
+                            {% else %}
+                            <ul class="collapse list-unstyled" id="systemSubMenu">
+                            {% endif %}  
+                                {% if title == "Status" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">Status</a>
+                                </li>
+                                {% if title == "Tasks" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">Tasks</a>
+                                </li>
+                                {% if title == "Updates" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">Updates</a>
+                                </li>
+                                {% if title == "Log Files" %}
+                                <li class="active">
+                                {% else %}
+                                <li>
+                                {% endif %}  
+                                    <a href="#">Log Files</a>
+                                </li>
+                            </ul>
+                        </li>-->
+                    </ul>
+                </nav>
+
+                <!-- Page Content  -->
+                <div id="content">
+
+                    {% block current_user_content %}
+
+                    {% endblock %}
+                </div>
+            </div>
+        {% else %}
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container">
+                    <a class="navbar-brand" href=" {{ url_for('playlists') }} ">Spotisub</a>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="nav navbar-nav ml-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        {% endif %}
+    {% endblock %}
+
+    {% block content %}
+        <div class="container">      
+            <!-- Contents of all our pages will go here -->
+
+            {% block app_content %}{% endblock %}
+        </div>
+    {% endblock %}
+
+    {% block scripts %}
+        <!-- jQuery CDN - Slim version (=without AJAX) -->
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <!-- Popper.JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+        <!-- Bootstrap JS -->
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+        <!-- jQuery Custom Scroller CDN -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.concat.min.js"></script>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $('#sidebarCollapse').on('click', function () {
+                    $('#sidebar').toggleClass('active');
+                });
+            });
+        </script>
+    {% endblock %}
+</body>
+
+</html>
