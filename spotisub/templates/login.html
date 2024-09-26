@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-12 text-center">
+        <!-- Flash message -->
+        {% include '_flash_message.html' %}
+        <!-- End of flash message -->
+        <h1><img src="{{ url_for('static', filename='img/logo.png') }}" id="sidebarCollapse" alt="Spotisub" width="34px" height="34px" id="logo" class="logo">  
+        </img>{{ title }}</h1>
+    </div>
+</div>
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Emtpy column -->
+        </div>
+        <div class="col-md-4">
+            {{ wtf.quick_form(form) }}
+        </div>
+        <div class="col-md-4">
+            <!-- Emtpy column -->
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% if current_user.is_authenticated %}
+    {% block current_user_content %}
+    {% include 'header.html' %}
+    <div class="container">
+        <div class="row">
+          <div class="col-md-6 align-self-center">
+            <h2>UH OH! You're lost.</h2>
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+            <a href="{{ url_for('playlists') }}" class="normal-href">Reload Spotisub</a>
+          </div>
+    {% endblock %}
+{% endif %}

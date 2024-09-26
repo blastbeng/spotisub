@@ -1,18 +1,18 @@
-"""Subsonic helper"""
+"""Subsonic generator"""
 import logging
 import os
 import random
 import time
 import re
-from os.path import dirname
-from os.path import join
-from dotenv import load_dotenv
-from .core.external.utils.constants import constants
-from .core.external import spotipy_helper
-from .core import subsonic_helper
+from spotisub import spotisub
+from spotisub import constants
+from spotisub.helpers import spotipy_helper
+from spotisub.helpers import subsonic_helper
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+
+def prechecks():
+    spotipy_helper.get_secrets()
+    subsonic_helper.check_pysonic_connection()
 
 
 def artist_top_tracks(query):

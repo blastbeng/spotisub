@@ -1,15 +1,11 @@
 """Lidarr helper"""
 import os
 
-from os.path import dirname
-from os.path import join
-from dotenv import load_dotenv
 from pyarr import LidarrAPI
 from expiringdict import ExpiringDict
-from .utils import utils
-from .utils.constants import constants
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+from spotisub import spotisub
+from spotisub import utils
+from spotisub import constants
 
 ipaddress = os.environ.get(constants.LIDARR_IP)
 port = os.environ.get(constants.LIDARR_PORT)

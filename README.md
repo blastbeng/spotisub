@@ -85,9 +85,8 @@ Same thing for artists top tracks playlists.
 ## Planned Features
 
 Dashboard
-* View which tracks are missing and decide to download trough spotdl or just ignore em
-* View which tracks are being matched with the Spotify playlists\recommendations, and decide to keep or exclude em
-* Configure some parameters of spotisub trough the dashboard instead of docker env variables
+* Ability to delete, skip or download matching tracks from spotify
+* Configure Spotisub trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard
 
 ## Help
