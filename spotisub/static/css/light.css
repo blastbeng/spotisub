@@ -439,3 +439,84 @@ a.article-active:hover {
 .fa-margin-right{
     margin-right:4px;
 }
+
+.PageToolbarSection-sectionContainer-dcxFs {
+    display: flex;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.PageToolbar-toolbar-YMl38 {
+    display: flex;
+    justify-content: space-between;
+    flex: 0 0 auto;
+    padding: 0 20px;
+    height: 60px;
+    background-color: white;
+    line-height: 10px;
+}
+
+.PageToolbarSection-sectionContainer-dcxFs {
+    display: flex;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.PageToolbarSection-left-E_sPJ {
+    justify-content: flex-start;
+}
+.PageToolbarSection-section-hL6TV {
+    display: flex;
+    align-items: stretch;
+    flex-grow: 1;
+}
+
+.PageToolbarButton-toolbarButton-j8a_b {
+    padding-top: 4px;
+    width: 60px;
+    text-align: center;
+}
+.Link-link-RInnp {
+    margin: 0;
+    padding: 0;
+    outline: none;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.PageToolbarSeparator-separator-N1WHF {
+    margin: 10px 20px;
+    height: 40px;
+    border-right: 1px solid black;
+    opacity: 0.35;
+}
+
+.PageToolbarButton-labelContainer-QhTz_ {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+}
+
+.PageToolbarButton-label-QIVQh {
+    padding: 0 3px;
+    color: black;
+    font-size: 14px;
+    line-height: 11px;
+}
+
+.svg-fa {
+    overflow: visible;
+    box-sizing: content-box;
+    margin-top:6px;
+    margin-left:19px;
+    font-size:22px;
+}
+
+.PageToolbarSection-right-w45zk {
+    justify-content: flex-end;
+}
