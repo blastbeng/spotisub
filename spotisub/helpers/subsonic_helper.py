@@ -398,13 +398,16 @@ def select_all_songs(missing_only=False, page=None,
             asc=asc,
             search=search)
 
+
         has_been_deleted = False
 
-        songs = []
+        ids=[]
+        for playlist in playlist_songs:
+           if playlist.subsonic_playlist_id not in ids:
+                ids.append(playlist.subsonic_playlist_id)
 
-        for row in playlist_songs:
-            playlist_search, has_been_deleted = get_playlist_from_cache(
-                row.subsonic_playlist_id)
+        for plid in ids:
+            playlist_search, has_been_deleted = get_playlist_from_cache(plid)
 
         if has_been_deleted:
             return select_all_songs(
@@ -414,7 +417,6 @@ def select_all_songs(missing_only=False, page=None,
                 order=order,
                 asc=asc,
                 search=search)
-
         return playlist_songs, count
     except SubsonicOfflineException as ex:
         raise ex
@@ -424,7 +426,7 @@ def select_all_playlists(page=None,
                          limit=None, order=None, asc=None):
     """get list of playlists"""
     try:
-        playlists, count = database.select_all_playlists(
+        all_playlists, count = database.select_all_playlists(
             page=page,
             limit=limit,
             order=order,
@@ -435,19 +437,18 @@ def select_all_playlists(page=None,
         songs = []
 
         ids = []
-        for playlist in playlists:
+        for playlist in all_playlists:
            if playlist["subsonic_playlist_id"] not in ids:
                 ids.append(playlist["subsonic_playlist_id"])
 
         for plid in ids:
             playlist_search, has_been_deleted = get_playlist_from_cache(
-                plid["subsonic_playlist_id"])
+                plid)
 
         if has_been_deleted:
             return select_all_playlists(page=None,
                 limit=None, order=None, asc=None)
-
-        return playlists, count
+        return all_playlists, count
     except SubsonicOfflineException as ex:
         raise ex
 
@@ -471,8 +472,9 @@ def get_playlist_from_cache(key):
         database.delete_playlist_relation_by_id(key)
         has_been_deleted = True
         return None, has_been_deleted
-
     return playlist_cache[key], has_been_deleted
+
+    
 
 
 def get_playlist_songs_ids_by_id(key):
@@ -510,8 +512,20 @@ def get_playlist_songs_ids_by_id(key):
 def remove_subsonic_deleted_playlist():
     """fix user manually deleted playlists"""
 
-    spotisub_playlists = database.select_all_songs(False)
-    for key in spotisub_playlists:
+    spotisub_playlists, count = database.select_all_playlists()
+    spotisub_songs, count = database.select_all_songs()
+
+    ids = []
+    
+    for row1 in spotisub_playlists:
+        if row1["subsonic_playlist_id"] not in ids:
+            ids.append(row1["subsonic_playlist_id"])
+
+    for row2 in spotisub_songs:
+        if row2.subsonic_playlist_id not in ids:
+            ids.append(row2.subsonic_playlist_id)
+
+    for key in ids:
         playlist_search = None
         try:
             playlist_search = check_pysonic_connection().getPlaylist(key)
