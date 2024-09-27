@@ -300,13 +300,15 @@ def select_playlist_info_by_uri_sub_id(conn, playlist_info):
 
 def delete_playlist_relation_by_id(playlist_id: str):
     """delete playlist from database"""
-    stmt = delete(dbms.subsonic_spotify_relation).where(
-        dbms.subsonic_spotify_relation.c.subsonic_playlist_id == playlist_id)
-    stmt = delete(dbms.playlist_info).where(
-        dbms.playlist_info.c.subsonic_playlist_id == playlist_id)
-    stmt.compile()
     with dbms.db_engine.connect() as conn:
-        conn.execute(stmt)
+        stmt1 = delete(dbms.subsonic_spotify_relation).where(
+            dbms.subsonic_spotify_relation.c.subsonic_playlist_id == playlist_id)
+        stmt1.compile()
+        stmt2 = delete(dbms.playlist_info).where(
+            dbms.playlist_info.c.subsonic_playlist_id == playlist_id)
+        stmt2.compile()
+        conn.execute(stmt1)
+        conn.execute(stmt2)
         conn.commit()
         conn.close()
 
@@ -890,11 +892,11 @@ def select_count_songs_by_album_uuid(conn, album_uuid):
     return count
 
 
-def select_all_playlists(page=None, limit=None, order=None, asc=None):
+def select_all_playlists(conn_ext=None, page=None, limit=None, order=None, asc=None):
     """select playlists from database"""
     records = []
     stmt = None
-    with dbms.db_engine.connect() as conn:
+    with conn_ext if conn_ext is not None else dbms.db_engine.connect() as conn:
         stmt = select(
             dbms.playlist_info.c.subsonic_playlist_id,
             dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
@@ -933,7 +935,8 @@ def select_all_playlists(page=None, limit=None, order=None, asc=None):
         cursor.close()
 
         count = count_playlists(conn)
-        conn.close()
+        if conn_ext is None:
+            conn.close()
 
     return records, count
 

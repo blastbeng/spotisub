@@ -85,14 +85,14 @@ def get_json_message(message, is_ok):
 def overview(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1):
     title = 'Overview'
     try:
-        playlists, song_count = subsonic_helper.select_all_playlists(
+        all_playlists, song_count = subsonic_helper.select_all_playlists(
             page=page - 1, limit=limit, order=order, asc=(asc == 1))
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
         return render_template('overview.html',
                                title=title,
-                               playlists=playlists,
+                               playlists=all_playlists,
                                pagination_array=pagination_array,
                                prev_page=prev_page,
                                next_page=next_page,
@@ -162,14 +162,14 @@ def song(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
     title = 'Song'
     try:
         spotipy_helper.get_secrets()
-        song, songs, song_count = subsonic_helper.load_song(
+        song1, songs, song_count = subsonic_helper.load_song(
             uuid, spotipy_helper, page=page-1, limit=limit, order=order, asc=(asc == 1))
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
         return render_template('song.html',
                                title=title,
-                               song=song,
+                               song=song1,
                                uuid=uuid,
                                songs=songs,
                                pagination_array=pagination_array,
@@ -200,14 +200,14 @@ def album(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
     title = 'Album'
     try:
         spotipy_helper.get_secrets()
-        album, songs, song_count = subsonic_helper.load_album(
+        album1, songs, song_count = subsonic_helper.load_album(
             uuid, spotipy_helper, page=page - 1, limit=limit, order=order, asc=(asc == 1))
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
         return render_template('album.html',
                                title=title,
-                               album=album,
+                               album=album1,
                                uuid=uuid,
                                songs=songs,
                                pagination_array=pagination_array,
@@ -239,14 +239,14 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
     title = 'Artist'
     try:
         spotipy_helper.get_secrets()
-        artist, songs, song_count = subsonic_helper.load_artist(
+        artist1, songs, song_count = subsonic_helper.load_artist(
             uuid, spotipy_helper, page=page - 1, limit=limit, order=order, asc=(asc == 1))
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
         return render_template('artist.html',
                                title=title,
-                               artist=artist,
+                               artist=artist1,
                                uuid=uuid,
                                songs=songs,
                                pagination_array=pagination_array,
