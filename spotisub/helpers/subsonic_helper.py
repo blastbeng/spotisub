@@ -434,9 +434,14 @@ def select_all_playlists(page=None,
 
         songs = []
 
+        ids = []
         for playlist in playlists:
+           if playlist["subsonic_playlist_id"] not in ids:
+                ids.append(playlist["subsonic_playlist_id"])
+
+        for plid in ids:
             playlist_search, has_been_deleted = get_playlist_from_cache(
-                playlist["subsonic_playlist_id"])
+                plid["subsonic_playlist_id"])
 
         if has_been_deleted:
             return select_all_playlists(page=None,
