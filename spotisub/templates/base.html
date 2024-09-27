@@ -47,7 +47,7 @@
                                 {% else %}
                                 <li>
                                 {% endif %}     
-                                    <a href="{{ url_for('overview', missing_only=0, page=1) }}">Overview</a>
+                                    <a href="{{ url_for('overview', page=1) }}">Overview</a>
                                 </li>
                                 {% if title == "Manage" %}
                                 <li class="active">
