@@ -408,7 +408,12 @@ def select_all_songs(missing_only=False, page=None,
 
         if has_been_deleted:
             return select_all_songs(
-                missing_only=missing_only, page=page, limit=limit)
+                missing_only=missing_only,
+                page=page,
+                limit=limit,
+                order=order,
+                asc=asc,
+                search=search)
 
         return playlist_songs, count
     except SubsonicOfflineException as ex:
@@ -434,8 +439,8 @@ def select_all_playlists(page=None,
                 playlist["subsonic_playlist_id"])
 
         if has_been_deleted:
-            return select_all_playlists(
-                missing_only=missing_only, page=page, limit=limit)
+            return select_all_playlists(page=None,
+                limit=None, order=None, asc=None)
 
         return playlists, count
     except SubsonicOfflineException as ex:
