@@ -520,3 +520,51 @@ a.article-active:hover {
 .PageToolbarSection-right-w45zk {
     justify-content: flex-end;
 }
+
+.progress-bar__wrapper {
+  position: relative;
+}
+.progress-bar__value {
+  color: white;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+progress {
+    width: 100%;
+    height: 20px;
+    border-radius: 10em;
+    background-color: #eee;
+    transition: width 300ms ease;
+  }
+  
+  progress[value] {
+    --w: 100%; /* the width*/
+    --background: #454545; /* the background color */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    width: var(--w);
+    border-radius: 10em;
+    background: var(--background);
+  }
+  progress[value]::-webkit-progress-bar {
+    border-radius: 10em;
+    background: var(--background);
+  }
+  progress[value]::-webkit-progress-value {
+    border-radius: 10em;
+    background: var(--color);
+  }
+  progress[value]::-moz-progress-bar {
+    border-radius: 10em;
+    background: var(--background);
+  }
+  
+  

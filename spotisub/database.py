@@ -1,5 +1,6 @@
 """Spotisub database"""
 import uuid
+import string
 import logging
 from config import Config
 from sqlalchemy import create_engine
@@ -26,6 +27,7 @@ SQLITE = 'sqlite'
 USER = 'user'
 CONFIG_TABLE = 'config_table'
 SUBSONIC_SPOTIFY_RELATION = 'subsonic_spotify_relation'
+PLAYLIST_INFO = 'playlist_info'
 SPOTIFY_SONG = 'spotify_song'
 SPOTIFY_ARTIST = 'spotify_artist'
 SPOTIFY_ALBUM = 'spotify_album'
@@ -80,6 +82,17 @@ class Database:
                                           'subsonic_playlist_name', String(500), nullable=False),
                                       Column(
                                           'spotify_song_uuid', String(36), nullable=False),
+                                      )
+
+    playlist_info = Table(PLAYLIST_INFO, metadata,
+                                      Column(
+                                          'uuid', String(36), primary_key=True, nullable=False),
+                                      Column(
+                                          'spotify_playlist_uri', String(36), nullable=True),
+                                      Column(
+                                          'type', String(36), nullable=False),
+                                      Column(
+                                          'subsonic_playlist_id', String(36), nullable=False)
                                       )
 
     spotify_song = Table(SPOTIFY_SONG, metadata,
@@ -223,7 +236,7 @@ def user_exists():
     return False
 
 
-def insert_song(playlist_id, playlist_name, subsonic_track,
+def insert_song(playlist_info, subsonic_track,
                 artist_spotify, track_spotify):
     """insert song into database"""
     with dbms.db_engine.connect() as conn:
@@ -232,7 +245,7 @@ def insert_song(playlist_id, playlist_name, subsonic_track,
         if spotify_song_uuid is not None:
             if subsonic_track is None:
                 insert_playlist_relation(
-                    conn, None, None, playlist_id, playlist_name, spotify_song_uuid)
+                    conn, None, None, playlist_info, spotify_song_uuid)
             else:
                 track_id = None
                 artist_id = None
@@ -244,19 +257,53 @@ def insert_song(playlist_id, playlist_name, subsonic_track,
                     conn,
                     track_id,
                     artist_id,
-                    playlist_id,
-                    playlist_name,
+                    playlist_info,
                     spotify_song_uuid)
+            insert_playlist_type(
+                conn, playlist_info)
             conn.commit()
         else:
             conn.rollback()
         conn.close()
 
+def insert_playlist_type(conn, playlist_info):
+    """insert playlist into database"""
+    playlist_info_db = select_playlist_info_by_uri_sub_id(conn, playlist_info)
+    if playlist_info_db is None:
+        stmt = insert(
+            dbms.playlist_info).values(
+            uuid=str(
+                uuid.uuid4().hex),
+            spotify_playlist_uri=playlist_info["spotify_uri"],
+            type=playlist_info["type"],
+            subsonic_playlist_id=playlist_info["subsonic_playlist_id"]).prefix_with('OR IGNORE')
+        stmt.compile()
+        conn.execute(stmt)
+
+
+def select_playlist_info_by_uri_sub_id(conn, playlist_info):
+    """select spotify artists by uuid"""
+    value = None
+    stmt = select(
+        dbms.playlist_info.c.uuid).where(
+        dbms.playlist_info.c.spotify_playlist_uri == playlist_info["spotify_uri"],
+        dbms.playlist_info.c.subsonic_playlist_id == playlist_info["subsonic_playlist_id"])
+    stmt.compile()
+    cursor = conn.execute(stmt)
+    records = cursor.fetchall()
+
+    for row in records:
+        value = row
+    cursor.close()
+
+    return value
 
 def delete_playlist_relation_by_id(playlist_id: str):
     """delete playlist from database"""
     stmt = delete(dbms.subsonic_spotify_relation).where(
         dbms.subsonic_spotify_relation.c.subsonic_playlist_id == playlist_id)
+    stmt = delete(dbms.playlist_info).where(
+        dbms.playlist_info.c.subsonic_playlist_id == playlist_id)
     stmt.compile()
     with dbms.db_engine.connect() as conn:
         conn.execute(stmt)
@@ -287,7 +334,7 @@ def delete_song_relation(playlist_id: str, subsonic_track):
 
 
 def insert_playlist_relation(conn, subsonic_song_id,
-                             subsonic_artist_id, subsonic_playlist_id, subsonic_playlist_name, spotify_song_uuid):
+                             subsonic_artist_id, playlist_info, spotify_song_uuid):
     """insert playlist into database"""
     stmt = insert(
         dbms.subsonic_spotify_relation).values(
@@ -295,14 +342,14 @@ def insert_playlist_relation(conn, subsonic_song_id,
             uuid.uuid4().hex),
         subsonic_song_id=subsonic_song_id,
         subsonic_artist_id=subsonic_artist_id,
-        subsonic_playlist_id=subsonic_playlist_id,
-        subsonic_playlist_name=subsonic_playlist_name,
+        subsonic_playlist_id=playlist_info["subsonic_playlist_id"],
+        subsonic_playlist_name=playlist_info["name"],
         spotify_song_uuid=spotify_song_uuid).prefix_with('OR IGNORE')
     stmt.compile()
     conn.execute(stmt)
 
 
-def select_all_playlists(conn_ext=None, missing_only=False, page=None,
+def select_all_songs(conn_ext=None, missing_only=False, page=None,
                          limit=None, order=None, asc=None, search=None, song_uuid = None):
     """select playlists from database"""
     records = []
@@ -364,14 +411,14 @@ def select_all_playlists(conn_ext=None, missing_only=False, page=None,
 
         cursor.close()
 
-        count = count_playlists(conn, missing_only=missing_only, search=search, song_uuid = song_uuid)
+        count = count_songs(conn, missing_only=missing_only, search=search, song_uuid = song_uuid)
         if conn_ext is None:
             conn.close()
 
     return records, count
 
 
-def count_playlists(conn, missing_only=False, search=None, song_uuid=None):
+def count_songs(conn, missing_only=False, search=None, song_uuid=None):
     """select playlists from database"""
     count = 0
 
@@ -623,7 +670,7 @@ def get_song_and_playlists(uuid: str, page=None,
     count = 0
     with dbms.db_engine.connect() as conn:
         song = select_spotify_song_by_uuid(conn, uuid)
-        playlists, count = select_all_playlists(
+        playlists, count = select_all_songs(
             conn_ext=conn, page=page, limit=limit, order=order, asc=asc, song_uuid=uuid)
         conn.close()
     return song, playlists, count
@@ -841,6 +888,82 @@ def select_count_songs_by_album_uuid(conn, album_uuid):
     conn.close()
 
     return count
+
+
+def select_all_playlists(page=None, limit=None, order=None, asc=None):
+    """select playlists from database"""
+    records = []
+    stmt = None
+    with dbms.db_engine.connect() as conn:
+        stmt = select(
+            dbms.playlist_info.c.subsonic_playlist_id,
+            dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
+            dbms.playlist_info.c.spotify_playlist_uri,
+            dbms.playlist_info.c.type).join(
+            dbms.subsonic_spotify_relation,
+            dbms.playlist_info.c.subsonic_playlist_id == dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
+        
+
+        stmt = limit_and_order_stmt(
+            stmt, page=page, limit=limit, order=order, asc=asc)
+
+        stmt = stmt.group_by(
+            dbms.playlist_info.c.subsonic_playlist_id)
+
+            
+        stmt.compile()
+        cursor = conn.execute(stmt)
+        rows = cursor.fetchall()
+        for row in rows:
+            total, matched, missing = get_playlist_counts(conn, row.subsonic_playlist_id)
+            record = {}
+            record["subsonic_playlist_id"] = row.subsonic_playlist_id
+            record["subsonic_playlist_name"] = row.subsonic_playlist_name
+            record["type"] = row.type
+            record["type_desc"] = string.capwords(row.type.replace("_"," "))
+            record["spotify_playlist_uri"] = "" if row.spotify_playlist_uri is None else str(row.spotify_playlist_uri).replace(":","/").replace("spotify","https://open.spotify.com")
+            record["total"] = total
+            record["matched"] = matched
+            record["missing"] = missing
+            record["percentage"] = int((matched/total)*100)
+
+            records.append(record)
+
+
+        cursor.close()
+
+        count = count_playlists(conn)
+        conn.close()
+
+    return records, count
+
+
+def count_playlists(conn):
+    """select playlists from database"""
+    count = 0
+
+    query = """select count(*) from (SELECT playlist_info.subsonic_playlist_id, subsonic_spotify_relation.subsonic_playlist_name, playlist_info.spotify_playlist_uri, playlist_info.type FROM playlist_info JOIN subsonic_spotify_relation ON playlist_info.subsonic_playlist_id = subsonic_spotify_relation.subsonic_playlist_id GROUP BY playlist_info.subsonic_playlist_id);"""
+
+    count = conn.execute(text(query)).scalar()
+
+    return count
+
+
+def get_playlist_counts(conn, subsonic_playlist_id):
+    """select count songs from database"""
+    total = 0
+    missing = 0
+    matched = 0
+    
+    total_query = "SELECT COUNT(*) FROM (SELECT subsonic_spotify_relation.uuid from subsonic_spotify_relation where subsonic_spotify_relation.subsonic_playlist_id = '" + subsonic_playlist_id + "');"
+    matched_query = "SELECT COUNT(*) FROM (SELECT subsonic_spotify_relation.uuid from subsonic_spotify_relation where subsonic_spotify_relation.subsonic_playlist_id = '" + subsonic_playlist_id + "' and subsonic_spotify_relation.subsonic_song_id is not null);"
+    missing_query = "SELECT COUNT(*) FROM (SELECT subsonic_spotify_relation.uuid from subsonic_spotify_relation where subsonic_spotify_relation.subsonic_playlist_id = '" + subsonic_playlist_id + "' and subsonic_spotify_relation.subsonic_song_id is null);"
+
+    total = conn.execute(text(total_query)).scalar()
+    matched = conn.execute(text(matched_query)).scalar()
+    missing = conn.execute(text(missing_query)).scalar()
+
+    return total, matched, missing
 
 
 dbms = Database(SQLITE, dbname=Config.SQLALCHEMY_DATABASE_NAME)

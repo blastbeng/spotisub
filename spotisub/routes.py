@@ -76,6 +76,41 @@ def get_json_message(message, is_ok):
 
 
 @spotisub.route('/')
+@spotisub.route('/overview/')
+@spotisub.route('/overview/<int:page>/')
+@spotisub.route('/overview/<int:page>/<int:limit>/')
+@spotisub.route('/overview/<int:page>/<int:limit>/<string:order>/')
+@spotisub.route('/overview/<int:page>/<int:limit>/<string:order>/<int:asc>/')
+@login_required
+def overview(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1):
+    title = 'Overview'
+    try:
+        playlists, song_count = subsonic_helper.select_all_playlists(
+            page=page - 1, limit=limit, order=order, asc=(asc == 1))
+        total_pages = math.ceil(song_count / limit)
+        pagination_array, prev_page, next_page = utils.get_pagination(
+            page, total_pages)
+        return render_template('overview.html',
+                               title=title,
+                               playlists=playlists,
+                               pagination_array=pagination_array,
+                               prev_page=prev_page,
+                               next_page=next_page,
+                               current_page=page,
+                               total_pages=total_pages,
+                               limit=limit,
+                               result_size=song_count,
+                               order=order,
+                               asc=asc)
+    except SubsonicOfflineException:
+        return render_template('errors/404.html',
+                               title=title,
+                               errors=["Unable to communicate with Subsonic.", "Please check your configuration and make sure your instance is online."])
+    except (SpotifyException, SpotifyApiException) as e:
+        return render_template('errors/404.html',
+                               title=title,
+                               errors=["Unable to communicate with Spotify.", "Please check your configuration."])
+
 @spotisub.route('/playlists/')
 @spotisub.route('/playlists/<int:missing_only>/')
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/')
@@ -89,7 +124,7 @@ def playlists(missing_only=0, page=1, limit=25,
     title = 'Missing' if missing_only == 1 else 'Manage'
     try:
         missing_bool = True if missing_only == 1 else False
-        playlists, song_count = subsonic_helper.select_all_playlists(
+        playlists, song_count = subsonic_helper.select_all_songs(
             missing_only=missing_bool, page=page - 1, limit=limit, order=order, asc=(asc == 1), search=search)
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
@@ -235,7 +270,7 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('playlists'))
+        return redirect(url_for('overview'))
     if not database.user_exists():
         return redirect(url_for('register'))
     form = LoginForm()
@@ -245,15 +280,14 @@ def login():
             flash('Invalid username or password')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
-        flash(f'Welcome {user.username}')
-        return redirect(url_for('playlists'))
+        return redirect(url_for('overview'))
     return render_template('login.html', title='Login', form=form)
 
 
 @spotisub.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('playlists'))
+        return redirect(url_for('overview'))
     if database.user_exists():
         flash('Spotisub user already exists. Please log in to continue')
         return redirect(url_for('login'))
@@ -263,7 +297,7 @@ def register():
         user.set_password(form.password.data)
         configuration_db.session.add(user)
         configuration_db.session.commit()
-        flash('Spotisub user successfully. Please log in to continue')
+        flash('Spotisub user successfully created. Please log in to continue')
         return redirect(url_for('login'))
     return render_template(
         'register.html', title='Create Spotisub credentials', form=form)

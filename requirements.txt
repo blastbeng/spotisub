@@ -20,7 +20,6 @@ musicbrainzngs
 alembic==1.8.1
 dnspython==2.2.1
 dominate==2.7.0
-email-validator==1.3.0
 greenlet==2.0.0.post0
 idna==3.4
 importlib-metadata==5.0.0
