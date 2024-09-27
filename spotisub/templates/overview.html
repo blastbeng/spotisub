@@ -25,8 +25,8 @@
                         {% else %}
                             <a href="{{ url_for('overview', page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name</a>   
                         {% endif %}
+                        <th>Link</th>
                         <th>
-                            <th>Link</th>
                         {% if order == 'playlist_info.type' %}
                             {% if asc == 1 %}
                                 <a href="{{ url_for('overview', page=current_page, limit=limit, order='playlist_info.type', asc=0) }}" class="normal-href">Type<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
