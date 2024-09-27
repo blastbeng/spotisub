@@ -21,7 +21,7 @@ from sqlalchemy import or_
 from sqlalchemy import collate
 
 
-VERSION = "0.3.0-alpha-01"
+VERSION = "0.3.1"
 
 SQLITE = 'sqlite'
 USER = 'user'
@@ -197,7 +197,7 @@ def upgrade():
     upgraded = False
     with dbms.db_engine.connect() as conn:
         fconfig = select_config_by_name(conn, 'VERSION')
-        if fconfig is None or fconfig.value != VERSION:
+        if fconfig is None or fconfig.value != VERSION or fconfig.value != "0.3.0-alpha-01":
             # FIRST RELEASE 3.0.0 DROPPING ENTIRE DATABASE
             drop_table(conn, SPOTIFY_SONG)
             drop_table(conn, SPOTIFY_ALBUM)
