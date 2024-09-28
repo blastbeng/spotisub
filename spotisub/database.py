@@ -923,7 +923,8 @@ def select_all_playlists(conn_ext=None, page=None, limit=None, order=None, asc=N
             record["subsonic_playlist_name"] = row.subsonic_playlist_name
             record["type"] = row.type
             record["type_desc"] = string.capwords(row.type.replace("_"," "))
-            record["spotify_playlist_uri"] = "" if row.spotify_playlist_uri is None else str(row.spotify_playlist_uri).replace(":","/").replace("spotify","https://open.spotify.com")
+            record["spotify_playlist_link"] = "" if row.spotify_playlist_uri is None else str(row.spotify_playlist_uri).replace(":","/").replace("spotify","https://open.spotify.com")
+            record["spotify_playlist_uri"] = "" if row.spotify_playlist_uri is None else row.spotify_playlist_uri
             record["total"] = total
             record["matched"] = matched
             record["missing"] = missing

@@ -306,6 +306,44 @@ a.article-active:hover {
     white-space:nowrap;
 }
 
+
+.table-striped [id=table-image] { 
+    display: none;
+}
+
+.table-card thead, tfoot {
+    display: none;
+}
+.table-card table {
+    background: none !important;
+    border: none !important;
+  }
+.table-card tr {
+    display: inline-block;
+    border: 1px solid grey;
+    padding: 10px;
+    width:200px;
+    overflow: hidden;
+    font-size: 14px;
+    border: none;
+  }
+
+  .table-card  td {
+    display: block;
+    padding: 0px;
+    border: none;
+    text-overflow: ellipsis; 
+    overflow: hidden; 
+    white-space: nowrap;
+  }
+
+  .table-card [id=table-spotify-link] { 
+    display: none;
+   }
+
+   .table-card [id=table-type] { 
+     display: none;
+    }
 .pagination a {
   color: black;
   float: right;
@@ -401,6 +439,14 @@ a.article-active:hover {
     height: 110px;
     border: 1px inset;
     border-color: #6d7fcc;
+}
+
+.InfoDetails-poster-overview {
+    flex-shrink: 0;
+    width:180px;
+    height: 180px;
+    border: none;
+    cursor: pointer;
 }
 
 .InfoDetails-info {

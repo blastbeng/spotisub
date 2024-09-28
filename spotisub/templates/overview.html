@@ -9,15 +9,16 @@
         {% include 'header.html' %}
 
         
-        {% with initial_url=url_for('overview', page=current_page, limit=limit), order=order, asc=asc %}
+        {% with initial_url=url_for('overview', page=current_page, limit=limit), order=order, asc=asc, page_type='overview' %}
             {% include 'toolbar.html'%}
         {% endwith %}
 
         
         <div class="table-container">
-            <table id="data" class="table table-striped">
+            <table id="data" class="table table-card">
                 <thead>
                 <tr>
+                    <th></th>
                     <th>
                         {% if order == 'subsonic_spotify_relation.subsonic_playlist_name' %}
                             {% if asc == 1 %}
@@ -46,15 +47,19 @@
                 <tbody>
                 {% for playlist in playlists %}
                     <tr>
-                    <td><a href="{{ url_for('playlists', missing_only=0, page=1, limit=limit, order='spotify_song.title', asc=1, search=playlist["subsonic_playlist_name"]) }}" class="normal-href">{{ playlist["subsonic_playlist_name"] }}</a></td>
-                    <td>{{ playlist["type_desc"] }}</td>
-                    <td>
+                    <td id="table-image">
+                        <img class="InfoDetails-poster-overview" alt="{{ playlist["subsonic_playlist_name"] }}" onclick="location.href='{{ url_for('playlists', missing_only=0, page=1, limit=limit, order='spotify_song.title', asc=1, search=playlist["subsonic_playlist_name"]) }}'" 
+                        src="{% if playlist["image"] != '' %}{{ playlist["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
+                    </td>
+                    <td id="table-href"><a href="{{ url_for('playlists', missing_only=0, page=1, limit=limit, order='spotify_song.title', asc=1, search=playlist["subsonic_playlist_name"]) }}" class="normal-href">{{ playlist["subsonic_playlist_name"] }}</a></td>
+                    <td id="table-type">{{ playlist["type_desc"] }}</td>
+                    <td id="table-spotify-link">
                             {% if playlist["type"] == "user_playlists" %}
-                                <a href="{{ playlist["spotify_playlist_uri"] }}" class="article normal-href" target="_blank">
+                                <a href="{{ playlist["spotify_playlist_link"] }}" class="article normal-href" target="_blank">
                                     View Playlist on Spotify
                                 </a>
                             {% elif (playlist["type"] == "artist_recommendations") or (playlist["type"] == "artist_top_tracks") %}
-                                <a href="{{ playlist["spotify_playlist_uri"] }}" class="article normal-href" target="_blank">
+                                <a href="{{ playlist["spotify_playlist_link"] }}" class="article normal-href" target="_blank">
                                     View Artist on Spotify
                                 </a>
                             {% else %}
@@ -63,7 +68,7 @@
                                 </a>
                             {% endif %}
                     </td>
-                    <td>
+                    <td id="table-progress">
                         <div class="progress-bar__wrapper">
                             <label class="progress-bar__value" htmlFor="progress-bar"> {{ playlist["matched"] }}/{{ playlist["total"] }} </label>
                             {% if playlist["percentage"] <= 20 %}

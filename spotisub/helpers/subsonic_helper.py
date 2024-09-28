@@ -54,10 +54,47 @@ pysonic = libsonic.Connection(
 
 # caches
 playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
-spotify_artist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
-spotify_album_cache = ExpiringDict(max_len=500, max_age_seconds=300)
-spotify_song_cache = ExpiringDict(max_len=500, max_age_seconds=300)
+spotify_playlist_cache = ExpiringDict(max_len=1000, max_age_seconds=3600)
+spotify_artist_cache = ExpiringDict(max_len=1000, max_age_seconds=3600)
+spotify_album_cache = ExpiringDict(max_len=1000, max_age_seconds=3600)
+spotify_song_cache = ExpiringDict(max_len=1000, max_age_seconds=3600)
 
+
+def get_spotify_artist_from_cache(sp, spotify_uri):
+    spotify_artist = None
+    if spotify_uri not in spotify_artist_cache:
+        spotify_artist = sp.artist(spotify_uri)
+        spotify_artist_cache[spotify_uri] = spotify_artist
+    else:
+        spotify_artist = spotify_artist_cache[spotify_uri]
+    return spotify_artist
+
+def get_spotify_playlist_from_cache(sp, spotify_uri):
+    spotify_playlist = None
+    if spotify_uri not in spotify_playlist_cache:
+        spotify_playlist = sp.playlist(spotify_uri)
+        spotify_playlist_cache[spotify_uri] = spotify_playlist
+    else:
+        spotify_playlist = spotify_playlist_cache[spotify_uri]
+    return spotify_playlist
+
+def get_spotify_album_from_cache(sp, spotify_uri):
+    spotify_album = None
+    if spotify_uri not in spotify_album_cache:
+        spotify_album = sp.album(spotify_uri)
+        spotify_album_cache[spotify_uri] = spotify_album
+    else:
+        spotify_album = spotify_album_cache[spotify_uri]
+    return spotify_album
+
+def get_spotify_song_from_cache(sp, spotify_uri):
+    spotify_song = None
+    if spotify_uri not in spotify_song_cache:
+        spotify_song = sp.track(spotify_uri)
+        spotify_song_cache[spotify_uri] = spotify_song
+    else:
+        spotify_song = spotify_song_cache[spotify_uri]
+    return spotify_song
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""
@@ -422,7 +459,7 @@ def select_all_songs(missing_only=False, page=None,
         raise ex
 
 
-def select_all_playlists(page=None,
+def select_all_playlists(spotipy_helper, page=None,
                          limit=None, order=None, asc=None):
     """get list of playlists"""
     try:
@@ -438,15 +475,25 @@ def select_all_playlists(page=None,
 
         ids = []
         for playlist in all_playlists:
-           if playlist["subsonic_playlist_id"] not in ids:
+            if playlist["subsonic_playlist_id"] not in ids:
                 ids.append(playlist["subsonic_playlist_id"])
+            if playlist["type"] == constants.JOB_ATT_ID or playlist["type"] == constants.JOB_AR_ID:
+                spotify_artist = get_spotify_artist_from_cache(spotipy_helper.get_spotipy_client(), playlist["spotify_playlist_uri"])
+                if "images" in spotify_artist and len(spotify_artist["images"]) > 0:
+                    playlist["image"] = spotify_artist["images"][0]["url"]
+            elif playlist["type"] == constants.JOB_UP_ID:
+                spotify_playlist = get_spotify_playlist_from_cache(spotipy_helper.get_spotipy_client(), playlist["spotify_playlist_uri"])
+                if "images" in spotify_playlist and len(spotify_playlist["images"]) > 0:
+                    playlist["image"] = spotify_playlist["images"][0]["url"]
+            else:
+                playlist["image"] = ""
 
         for plid in ids:
             playlist_search, has_been_deleted = get_playlist_from_cache(
                 plid)
 
         if has_been_deleted:
-            return select_all_playlists(page=None,
+            return select_all_playlists(spotipy_helper, page=None,
                 limit=None, order=None, asc=None)
         return all_playlists, count
     except SubsonicOfflineException as ex:
@@ -547,21 +594,13 @@ def remove_subsonic_deleted_playlist():
     # This can cause errors when an import process is running
     # I will just leave spotify songs saved in Spotisub database for now
 
-
 def load_artist(uuid, spotipy_helper, page=None,
                 limit=None, order=None, asc=None):
     artist_db, songs, count = database.get_artist_and_songs(
         uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
-    spotify_artist = None
-
-    if uuid not in spotify_artist_cache:
-        sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
-        spotify_artist = sp.artist(artist_db.spotify_uri)
-        spotify_artist_cache[uuid] = spotify_artist
-    else:
-        spotify_artist = spotify_artist_cache[uuid]
+    spotify_artist = get_spotify_artist_from_cache(spotipy_helper.get_spotipy_client(), artist_db.spotify_uri)
 
     if spotify_artist is None:
         raise SpotifyDataException
@@ -588,14 +627,7 @@ def load_album(uuid, spotipy_helper, page=None,
         uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
-    spotify_album = None
-
-    if uuid not in spotify_album_cache:
-        sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
-        spotify_album = sp.album(album_db.spotify_uri)
-        spotify_album_cache[uuid] = spotify_album
-    else:
-        spotify_album = spotify_album_cache[uuid]
+    spotify_album = get_spotify_album_from_cache(spotipy_helper.get_spotipy_client(), album_db.spotify_uri)
 
     if spotify_album is None:
         raise SpotifyDataException
@@ -620,14 +652,7 @@ def load_song(uuid, spotipy_helper, page=None,
         uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
-    spotify_song = None
-
-    if uuid not in spotify_song_cache:
-        sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
-        spotify_song = sp.track(song_db.spotify_uri)
-        spotify_song_cache[uuid] = spotify_song
-    else:
-        spotify_song = spotify_song_cache[uuid]
+    spotify_song = get_spotify_song_from_cache(spotipy_helper.get_spotipy_client(), song_db.spotify_uri)
 
     if spotify_song is None:
         raise SpotifyDataException

@@ -85,7 +85,8 @@ def get_json_message(message, is_ok):
 def overview(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1):
     title = 'Overview'
     try:
-        all_playlists, song_count = subsonic_helper.select_all_playlists(
+        spotipy_helper.get_secrets()
+        all_playlists, song_count = subsonic_helper.select_all_playlists(spotipy_helper,
             page=page - 1, limit=limit, order=order, asc=(asc == 1))
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(

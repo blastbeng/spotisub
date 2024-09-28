@@ -24,16 +24,18 @@
                 <div class="PageToolbarButton-label">Options</div>
              </div>
           </button>-->
-          {% if sorting_dict %} 
+          {% if sorting_dict or ( page_type and page_type == 'overview' ) %} 
           <div class="PageToolbarSeparator-separator"></div>
           {% endif %} 
           
-          <!--<button type="button" class="PageToolbarButton-toolbarButton Link-link Link-link">
-            <i class="svg-fa fa fa-filter" aria-hidden="true"></i>
+          {% if ( page_type and page_type == 'overview' ) %} 
+          <button type="button" onClick="showView();" class="PageToolbarButton-toolbarButton Link-link Link-link">
+            <i class="svg-fa fa fa-eye" aria-hidden="true"></i>
             <div class="PageToolbarButton-labelContainer">
-               <div class="PageToolbarButton-label">Filter</div>
+               <div class="PageToolbarButton-label">View</div>
             </div>
-         </button>-->
+         </button>
+         {% endif %} 
          {% if sorting_dict %} 
          <button type="button" onClick="showSort();" class="PageToolbarButton-toolbarButton Link-link Link-link">
            <i class="svg-fa fa fa-sort" aria-hidden="true"></i>
@@ -46,9 +48,9 @@
     </div>
  </div>
 
-<div id="filter-root" class="nodisplay">
-   {% if sorting_dict %} 
-   <div id="id-0" class="MenuContent-menuContent">
+ {% if sorting_dict %} 
+<div id="toolbar-root-sort" class="nodisplay">
+   <div class="MenuContent-menuContent">
       {% for sorting_value, sorting_key in sorting_dict.items() %}
       <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
          {% if order == sorting_key %}
@@ -71,9 +73,43 @@
                   {{ sorting_value }}
                </div>
             </button>   
-         {% endif %}</th>
+         {% endif %}
       </div>
       {% endfor %}
    </div>
-   {% endif %} 
 </div>
+{% endif %} 
+{% if ( page_type and page_type == 'overview' ) %} 
+<div id="toolbar-root-view" class="nodisplay">
+   <div class="MenuContent-menuContent">
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+            <div class="SelectedMenuItem-item">
+               Table
+            </div>
+         </button>  
+      </div>
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+            <div class="SelectedMenuItem-item">
+               Posters
+            </div>
+         </button>  
+      </div>
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+            <div class="SelectedMenuItem-item">
+               Banners
+            </div>
+         </button>  
+      </div>
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+            <div class="SelectedMenuItem-item">
+               Overview
+            </div>
+         </button>  
+      </div>
+   </div>
+</div>
+{% endif %} 

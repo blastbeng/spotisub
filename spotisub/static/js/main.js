@@ -19,11 +19,30 @@ function gotoArtist(hiddenId){
     }
 }
 
-function showSort(){
-    var element = document.getElementById("filter-root");
-    if ( element.classList.contains("nodisplay") ) {
-        element.classList.remove("nodisplay");
-    } else {
+function hideToolbarElement(element_id) {
+    var element = document.getElementById(element_id);
+    if ( !element.classList.contains("nodisplay") ) {
         element.classList.add("nodisplay");
     }
 }
+
+function showSort(hide){
+    var element = document.getElementById("toolbar-root-sort");
+    if ( element.classList.contains("nodisplay") ) {
+        element.classList.remove("nodisplay");
+    } else if (!hide) {
+        element.classList.add("nodisplay");
+    }
+    hideToolbarElement("toolbar-root-view")
+}
+
+function showView(hide){
+    var element = document.getElementById("toolbar-root-view");
+    if ( element.classList.contains("nodisplay") ) {
+        element.classList.remove("nodisplay");
+    } else if (!hide) {
+        element.classList.add("nodisplay");
+    }
+    hideToolbarElement("toolbar-root-sort")
+}
+
