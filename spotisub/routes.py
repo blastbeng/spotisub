@@ -90,6 +90,9 @@ def overview(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlis
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
+        sorting_dict = {}
+        sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+        sorting_dict["Type"] = "playlist_info.type"
         return render_template('overview.html',
                                title=title,
                                playlists=all_playlists,
@@ -101,7 +104,8 @@ def overview(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlis
                                limit=limit,
                                result_size=song_count,
                                order=order,
-                               asc=asc)
+                               asc=asc,
+                               sorting_dict=sorting_dict)
     except SubsonicOfflineException:
         return render_template('errors/404.html',
                                title=title,
@@ -129,6 +133,15 @@ def playlists(missing_only=0, page=1, limit=25,
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
+            
+        sorting_dict = {}
+        sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
+        sorting_dict["Spotify Song Title"] = "spotify_song.title"
+        sorting_dict["Spotify Artist"] = "spotify_artist.name"
+        sorting_dict["Spotify Album"] = "spotify_album.name"
+        sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+
+
         return render_template('playlists.html',
                                title=title,
                                playlists=playlists,
@@ -142,7 +155,8 @@ def playlists(missing_only=0, page=1, limit=25,
                                result_size=song_count,
                                order=order,
                                asc=asc,
-                               search=search)
+                               search=search,
+                               sorting_dict=sorting_dict)
     except SubsonicOfflineException:
         return render_template('errors/404.html',
                                title=title,
@@ -167,6 +181,15 @@ def song(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
+
+        
+        sorting_dict = {}
+        sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
+        sorting_dict["Spotify Song Title"] = "spotify_song.title"
+        sorting_dict["Spotify Artist"] = "spotify_artist.name"
+        sorting_dict["Spotify Album"] = "spotify_album.name"
+        sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+
         return render_template('song.html',
                                title=title,
                                song=song1,
@@ -180,7 +203,8 @@ def song(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
                                limit=limit,
                                result_size=song_count,
                                order=order,
-                               asc=asc)
+                               asc=asc,
+                               sorting_dict=sorting_dict)
     except SubsonicOfflineException:
         return render_template('errors/404.html',
                                title=title,
@@ -205,6 +229,12 @@ def album(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
+        sorting_dict = {}
+        sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
+        sorting_dict["Spotify Song Title"] = "spotify_song.title"
+        sorting_dict["Spotify Artist"] = "spotify_artist.name"
+        sorting_dict["Spotify Album"] = "spotify_album.name"
+        sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
         return render_template('album.html',
                                title=title,
                                album=album1,
@@ -218,7 +248,8 @@ def album(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
                                limit=limit,
                                result_size=song_count,
                                order=order,
-                               asc=asc)
+                               asc=asc,
+                               sorting_dict=sorting_dict)
     except SubsonicOfflineException:
         return render_template('errors/404.html',
                                title=title,
@@ -244,6 +275,12 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
         total_pages = math.ceil(song_count / limit)
         pagination_array, prev_page, next_page = utils.get_pagination(
             page, total_pages)
+        sorting_dict = {}
+        sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
+        sorting_dict["Spotify Song Title"] = "spotify_song.title"
+        sorting_dict["Spotify Artist"] = "spotify_artist.name"
+        sorting_dict["Spotify Album"] = "spotify_album.name"
+        sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
         return render_template('artist.html',
                                title=title,
                                artist=artist1,
@@ -257,7 +294,8 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
                                limit=limit,
                                result_size=song_count,
                                order=order,
-                               asc=asc)
+                               asc=asc,
+                               sorting_dict=sorting_dict)
     except SubsonicOfflineException:
         return render_template('errors/404.html',
                                title=title,

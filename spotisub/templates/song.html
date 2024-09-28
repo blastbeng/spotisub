@@ -6,6 +6,10 @@
     <!-- End of flash message -->
         {% include 'header.html' %}
 
+        {% with initial_url=url_for('song', uuid=uuid, page=current_page, limit=limit), order=order, asc=asc %}
+            {% include 'toolbar.html'%}
+        {% endwith %}
+
         <div class="InfoDetails">
             <img class="InfoDetails-poster" src="{{ song["image"] }}">
             <div class="InfoDetails-info">
@@ -34,8 +38,6 @@
              </audio>
          {% endif %}
          </div>
-
-         {% include 'toolbar.html'%}
          <div class="table-container">
             <table id="data" class="table table-striped">
                 <thead>

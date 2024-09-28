@@ -54,14 +54,14 @@
                                 {% else %}
                                 <li>
                                 {% endif %}     
-                                    <a href="{{ url_for('playlists', missing_only=0, page=1) }}">Manage</a>
+                                    <a href="{{ url_for('playlists', missing_only=0) }}">Manage</a>
                                 </li>
                                 {% if title == "Missing" %}
                                 <li class="active">
                                 {% else %}
                                 <li>
                                 {% endif %}  
-                                    <a href="{{ url_for('playlists', missing_only=1, page=1) }}">Missing</a>
+                                    <a href="{{ url_for('playlists', missing_only=1) }}">Missing</a>
                                 </li>
                             </ul>
                         </li>

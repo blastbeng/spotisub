@@ -18,3 +18,12 @@ function gotoArtist(hiddenId){
         this.location = "/artist/" + uuid.trim() + "/";
     }
 }
+
+function showSort(){
+    var element = document.getElementById("filter-root");
+    if ( element.classList.contains("nodisplay") ) {
+        element.classList.remove("nodisplay");
+    } else {
+        element.classList.add("nodisplay");
+    }
+}

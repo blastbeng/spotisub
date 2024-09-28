@@ -1,45 +1,79 @@
-<div class="PageToolbar-toolbar-YMl38">
-    <div class="PageToolbarSection-sectionContainer-dcxFs" style="flex-grow: 4;">
-       <div class="PageToolbarSection-section-hL6TV PageToolbarSection-left-E_sPJ">
-          <button type="button" class="PageToolbarButton-toolbarButton-j8a_b Link-link-RInnp Link-link-RInnp">
-            <a href="#" onClick="window.location.reload();return false;"><i class="svg-fa fa fa-refresh svg-fa" aria-hidden="true"></i></a>
-             <div class="PageToolbarButton-labelContainer-QhTz_">
-                <div class="PageToolbarButton-label-QIVQh">Refresh</div>
+<div class="PageToolbar-toolbar">
+    <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
+       <div class="PageToolbarSection-section PageToolbarSection-left">
+          <button type="button" onClick="window.location.reload();return false;" class="PageToolbarButton-toolbarButton Link-link Link-link">
+             <i class="svg-fa fa fa-refresh svg-fa" aria-hidden="true"></i>
+             <div class="PageToolbarButton-labelContainer">
+                <div class="PageToolbarButton-label">Refresh</div>
              </div>
           </button>
-          <!--<div class="PageToolbarSeparator-separator-N1WHF"></div>
-          <button type="button" class="PageToolbarButton-toolbarButton-j8a_b Link-link-RInnp Link-link-RInnp">
+          <div class="PageToolbarSeparator-separator"></div>
+          <!--<button type="button" class="PageToolbarButton-toolbarButton Link-link Link-link">
              <i class="svg-fa fa fa-check-square" aria-hidden="true"></i>
-             <div class="PageToolbarButton-labelContainer-QhTz_">
-                <div class="PageToolbarButton-label-QIVQh">Select</div>
+             <div class="PageToolbarButton-labelContainer">
+                <div class="PageToolbarButton-label">Select</div>
              </div>
           </button>-->
        </div>
     </div>
-    <div class="PageToolbarSection-sectionContainer-dcxFs" style="flex-grow: 4;">
-       <div class="PageToolbarSection-section-hL6TV PageToolbarSection-right-w45zk">
-          <!--<button type="button" class="PageToolbarButton-toolbarButton-j8a_b Link-link-RInnp Link-link-RInnp">
+    <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
+       <div class="PageToolbarSection-section PageToolbarSection-right">
+          <!--<button type="button" class="PageToolbarButton-toolbarButton Link-link Link-link">
              <i class="svg-fa fa fa-table" aria-hidden="true"></i>
-             <div class="PageToolbarButton-labelContainer-QhTz_">
-                <div class="PageToolbarButton-label-QIVQh">Options</div>
+             <div class="PageToolbarButton-labelContainer">
+                <div class="PageToolbarButton-label">Options</div>
              </div>
-          </button>
-          <div></div>
-          <div class="PageToolbarSeparator-separator-N1WHF"></div>
+          </button>-->
+          {% if sorting_dict %} 
+          <div class="PageToolbarSeparator-separator"></div>
+          {% endif %} 
           
-          <button type="button" class="PageToolbarButton-toolbarButton-j8a_b Link-link-RInnp Link-link-RInnp">
+          <!--<button type="button" class="PageToolbarButton-toolbarButton Link-link Link-link">
             <i class="svg-fa fa fa-filter" aria-hidden="true"></i>
-            <div class="PageToolbarButton-labelContainer-QhTz_">
-               <div class="PageToolbarButton-label-QIVQh">Filter</div>
+            <div class="PageToolbarButton-labelContainer">
+               <div class="PageToolbarButton-label">Filter</div>
             </div>
-         </button>
-          
-         <button type="button" class="PageToolbarButton-toolbarButton-j8a_b Link-link-RInnp Link-link-RInnp">
+         </button>-->
+         {% if sorting_dict %} 
+         <button type="button" onClick="showSort();" class="PageToolbarButton-toolbarButton Link-link Link-link">
            <i class="svg-fa fa fa-sort" aria-hidden="true"></i>
-           <div class="PageToolbarButton-labelContainer-QhTz_">
-              <div class="PageToolbarButton-label-QIVQh">Sort</div>
-           </div>-->
+           <div class="PageToolbarButton-labelContainer">
+              <div class="PageToolbarButton-label">Sort</div>
+           </div>
         </button>
+        {% endif %} 
        </div>
     </div>
  </div>
+
+<div id="filter-root" class="nodisplay">
+   {% if sorting_dict %} 
+   <div id="id-0" class="MenuContent-menuContent">
+      {% for sorting_value, sorting_key in sorting_dict.items() %}
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         {% if order == sorting_key %}
+               {% if asc == 1 %}
+                  <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+                     <div class="SelectedMenuItem-item">
+                        {{ sorting_value }}<i class="sorting fa fa-sort-asc" aria-hidden="true"></i>
+                     </div>
+                  </button>
+               {% else %}
+                  <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 1 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+                     <div class="SelectedMenuItem-item">
+                        {{ sorting_value }}<i class="sorting fa fa-sort-desc" aria-hidden="true"></i>
+                     </div>
+                  </button>
+               {% endif %}
+         {% else %}
+            <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+               <div class="SelectedMenuItem-item">
+                  {{ sorting_value }}
+               </div>
+            </button>   
+         {% endif %}</th>
+      </div>
+      {% endfor %}
+   </div>
+   {% endif %} 
+</div>

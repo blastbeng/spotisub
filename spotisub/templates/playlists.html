@@ -8,7 +8,10 @@
 
         {% include 'header.html' %}
 
-        {% include 'toolbar.html'%}
+        
+        {% with initial_url=url_for('playlists', missing_only=missing_only, page=current_page, limit=limit), order=order, asc=asc, search=search %}
+            {% include 'toolbar.html'%}
+        {% endwith %}
 
         
         <div class="table-container">

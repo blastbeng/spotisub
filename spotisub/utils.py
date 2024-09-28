@@ -154,3 +154,8 @@ def get_pagination(page, total_pages):
     next_page = (page + 1) if (page + 1) <= total_pages else total_pages
 
     return sorted(value), prev_page, next_page
+
+
+def get_sorting_dic(element):
+    if len(element) > 0 and isinstance(element[0], dict):
+        print()
