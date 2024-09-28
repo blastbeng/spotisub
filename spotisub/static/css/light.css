@@ -322,7 +322,7 @@ a.article-active:hover {
     display: inline-block;
     border: 1px solid grey;
     padding: 10px;
-    width:200px;
+    width:160px;
     overflow: hidden;
     font-size: 14px;
     border: none;
@@ -443,8 +443,8 @@ a.article-active:hover {
 
 .InfoDetails-poster-overview {
     flex-shrink: 0;
-    width:180px;
-    height: 180px;
+    width:140px;
+    height: 140px;
     border: none;
     cursor: pointer;
 }

@@ -487,6 +487,12 @@ def select_all_playlists(spotipy_helper, page=None,
                     playlist["image"] = spotify_playlist["images"][0]["url"]
             else:
                 playlist["image"] = ""
+            prefix = os.environ.get(
+                        constants.PLAYLIST_PREFIX,
+                        constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
+                        "\"",
+                        "")
+            playlist["subsonic_playlist_name"] = playlist["subsonic_playlist_name"].replace(prefix,"")
 
         for plid in ids:
             playlist_search, has_been_deleted = get_playlist_from_cache(
