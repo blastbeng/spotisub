@@ -424,16 +424,25 @@ def count_songs(conn, missing_only=False, search=None, song_uuid=None):
     """select playlists from database"""
     count = 0
 
-    query = """select count(*) from (select subsonic_spotify_relation.uuid from
-    subsonic_spotify_relation
-    join spotify_song
-    on subsonic_spotify_relation.spotify_song_uuid = spotify_song.uuid
-    join spotify_album
-    on spotify_song.album_uuid = spotify_album.uuid
-    join spotify_song_artist_relation
-    on spotify_song.uuid = spotify_song_artist_relation.song_uuid
-    join spotify_artist
-    on spotify_song_artist_relation.artist_uuid = spotify_artist.uuid """
+    query = """SELECT COUNT(*) FROM
+        (SELECT subsonic_spotify_relation.uuid,
+            subsonic_spotify_relation.subsonic_song_id,
+            subsonic_spotify_relation.subsonic_artist_id,
+            subsonic_spotify_relation.subsonic_playlist_id,
+            subsonic_spotify_relation.subsonic_playlist_name,
+            subsonic_spotify_relation.spotify_song_uuid,
+            spotify_song.title AS spotify_song_title,
+            spotify_song.spotify_uri AS spotify_song_uri,
+            spotify_song.album_uuid AS spotify_album_uuid,
+            spotify_album.spotify_uri AS spotify_album_uri,
+            spotify_album.name AS spotify_album_name,
+            group_concat(spotify_artist.name) AS spotify_artist_names,
+            group_concat(spotify_artist.uuid) AS spotify_artist_uuids,
+            spotify_song.tms_insert FROM subsonic_spotify_relation
+        JOIN spotify_song ON subsonic_spotify_relation.spotify_song_uuid = spotify_song.uuid
+        JOIN spotify_album ON spotify_song.album_uuid = spotify_album.uuid
+        JOIN spotify_song_artist_relation ON spotify_song.uuid = spotify_song_artist_relation.song_uuid
+        JOIN spotify_artist ON spotify_song_artist_relation.artist_uuid = spotify_artist.uuid """
     where = ""
     if missing_only:
         where = where + """ subsonic_spotify_relation.subsonic_song_id is null
@@ -441,11 +450,22 @@ def count_songs(conn, missing_only=False, search=None, song_uuid=None):
     if search is not None:
         if where != "":
             where = where + " and "
-        where = where + """ Lower(spotify_song.title) LIKE Lower('""" + search + """')
-            OR Lower(spotify_album.name) LIKE Lower('""" + search + """')
-            OR Lower(spotify_artist.name) LIKE Lower('""" + search + """')
-            OR Lower(subsonic_spotify_relation.subsonic_playlist_name) LIKE
-            Lower('""" + search + """') """
+        where = where + """ (lower(spotify_song.title) LIKE lower('""" + search + """')
+            OR lower(spotify_album.name) LIKE lower('""" + search + """')
+            OR lower(spotify_artist.name) LIKE lower('""" + search + """')
+            OR lower(subsonic_spotify_relation.subsonic_playlist_name) LIKE lower('""" + search + """') """
+        where = where + """ OR lower(spotify_song.title) LIKE lower('%""" + search + """')
+            OR lower(spotify_album.name) LIKE lower('%""" + search + """')
+            OR lower(spotify_artist.name) LIKE lower('%""" + search + """')
+            OR lower(subsonic_spotify_relation.subsonic_playlist_name) LIKE lower('%""" + search + """') """
+        where = where + """ OR lower(spotify_song.title) LIKE lower('""" + search + """%')
+            OR lower(spotify_album.name) LIKE lower('""" + search + """%')
+            OR lower(spotify_artist.name) LIKE lower('""" + search + """%')
+            OR lower(subsonic_spotify_relation.subsonic_playlist_name) LIKE lower('""" + search + """%') """
+        where = where + """ OR lower(spotify_song.title) LIKE lower('%""" + search + """%')
+            OR lower(spotify_album.name) LIKE lower('%""" + search + """%')
+            OR lower(spotify_artist.name) LIKE lower('%""" + search + """%')
+            OR lower(subsonic_spotify_relation.subsonic_playlist_name) LIKE lower('%""" + search + """%')) """
     if song_uuid is not None:
         if where != "":
             where = where + " and "

@@ -177,7 +177,7 @@ def add_missing_values_to_track(sp, track):
     if "id" in track:
         uri = 'spotify:track:' + track['id']
         if "album" not in track or has_isrc(track) is False:
-            track = sp.track(uri)
+            track = get_spotify_song_from_cache(sp, uri)
             time.sleep(1)
         elif "uri" not in track:
             track["uri"] = uri
@@ -679,15 +679,11 @@ def load_song(uuid, spotipy_helper, page=None,
 
     if len(songs) > 0:
         spotify_album = None
-        if songs[0].spotify_album_uuid not in spotify_album_cache:
-            sp = sp if sp is not None else spotipy_helper.get_spotipy_client()
-            spotify_album = sp.album(songs[0].spotify_album_uri)
-            spotify_album_cache[songs[0].spotify_album_uuid] = spotify_album
-        else:
-            spotify_album = spotify_album_cache[songs[0].spotify_album_uuid]
+        if songs[0].spotify_album_uri not in spotify_album_cache:
+            spotify_album = get_spotify_album_from_cache(spotipy_helper.get_spotipy_client(), songs[0].spotify_album_uri)
 
-        if spotify_album is None:
-            raise SpotifyDataException
+            if spotify_album is None:
+                raise SpotifyDataException
         
         if "images" in spotify_album and len(spotify_album["images"]) > 0:
             song["image"] = spotify_album["images"][0]["url"]
