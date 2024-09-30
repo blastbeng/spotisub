@@ -14,6 +14,11 @@
             <img class="InfoDetails-poster" src="{% if album["image"] != '' %}{{ album["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
             <div class="InfoDetails-info">
                Album
+               {% if album["ignored"] == 0 %}
+               <i class="fa fa-trash fa-custom-link" title="Mark as ignored in every playlist" aria-hidden="true"></i>
+               {% else %}
+               <i class="fa fa-plus-square fa-plus-square" title="Mark as not ignored in every playlist" aria-hidden="true"></i>
+               {% endif %}
                <div class="InfoDetails-titleRow">
                   <div class="InfoDetails-titleContainer">
                      <div class="InfoDetails-title">{{ album["name"] }}</div>
@@ -89,19 +94,38 @@
                             <a href="{{ url_for('album', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name</a>   
                         {% endif %}
                     </th>
+                    <th>
+                        Actions
+                    </th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for song in songs %}
                     <tr>
-                    {% if song["subsonic_song_id"] is none %}
+                    {% if song["ignored"] == 1 %}
+                    <td><i class="fa fa-ban" aria-hidden="true" title="Song is marked as ignored in all playlists"></i></td>
+                    {% elif song["ignored_pl"] == 1 %}
+                    <td><i class="fa fa-minus-circle" aria-hidden="true" title="Song is marked as ignored in some playlist"></i></td>
+                    {% elif song["subsonic_song_id"] is none %}
                         <td><i class="fa fa-exclamation-triangle" aria-hidden="true" title="Song is missing from Subsonic"></i></td>
                     {% else %}
                         <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
                     {% endif %}
                     <td><a href="{{ url_for('song', uuid=song.uuid, page=1, limit=25) }}" class="normal-href">{{ song.title }}</a></td>
                     
-                    <td>{% for name in (song.spotify_artist_names.split(",") | unique) %}
+                    <td>
+                        {% set break = False %}
+                        {% for artist_ignored in (song.spotify_artist_ignored.split(",") | unique) %}
+                            {% if not break and artist_ignored == "1" %}
+                                {% if ((song.spotify_artist_names.split(","))|length) == 1 %}
+                                    <i class="fa fa-ban" aria-hidden="true" title="This artist is marked as ignored"></i>
+                                {% else %}
+                                    <i class="fa fa-ban" aria-hidden="true" title="Some of these artists are marked as ignored"></i>
+                                {% endif %}
+                                {% set break = True %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for name in (song.spotify_artist_names.split(",") | unique) %}
                         <a href="javascript:gotoArtist('{{ song.spotify_song_uuid }}_artist_{{ loop.index }}');" class="normal-href">{{ name }}</a>
                         {% endfor %}
                         {% for uuid in (song.spotify_artist_uuids.split(",") | unique) %}
@@ -110,6 +134,25 @@
                     </td>
                     <td><a href="{{ url_for('album', uuid=song.album_uuid) }}" class="normal-href">{{ song.album_name }}</a></td>
                     <td><a href="{{ url_for('playlists', missing_only=0, page=1, limit=25, order='spotify_song.title', asc=1, search=song.subsonic_playlist_name ) }}" class="normal-href">{{ song.subsonic_playlist_name }}</a></td>
+                    <td>
+
+                        {% if song["ignored_pl"] == 1 %}
+                            <i class="fa fa-plus fa-custom-link" title="Mark this song as not ignored in this playlist" aria-hidden="true"></i>x
+                        {% else %}
+                            <i class="fa fa-eraser fa-custom-link" title="Mark this song as ignored in this playlist" aria-hidden="true"></i>
+                        {% endif %}
+
+
+                        {% if song["ignored"] == 1 %}
+                            <i class="fa fa-plus-square fa-custom-link" title="Mark this song as not ignored in every playlist" aria-hidden="true"></i>
+                        {% else %}
+                            <i class="fa fa-trash fa-custom-link" title="Mark this song as ignored in every playlist" aria-hidden="true"></i>
+                        {% endif %}
+
+                        {% if song["subsonic_song_id"] is none %}
+                            <i class="fa fa-download fa-custom-link" title="Download this song using SPOTDL" aria-hidden="true"></i>
+                        {% endif %}
+                    </td>
                     </tr>
                 {% endfor %}
                 </tbody>

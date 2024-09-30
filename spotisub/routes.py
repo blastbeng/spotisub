@@ -442,6 +442,17 @@ class SavedTracksClass(Resource):
             "Importing your saved tracks", True), 200)
 
 
+nsdatabase = api.namespace('database', 'Utils APIs')
+@nsdatabase.route('/object/ignore/<string:uuid>/<string:type>/<int:value>/')
+class SetIgnoredObjectClass(Resource):
+    """Set ignored value to an object class"""
+
+    def get(self):
+        """Set ignored value to an object"""
+        return get_response_json(get_json_message(
+            "Work in progress", True), 200)
+
+
 nsutils = api.namespace('utils', 'Utils APIs')
 
 

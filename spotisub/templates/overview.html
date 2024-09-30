@@ -45,6 +45,7 @@
                 </thead>
                 <tbody id="overview_data">
                     {% include 'overview_content.html'%}
+                    {% if result_size > limit %}
                     <tr id="loading-more">
                         <td id="table-image"></td>
                         <td id="table-href">Loading more...</td>
@@ -54,6 +55,7 @@
                         <td id="table-progress">
                         </td>
                     </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>

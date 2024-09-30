@@ -78,20 +78,42 @@
                 <tbody>
                 {% for playlist in playlists %}
                     <tr>
-                    {% if playlist.subsonic_song_id is none %}
-                        <td><i class="fa fa-exclamation-triangle" aria-hidden="true" title="Song is missing from Subsonic"></i></td>
-                    {% else %}
-                        <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
-                    {% endif %}
+                    
+                        {% if playlist.ignored == 1 %}
+                        <td><i class="fa fa-ban" aria-hidden="true" title="Song is marked as ignored in all playlists"></i></td>
+                        {% elif playlist.ignored_pl == 1 %}
+                        <td><i class="fa fa-minus-circle" aria-hidden="true" title="Song is marked as ignored in some playlist"></i></td>
+                        {% elif playlist.subsonic_song_id is none %}
+                            <td><i class="fa fa-exclamation-triangle" aria-hidden="true" title="Song is missing from Subsonic"></i></td>
+                        {% else %}
+                            <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
+                        {% endif %}
                     <td><a href="{{ url_for('song', uuid=playlist.spotify_song_uuid, page=1, limit=25, order=order, asc=asc) }}"class="normal-href">{{ playlist.spotify_song_title }}</a></td>
-                    <td>{% for name in (playlist.spotify_artist_names.split(",") | unique) %}
+                    <td>{% set break = False %}
+                        {% for artist_ignored in (playlist.spotify_artist_ignored.split(",") | unique) %}
+                            {% if not break and artist_ignored == "1" %}
+                                {% if ((playlist.spotify_artist_names.split(","))|length) == 1 %}
+                                    <i class="fa fa-ban" aria-hidden="true" title="This artist is marked as ignored"></i>
+                                {% else %}
+                                    <i class="fa fa-ban" aria-hidden="true" title="Some of these artists are marked as ignored"></i>
+                                {% endif %}
+                                {% set break = True %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for name in (playlist.spotify_artist_names.split(",") | unique) %}
                             <a href="javascript:gotoArtist('{{ playlist.spotify_song_uuid }}_artist_{{ loop.index }}');" class="normal-href">{{ name }}</a>
                         {% endfor %}
                         {% for uuid in (playlist.spotify_artist_uuids.split(",") | unique) %}
                             <input type="hidden" id="{{ playlist.spotify_song_uuid }}_artist_{{ loop.index }}" value="{{ uuid }}" />
                         {% endfor %}
                     </td>
-                    <td><a href="{{ url_for('album', uuid=playlist.spotify_album_uuid) }}" class="normal-href">{{ playlist.spotify_album_name }}</a></td>
+                    <td>
+                        {% if playlist.spotify_album_ignored == 1 %}
+                        <i class="fa fa-ban" aria-hidden="true" title="This album is marked as ignored"></i>
+                        {% endif %}
+                        <a href="{{ url_for('album', uuid=playlist.spotify_album_uuid) }}" class="normal-href">
+                        {{ playlist.spotify_album_name }}
+                    </a></td>
                     <td><a href="{{ url_for('playlists', missing_only=missing_only, page=1, limit=limit, order=order, asc=asc, search=playlist.subsonic_playlist_name) }}" class="normal-href">{{ playlist.subsonic_playlist_name }}</a></td>
                     </tr>
                 {% endfor %}

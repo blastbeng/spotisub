@@ -407,6 +407,9 @@ a.article-active:hover {
 .fa-refresh{
     margin-top:10px;
 }
+.fa-custom-link{
+    cursor:pointer;
+}
 
 .footer {
     padding: 5px;
@@ -450,7 +453,7 @@ a.article-active:hover {
 }
 
 .InfoDetails-info {
-    display: flex;
+    display: inline;
     flex-direction: column;
     flex-grow: 1;
     overflow: hidden;
