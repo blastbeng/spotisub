@@ -37,15 +37,14 @@ def create_sp_client():
     """Creates the spotipy client"""
     secrets = get_secrets()
     scope = "user-top-read,user-library-read,user-read-recently-played"
+    cache_path = os.path.abspath(os.curdir) + '/cache/spotipy_cache'
     creds = SpotifyOAuth(
         scope=scope,
         client_id=secrets["client_id"],
         client_secret=secrets["client_secret"],
         redirect_uri=secrets["redirect_uri"],
         open_browser=False,
-        cache_path=os.path.dirname(
-            os.path.abspath(__file__)) +
-        "/../../cache/spotipy_cache")
+        cache_path=cache_path)
 
     return spotipy.Spotify(auth_manager=creds)
 

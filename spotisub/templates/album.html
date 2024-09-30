@@ -11,7 +11,7 @@
         {% endwith %}
 
         <div class="InfoDetails">
-            <img class="InfoDetails-poster" src="{{ album["image"] }}">
+            <img class="InfoDetails-poster" src="{% if album["image"] != '' %}{{ album["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
             <div class="InfoDetails-info">
                Album
                <div class="InfoDetails-titleRow">
@@ -99,7 +99,7 @@
                     {% else %}
                         <td><i class="fa fa-check-square" aria-hidden="true" title="Song is matched with a Subsonic Track"></i></td>
                     {% endif %}
-                    <td><a href="{{ url_for('song', uuid=song.uuid, page=1, limit=25, order=order, asc=asc) }}" class="normal-href">{{ song.title }}</a></td>
+                    <td><a href="{{ url_for('song', uuid=song.uuid, page=1, limit=25) }}" class="normal-href">{{ song.title }}</a></td>
                     
                     <td>{% for name in (song.spotify_artist_names.split(",") | unique) %}
                         <a href="javascript:gotoArtist('{{ song.spotify_song_uuid }}_artist_{{ loop.index }}');" class="normal-href">{{ name }}</a>

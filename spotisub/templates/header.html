@@ -7,9 +7,9 @@
         <a href="#" id="sidebarCollapse"><i class="fa fa-bars" aria-hidden="true"  ></i></a>
     </li>
     <li>
-        <input onkeypress="keypressPlaylistsResults(event,{{missing_only}},1,25);" id="text-search" class="text-search"  type="text" placeholder="Search..." value="{% if search %}{{ search }}{%endif %}"/>
+        <input onkeypress="keypressPlaylistsResults(event,0,1,25);" id="text-search" class="text-search"  type="text" placeholder="Search..." value="{% if search %}{{ search }}{%endif %}"/>
     </li>
     <li>
-        <a href="javascript:searchPlaylistsResults({{missing_only}},1,25);" class="search-submit"><i class="fa fa-search"></i></a>
+        <a href="javascript:searchPlaylistsResults(0,1,25);" class="search-submit"><i class="fa fa-search"></i></a>
     </li>
 </ul>

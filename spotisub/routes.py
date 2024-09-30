@@ -6,6 +6,9 @@ import threading
 import json
 import math
 from time import strftime
+from requests import ConnectionError
+from requests import ReadTimeout
+from urllib3.exceptions import MaxRetryError
 from flask import Blueprint
 from flask import Response
 from flask import request
@@ -54,18 +57,9 @@ def after_request(response):
 
 @spotisub.errorhandler(Exception)
 def all_exception_handler(error):
-    if isinstance(error, SubsonicOfflineException):
-        return render_template('errors/404.html',
-            title=title,
-            errors=["Unable to communicate with Subsonic.", "Please check your configuration and make sure your instance is online."])
-    elif isinstance(error, SpotifyException) or isinstance(error, SpotifyApiException):
-        return render_template('errors/404.html',
-            title=title,
-            errors=["Unable to communicate with Spotify.", "Please check your configuration."])
-    elif isinstance(error, ConnectionError):
-        return render_template('errors/404.html',
-            title=title,
-            errors=["Connection Error. Please check Spotisub logs."])
+    return render_template('errors/404.html',
+        title='Error!',
+        errors=[repr(error)])
 
 blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
 api = Api(blueprint, doc='/docs/')
@@ -96,7 +90,7 @@ def get_json_message(message, is_ok):
 @spotisub.route('/overview/<int:page>/<int:limit>/<string:order>/')
 @spotisub.route('/overview/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def overview(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1):
+def overview(page=1, limit=100, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1):
     title = 'Overview'
     spotipy_helper.get_secrets()
     all_playlists, song_count = subsonic_helper.select_all_playlists(spotipy_helper,
@@ -120,7 +114,28 @@ def overview(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlis
                            order=order,
                            asc=asc,
                            sorting_dict=sorting_dict)
-                               
+
+
+@spotisub.route('/')
+@spotisub.route('/overview_content/')
+@spotisub.route('/overview_content/<int:page>/')
+@spotisub.route('/overview_content/<int:page>/<int:limit>/')
+@spotisub.route('/overview_content/<int:page>/<int:limit>/<string:order>/')
+@spotisub.route('/overview_content/<int:page>/<int:limit>/<string:order>/<int:asc>/')
+@login_required
+def overview_content(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1):
+    spotipy_helper.get_secrets()
+    all_playlists, song_count = subsonic_helper.select_all_playlists(spotipy_helper,
+        page=page - 1, limit=limit, order=order, asc=(asc == 1))
+    sorting_dict = {}
+    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+    sorting_dict["Type"] = "playlist_info.type"
+    return render_template('overview_content.html',
+                           playlists=all_playlists,
+                           limit=limit,
+                           result_size=song_count,
+                           order=order,
+                           asc=asc)                               
 
 @spotisub.route('/playlists/')
 @spotisub.route('/playlists/<int:missing_only>/')
@@ -511,5 +526,8 @@ scheduler.start(paused=(os.environ.get(constants.SCHEDULER_ENABLED,
                                        constants.SCHEDULER_ENABLED_DEFAULT_VALUE) != "1"))
 
 
-# Used to initialize cache for the first 500 playlists
-subsonic_helper.select_all_playlists(spotipy_helper, page=0, limit=500, order='subsonic_spotify_relation.subsonic_playlist_name', asc=True)
+# Used to initialize cache for the first 100 playlists
+try:
+    subsonic_helper.select_all_playlists(spotipy_helper, page=0, limit=100, order='subsonic_spotify_relation.subsonic_playlist_name', asc=True)
+except:
+    pass

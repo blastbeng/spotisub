@@ -3,10 +3,12 @@ import logging
 import os
 import random
 import time
+import pickle
 import threading
 import libsonic
 from expiringdict import ExpiringDict
 from libsonic.errors import DataNotFoundError
+from spotipy.exceptions import SpotifyException
 from spotisub import spotisub
 from spotisub import database
 from spotisub import constants
@@ -54,47 +56,36 @@ pysonic = libsonic.Connection(
 
 # caches
 playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
-spotify_playlist_cache = ExpiringDict(max_len=1000, max_age_seconds=3600)
-spotify_artist_cache = ExpiringDict(max_len=1000, max_age_seconds=3600)
-spotify_album_cache = ExpiringDict(max_len=1000, max_age_seconds=3600)
-spotify_song_cache = ExpiringDict(max_len=1000, max_age_seconds=3600)
+spotify_cache = None
 
+def load_spotify_cache_from_file():
+    object = ExpiringDict(max_len=10000, max_age_seconds=43200)
+    path = os.path.abspath(os.curdir) + '/cache/spotify_object_cache.pkl'
+    if os.path.exists(path):
+        with open(path, 'rb') as f:
+            old_cache_obj = pickle.load(f)
+            for key, value in old_cache_obj.items():
+                object[key] = value
+    return object
 
-def get_spotify_artist_from_cache(sp, spotify_uri):
-    spotify_artist = None
-    if spotify_uri not in spotify_artist_cache:
-        spotify_artist = sp.artist(spotify_uri)
-        spotify_artist_cache[spotify_uri] = spotify_artist
+def save_spotify_cache_to_file(object):
+    path = os.path.abspath(os.curdir) + '/cache/spotify_object_cache.pkl'
+    with open(path, 'wb') as f:
+        pickle.dump(object, f)
+
+def get_spotify_object_from_cache(sp, spotify_uri):
+    spotify_object = None
+    if spotify_uri not in spotify_cache:
+        try:
+            spotify_object = sp.artist(spotify_uri)
+            spotify_cache[spotify_uri] = spotify_object
+            save_spotify_cache_to_file(spotify_cache)
+        except SpotifyException:
+            pass
     else:
-        spotify_artist = spotify_artist_cache[spotify_uri]
-    return spotify_artist
+        spotify_object = spotify_cache[spotify_uri]
+    return spotify_object
 
-def get_spotify_playlist_from_cache(sp, spotify_uri):
-    spotify_playlist = None
-    if spotify_uri not in spotify_playlist_cache:
-        spotify_playlist = sp.playlist(spotify_uri)
-        spotify_playlist_cache[spotify_uri] = spotify_playlist
-    else:
-        spotify_playlist = spotify_playlist_cache[spotify_uri]
-    return spotify_playlist
-
-def get_spotify_album_from_cache(sp, spotify_uri):
-    spotify_album = None
-    if spotify_uri not in spotify_album_cache:
-        spotify_album = sp.album(spotify_uri)
-        spotify_album_cache[spotify_uri] = spotify_album
-    else:
-        spotify_album = spotify_album_cache[spotify_uri]
-    return spotify_album
-
-def get_spotify_song_from_cache(sp, spotify_uri):
-    spotify_song = None
-    if spotify_uri not in spotify_song_cache:
-        spotify_song = sp.track(spotify_uri)
-        spotify_song_cache[spotify_uri] = spotify_song
-    else:
-        spotify_song = spotify_song_cache[spotify_uri]
-    return spotify_song
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""
@@ -177,9 +168,11 @@ def add_missing_values_to_track(sp, track):
     if "id" in track:
         uri = 'spotify:track:' + track['id']
         if "album" not in track or has_isrc(track) is False:
-            track = get_spotify_song_from_cache(sp, uri)
+            spotify_track = get_spotify_object_from_cache(sp, uri)
+            if spotify_track is not None:
+                track = spotify_track
             time.sleep(1)
-        elif "uri" not in track:
+        if "uri" not in track:
             track["uri"] = uri
         return track
     return None
@@ -474,19 +467,19 @@ def select_all_playlists(spotipy_helper, page=None,
         songs = []
 
         ids = []
+
         for playlist in all_playlists:
+            playlist["image"] = ""
             if playlist["subsonic_playlist_id"] not in ids:
                 ids.append(playlist["subsonic_playlist_id"])
             if playlist["type"] == constants.JOB_ATT_ID or playlist["type"] == constants.JOB_AR_ID:
-                spotify_artist = get_spotify_artist_from_cache(spotipy_helper.get_spotipy_client(), playlist["spotify_playlist_uri"])
-                if "images" in spotify_artist and len(spotify_artist["images"]) > 0:
+                spotify_artist = get_spotify_object_from_cache(spotipy_helper.get_spotipy_client(), playlist["spotify_playlist_uri"])
+                if spotify_artist is not None and "images" in spotify_artist and len(spotify_artist["images"]) > 0:
                     playlist["image"] = spotify_artist["images"][0]["url"]
             elif playlist["type"] == constants.JOB_UP_ID:
-                spotify_playlist = get_spotify_playlist_from_cache(spotipy_helper.get_spotipy_client(), playlist["spotify_playlist_uri"])
-                if "images" in spotify_playlist and len(spotify_playlist["images"]) > 0:
+                spotify_playlist = get_spotify_object_from_cache(spotipy_helper.get_spotipy_client(), playlist["spotify_playlist_uri"])
+                if spotify_playlist is not None and "images" in spotify_playlist and len(spotify_playlist["images"]) > 0:
                     playlist["image"] = spotify_playlist["images"][0]["url"]
-            else:
-                playlist["image"] = ""
             prefix = os.environ.get(
                         constants.PLAYLIST_PREFIX,
                         constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
@@ -606,24 +599,23 @@ def load_artist(uuid, spotipy_helper, page=None,
         uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
-    spotify_artist = get_spotify_artist_from_cache(spotipy_helper.get_spotipy_client(), artist_db.spotify_uri)
+    spotify_artist = get_spotify_object_from_cache(spotipy_helper.get_spotipy_client(), artist_db.spotify_uri)
 
-    if spotify_artist is None:
-        raise SpotifyDataException
     artist = {}
     artist["name"] = artist_db.name
     artist["genres"] = ""
     artist["url"] = ""
     artist["image"] = ""
     artist["popularity"] = ""
-    if "genres" in spotify_artist:
-        artist["genres"] = ", ".join(spotify_artist["genres"])
-    if "popularity" in spotify_artist:
-        artist["popularity"] = str(spotify_artist["popularity"]) + "%"
-    if "external_urls" in spotify_artist and "spotify" in spotify_artist["external_urls"]:
-        artist["url"] = spotify_artist["external_urls"]["spotify"]
-    if "images" in spotify_artist and len(spotify_artist["images"]) > 0:
-        artist["image"] = spotify_artist["images"][0]["url"]
+    if spotify_artist is not None:
+        if "genres" in spotify_artist:
+            artist["genres"] = ", ".join(spotify_artist["genres"])
+        if "popularity" in spotify_artist:
+            artist["popularity"] = str(spotify_artist["popularity"]) + "%"
+        if "external_urls" in spotify_artist and "spotify" in spotify_artist["external_urls"]:
+            artist["url"] = spotify_artist["external_urls"]["spotify"]
+        if "images" in spotify_artist and len(spotify_artist["images"]) > 0:
+            artist["image"] = spotify_artist["images"][0]["url"]
     return artist, songs, count
 
 
@@ -633,21 +625,20 @@ def load_album(uuid, spotipy_helper, page=None,
         uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
-    spotify_album = get_spotify_album_from_cache(spotipy_helper.get_spotipy_client(), album_db.spotify_uri)
+    spotify_album = get_spotify_object_from_cache(spotipy_helper.get_spotipy_client(), album_db.spotify_uri)
 
-    if spotify_album is None:
-        raise SpotifyDataException
     album = {}
     album["name"] = album_db.name
     album["url"] = ""
     album["image"] = ""
     album["release_date"] = ""
-    if "release_date" in spotify_album:
-        album["release_date"] = spotify_album["release_date"]
-    if "external_urls" in spotify_album and "spotify" in spotify_album["external_urls"]:
-        album["url"] = spotify_album["external_urls"]["spotify"]
-    if "images" in spotify_album and len(spotify_album["images"]) > 0:
-        album["image"] = spotify_album["images"][0]["url"]
+    if spotify_album is not None:
+        if "release_date" in spotify_album:
+            album["release_date"] = spotify_album["release_date"]
+        if "external_urls" in spotify_album and "spotify" in spotify_album["external_urls"]:
+            album["url"] = spotify_album["external_urls"]["spotify"]
+        if "images" in spotify_album and len(spotify_album["images"]) > 0:
+            album["image"] = spotify_album["images"][0]["url"]
 
     return album, songs, count
 
@@ -658,10 +649,7 @@ def load_song(uuid, spotipy_helper, page=None,
         uuid, page=page, limit=limit, order=order, asc=asc)
     sp = None
 
-    spotify_song = get_spotify_song_from_cache(spotipy_helper.get_spotipy_client(), song_db.spotify_uri)
-
-    if spotify_song is None:
-        raise SpotifyDataException
+    spotify_song = get_spotify_object_from_cache(spotipy_helper.get_spotipy_client(), song_db.spotify_uri)
 
     song = {}
     song["name"] = song_db.title
@@ -670,22 +658,22 @@ def load_song(uuid, spotipy_helper, page=None,
     song["popularity"] = ""
     song["preview"] = ""
     
-    if "preview_url" in spotify_song:
-        song["preview_url"] = spotify_song["preview_url"]
-    if "popularity" in spotify_song:
-        song["popularity"] = str(spotify_song["popularity"]) + "%"
-    if "external_urls" in spotify_song and "spotify" in spotify_song["external_urls"]:
-        song["url"] = spotify_song["external_urls"]["spotify"]
+    if spotify_song is not None:
+        if "preview_url" in spotify_song:
+            song["preview_url"] = spotify_song["preview_url"]
+        if "popularity" in spotify_song:
+            song["popularity"] = str(spotify_song["popularity"]) + "%"
+        if "external_urls" in spotify_song and "spotify" in spotify_song["external_urls"]:
+            song["url"] = spotify_song["external_urls"]["spotify"]
 
     if len(songs) > 0:
-        spotify_album = None
         if songs[0].spotify_album_uri not in spotify_album_cache:
-            spotify_album = get_spotify_album_from_cache(spotipy_helper.get_spotipy_client(), songs[0].spotify_album_uri)
+            spotify_album = get_spotify_object_from_cache(spotipy_helper.get_spotipy_client(), songs[0].spotify_album_uri)
 
-            if spotify_album is None:
-                raise SpotifyDataException
-        
-        if "images" in spotify_album and len(spotify_album["images"]) > 0:
-            song["image"] = spotify_album["images"][0]["url"]
+            if spotify_album is not None:
+                if "images" in spotify_album and len(spotify_album["images"]) > 0:
+                    song["image"] = spotify_album["images"][0]["url"]
 
     return song, songs, count
+
+spotify_cache = load_spotify_cache_from_file()

@@ -35,6 +35,12 @@
                <div class="PageToolbarButton-label">View</div>
             </div>
          </button>
+         <button type="button" onClick="showFilter();" class="PageToolbarButton-toolbarButton Link-link Link-link">
+           <i class="svg-fa fa fa-filter" aria-hidden="true"></i>
+           <div class="PageToolbarButton-labelContainer">
+              <div class="PageToolbarButton-label">Filter</div>
+           </div>
+        </button>
          {% endif %} 
          {% if sorting_dict %} 
          <button type="button" onClick="showSort();" class="PageToolbarButton-toolbarButton Link-link Link-link">
@@ -83,20 +89,20 @@
 <div id="toolbar-root-view" class="nodisplay">
    <div class="MenuContent-menuContent">
       <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="displayTable()">
             <div class="SelectedMenuItem-item">
                Table
             </div>
          </button>  
       </div>
       <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="displayPoster()">
             <div class="SelectedMenuItem-item">
                Posters
             </div>
          </button>  
       </div>
-      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+      <!--<div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
          <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
             <div class="SelectedMenuItem-item">
                Banners
@@ -109,6 +115,15 @@
                Overview
             </div>
          </button>  
+      </div>-->
+   </div>
+</div>
+<div id="toolbar-root-filter" class="nodisplay">
+   <div class="MenuContent-menuContent">
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <div class="SelectedMenuItem-item">
+               <input type="text" id="filter-overview-text" onkeyup="filterOverview()" placeholder="Filter...">
+         </div> 
       </div>
    </div>
 </div>

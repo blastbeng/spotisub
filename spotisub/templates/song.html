@@ -11,7 +11,7 @@
         {% endwith %}
 
         <div class="InfoDetails">
-            <img class="InfoDetails-poster" src="{{ song["image"] }}">
+            <img class="InfoDetails-poster" src="{% if song["image"] != '' %}{{ song["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
             <div class="InfoDetails-info">
                Song
                <div class="InfoDetails-titleRow">

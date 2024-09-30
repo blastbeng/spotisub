@@ -1,0 +1,41 @@
+{% for playlist in playlists %}
+<tr id="{{ playlist["subsonic_playlist_id"] }}">
+<td id="table-image">
+    <img class="InfoDetails-poster-overview" alt="{{ playlist["subsonic_playlist_name"] }}" onclick="location.href='{{ url_for('playlists', missing_only=0, page=1, limit=limit, order='spotify_song.title', asc=1, search=playlist["subsonic_playlist_name"]) }}'" 
+    src="{% if playlist["image"] != '' %}{{ playlist["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
+</td>
+<td id="table-href"><a href="{{ url_for('playlists', missing_only=0, page=1, limit=limit, order='spotify_song.title', asc=1, search=playlist["subsonic_playlist_name"]) }}" class="normal-href">{{ playlist["subsonic_playlist_name"] }}</a></td>
+<td id="table-type">{{ playlist["type_desc"] }}</td>
+<td id="table-spotify-link">
+        {% if playlist["type"] == "user_playlists" %}
+            <a href="{{ playlist["spotify_playlist_link"] }}" class="article normal-href" target="_blank">
+                View Playlist on Spotify
+            </a>
+        {% elif (playlist["type"] == "artist_recommendations") or (playlist["type"] == "artist_top_tracks") %}
+            <a href="{{ playlist["spotify_playlist_link"] }}" class="article normal-href" target="_blank">
+                View Artist on Spotify
+            </a>
+        {% else %}
+            <a href="https://open.spotify.com/" class="article normal-href" target="_blank">
+                View on Spotify
+            </a>
+        {% endif %}
+</td>
+<td id="table-progress">
+    <div class="progress-bar__wrapper">
+        <label class="progress-bar__value" htmlFor="progress-bar"> {{ playlist["matched"] }}/{{ playlist["total"] }} </label>
+        {% if playlist["percentage"] <= 20 %}
+            <progress id="progress-bar" style="--color:#ff3030;" value="{{ playlist["matched"] }}" max="{{ playlist["total"] }}"></progress>
+        {% elif playlist["percentage"] > 20 and playlist["percentage"] <= 40 %}
+            <progress id="progress-bar" style="--color:#ff9029;" value="{{ playlist["matched"] }}" max="{{ playlist["total"] }}"></progress>
+        {% elif playlist["percentage"] > 40 and playlist["percentage"] <= 60 %}
+            <progress id="progress-bar" style="--color:#a742ff;" value="{{ playlist["matched"] }}" max="{{ playlist["total"] }}"></progress>
+        {% elif playlist["percentage"] > 60 and playlist["percentage"] <= 80 %}
+            <progress id="progress-bar" style="--color:#524fff;" value="{{ playlist["matched"] }}" max="{{ playlist["total"] }}"></progress>
+        {% else %}
+            <progress id="progress-bar" style="--color:#31a348;" value="{{ playlist["matched"] }}" max="{{ playlist["total"] }}"></progress>
+        {% endif %}
+    </div>
+</td>
+</tr>
+{% endfor %}

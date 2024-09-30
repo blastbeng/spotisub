@@ -26,23 +26,11 @@ function hideToolbarElement(element_id) {
     }
 }
 
-function showSort(hide){
+function showSort(){
     var element = document.getElementById("toolbar-root-sort");
     if ( element.classList.contains("nodisplay") ) {
         element.classList.remove("nodisplay");
-    } else if (!hide) {
+    } else {
         element.classList.add("nodisplay");
     }
-    hideToolbarElement("toolbar-root-view")
 }
-
-function showView(hide){
-    var element = document.getElementById("toolbar-root-view");
-    if ( element.classList.contains("nodisplay") ) {
-        element.classList.remove("nodisplay");
-    } else if (!hide) {
-        element.classList.add("nodisplay");
-    }
-    hideToolbarElement("toolbar-root-sort")
-}
-
