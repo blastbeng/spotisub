@@ -6,6 +6,10 @@
     <!-- End of flash message -->
         {% include 'header.html' %}
 
+        {% with initial_url=url_for('artist', uuid=uuid, page=current_page, limit=limit), order=order, asc=asc %}
+            {% include 'toolbar.html'%}
+        {% endwith %}
+
 
         <div class="InfoDetails">
             <img class="InfoDetails-poster" src="{% if artist["image"] != '' %}{{ artist["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
@@ -44,10 +48,6 @@
             <span class="InfoDetails-details">Genres: {{ artist["genres"] }}</span>
         {% endif %}
         </div>
-
-        {% with initial_url=url_for('artist', uuid=uuid, page=current_page, limit=limit), order=order, asc=asc %}
-            {% include 'toolbar.html'%}
-        {% endwith %}
          <div class="table-container">
             <table id="data" class="table table-striped">
                 <thead>
