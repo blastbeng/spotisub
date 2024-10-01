@@ -1,10 +1,10 @@
 {% for playlist in playlists %}
 <tr id="{{ playlist["subsonic_playlist_id"] }}">
 <td id="table-image">
-    <img class="InfoDetails-poster-overview" alt="{{ playlist["subsonic_playlist_name"] }}" onclick="location.href='{{ url_for('playlists', missing_only=0, page=1, limit=limit, order='spotify_song.title', asc=1, search=playlist["subsonic_playlist_name"]) }}'" 
+    <img class="InfoDetails-poster-overview" alt="{{ playlist["subsonic_playlist_name"] }}" onclick="location.href='{{ url_for('playlist', uuid=playlist["subsonic_playlist_id"], page=1, limit=limit, order='spotify_song.title', asc=1) }}'" 
     src="{% if playlist["image"] != '' %}{{ playlist["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
 </td>
-<td id="table-href"><a href="{{ url_for('playlists', missing_only=0, page=1, limit=limit, order='spotify_song.title', asc=1, search=playlist["subsonic_playlist_name"]) }}" class="normal-href">{{ playlist["subsonic_playlist_name"] }}</a></td>
+<td id="table-href"><a href="{{ url_for('playlist', uuid=playlist["subsonic_playlist_id"], page=1, limit=limit, order='spotify_song.title', asc=1) }}" class="normal-href">{{ playlist["subsonic_playlist_name"] }}</a></td>
 <td id="table-type">{{ playlist["type_desc"] }}</td>
 <td id="table-spotify-link">
         {% if playlist["type"] == "user_playlists" %}

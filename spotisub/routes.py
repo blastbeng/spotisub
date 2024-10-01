@@ -137,6 +137,50 @@ def overview_content(page=1, limit=25, order='subsonic_spotify_relation.subsonic
                            order=order,
                            asc=asc)                               
 
+
+
+@spotisub.route('/playlist/')
+@spotisub.route('/playlist/<string:uuid>/')
+@spotisub.route('/playlist/<string:uuid>/<int:page>/')
+@spotisub.route('/playlist/<string:uuid>/<int:page>/<int:limit>/')
+@spotisub.route('/playlist/<string:uuid>/<int:page>/<int:limit>/<string:order>/')
+@spotisub.route('/playlist/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
+@login_required
+def playlist(uuid=None, page=1, limit=25,
+              order='spotify_song.title', asc=1):
+    title = 'Playlist'
+    playlists, song_count = subsonic_helper.select_all_songs(
+        page=page - 1, limit=limit, order=order, asc=(asc == 1), playlist_uuid=uuid)
+    total_pages = math.ceil(song_count / limit)
+    pagination_array, prev_page, next_page = utils.get_pagination(
+        page, total_pages)
+
+    playlist_info = subsonic_helper.select_playlist_info_by_subsonic_id(spotipy_helper, uuid)
+        
+    sorting_dict = {}
+    sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
+    sorting_dict["Spotify Song Title"] = "spotify_song.title"
+    sorting_dict["Spotify Artist"] = "spotify_artist.name"
+    sorting_dict["Spotify Album"] = "spotify_album.name"
+    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+
+    return render_template('playlists.html',
+                           title=title,
+                           playlists=playlists,
+                           missing_only=0,
+                           pagination_array=pagination_array,
+                           prev_page=prev_page,
+                           next_page=next_page,
+                           current_page=page,
+                           total_pages=total_pages,
+                           limit=limit,
+                           result_size=song_count,
+                           order=order,
+                           asc=asc,
+                           playlist_info=playlist_info,
+                           sorting_dict=sorting_dict)
+
+
 @spotisub.route('/playlists/')
 @spotisub.route('/playlists/<int:missing_only>/')
 @spotisub.route('/playlists/<int:missing_only>/<int:page>/')
@@ -291,6 +335,24 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
                            asc=asc,
                            sorting_dict=sorting_dict)
 
+@spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')
+@login_required
+def ignore(type=None, uuid=None, value = None):
+    """Set ignored value to an object"""
+    subsonic_helper.set_ignore(type,uuid,value)
+    if type == 'song':
+        database.update_ignored_song(uuid,value)
+    elif type == 'artist':
+        database.update_ignored_artist(uuid,value)
+    elif type == 'album':
+        database.update_ignored_album(uuid,value)
+    elif type == 'song_pl':
+        database.update_ignored_song_pl(uuid,value)
+    elif type == 'playlist':
+        database.update_ignored_playlist(uuid,value)
+    return get_response_json(get_json_message(
+        "Setting ignored to " +str(value)+ " to object with uuid " + uuid +", type: " + type, True), 200)
+
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -440,17 +502,6 @@ class SavedTracksClass(Resource):
                 .run_job(constants.JOB_ST_ID)).start()
         return get_response_json(get_json_message(
             "Importing your saved tracks", True), 200)
-
-
-nsdatabase = api.namespace('database', 'Utils APIs')
-@nsdatabase.route('/object/ignore/<string:uuid>/<string:type>/<int:value>/')
-class SetIgnoredObjectClass(Resource):
-    """Set ignored value to an object class"""
-
-    def get(self):
-        """Set ignored value to an object"""
-        return get_response_json(get_json_message(
-            "Work in progress", True), 200)
 
 
 nsutils = api.namespace('utils', 'Utils APIs')

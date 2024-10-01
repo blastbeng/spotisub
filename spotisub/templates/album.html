@@ -6,18 +6,18 @@
     <!-- End of flash message -->
         {% include 'header.html' %}
 
-        {% with initial_url=url_for('album', uuid=uuid, page=current_page, limit=limit), order=order, asc=asc %}
-            {% include 'toolbar.html'%}
-        {% endwith %}
-
         <div class="InfoDetails">
             <img class="InfoDetails-poster" src="{% if album["image"] != '' %}{{ album["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
             <div class="InfoDetails-info">
                Album
-               {% if album["ignored"] == 0 %}
-               <i class="fa fa-trash fa-custom-link" title="Mark as ignored in every playlist" aria-hidden="true"></i>
+               {% if album["ignored"] == 1 %}(Ignored)
+                <a href="javascript:callUrlAndReload('{{url_for('ignore', type='album', uuid=album["uuid"], value='0')}}');" class="normal-href">
+                    <i class="fa fa-plus-square fa-custom-link" title="Mark this album as not ignored" aria-hidden="true"></i>
+                </a>
                {% else %}
-               <i class="fa fa-plus-square fa-plus-square" title="Mark as not ignored in every playlist" aria-hidden="true"></i>
+               <a href="javascript:callUrlAndReload('{{url_for('ignore', type='album', uuid=album["uuid"], value='1')}}');" class="normal-href">
+                   <i class="fa fa-trash fa-custom-link" title="Mark this album as ignored" aria-hidden="true"></i>
+                </a>                
                {% endif %}
                <div class="InfoDetails-titleRow">
                   <div class="InfoDetails-titleContainer">
@@ -35,6 +35,10 @@
                </div>
             </div>
          </div>
+
+         {% with initial_url=url_for('album', uuid=uuid, page=current_page, limit=limit), order=order, asc=asc %}
+             {% include 'toolbar.html'%}
+         {% endwith %}
          <div class="table-container">
             <table id="data" class="table table-striped">
                 <thead>
@@ -103,7 +107,7 @@
                 {% for song in songs %}
                     <tr>
                     {% if song["ignored"] == 1 %}
-                    <td><i class="fa fa-ban" aria-hidden="true" title="Song is marked as ignored in all playlists"></i></td>
+                    <td><i class="fa fa-ban" aria-hidden="true" title="Song is marked as ignored in every playlist"></i></td>
                     {% elif song["ignored_pl"] == 1 %}
                     <td><i class="fa fa-minus-circle" aria-hidden="true" title="Song is marked as ignored in some playlist"></i></td>
                     {% elif song["subsonic_song_id"] is none %}
@@ -132,24 +136,41 @@
                             <input type="hidden" id="{{ song.spotify_song_uuid }}_artist_{{ loop.index }}" value="{{ uuid }}" />
                         {% endfor %}
                     </td>
-                    <td><a href="{{ url_for('album', uuid=song.album_uuid) }}" class="normal-href">{{ song.album_name }}</a></td>
-                    <td><a href="{{ url_for('playlists', missing_only=0, page=1, limit=25, order='spotify_song.title', asc=1, search=song.subsonic_playlist_name ) }}" class="normal-href">{{ song.subsonic_playlist_name }}</a></td>
+                    <td>{% if song.spotify_album_ignored == 1 %}
+                        <i class="fa fa-ban" aria-hidden="true" title="This album is marked as ignored"></i>
+                        {% endif %}
+                        <a href="{{ url_for('album', uuid=song.album_uuid) }}" class="normal-href">
+                        {{ song.album_name }}</a>
+                    </td>
+                    <td>
+                        {% if song.ignored_whole_pl == 1 %}
+                        <i class="fa fa-ban" aria-hidden="true" title="This playlist is marked as ignored"></i>
+                        {% endif %}
+                        <a href="{{ url_for('playlist', uuid=song.subsonic_playlist_id, page=1, limit=limit, order='spotify_song.title', asc=1) }}" class="normal-href">{{ song.subsonic_playlist_name }}</a></td>
                     <td>
 
-                        {% if song["ignored_pl"] == 1 %}
-                            <i class="fa fa-plus fa-custom-link" title="Mark this song as not ignored in this playlist" aria-hidden="true"></i>x
+                        {% if song.ignored_pl == 1 %}
+                            <a href="javascript:callUrlAndReload('{{url_for('ignore', type='song_pl', uuid=song.subsonic_spotify_relation_uuid, value='0')}}');" class="normal-href">
+                                <i class="fa fa-plus fa-custom-link" title="Mark this song as not ignored in this playlist" aria-hidden="true"></i>
+                            </a>
                         {% else %}
-                            <i class="fa fa-eraser fa-custom-link" title="Mark this song as ignored in this playlist" aria-hidden="true"></i>
+                            <a href="javascript:callUrlAndReload('{{url_for('ignore', type='song_pl', uuid=song.subsonic_spotify_relation_uuid, value='1')}}');" class="normal-href">
+                                <i class="fa fa-eraser fa-custom-link" title="Mark this song as ignored in this playlist" aria-hidden="true"></i>
+                            </a>
                         {% endif %}
 
 
-                        {% if song["ignored"] == 1 %}
-                            <i class="fa fa-plus-square fa-custom-link" title="Mark this song as not ignored in every playlist" aria-hidden="true"></i>
+                        {% if song.ignored == 1 %}
+                            <a href="javascript:callUrlAndReload('{{url_for('ignore', type='song', uuid=song.uuid, value='0')}}');" class="normal-href">
+                                <i class="fa fa-plus-square fa-custom-link" title="Mark this song as not ignored in every playlist" aria-hidden="true"></i>
+                            </a>
                         {% else %}
-                            <i class="fa fa-trash fa-custom-link" title="Mark this song as ignored in every playlist" aria-hidden="true"></i>
+                            <a href="javascript:callUrlAndReload('{{url_for('ignore', type='song', uuid=song.uuid, value='1')}}');" class="normal-href">
+                                <i class="fa fa-trash fa-custom-link" title="Mark this song as ignored in every playlist" aria-hidden="true"></i>
+                            </a>
                         {% endif %}
 
-                        {% if song["subsonic_song_id"] is none %}
+                        {% if song.subsonic_song_id is none %}
                             <i class="fa fa-download fa-custom-link" title="Download this song using SPOTDL" aria-hidden="true"></i>
                         {% endif %}
                     </td>

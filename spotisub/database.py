@@ -94,7 +94,9 @@ class Database:
                                       Column(
                                           'type', String(36), nullable=False),
                                       Column(
-                                          'subsonic_playlist_id', String(36), nullable=False)
+                                          'subsonic_playlist_id', String(36), nullable=False),
+                                      Column(
+                                          'ignored', Integer, nullable=False, default=0)
                                       )
 
     spotify_song = Table(SPOTIFY_SONG, metadata,
@@ -372,6 +374,38 @@ def insert_playlist_relation(conn, subsonic_song_id,
     else:
         return old_relation
 
+def select_playlist_info_by_subsonic_id(subsonic_playlist_id):
+    """select spotify artists by uuid"""
+    value = None
+    with dbms.db_engine.connect() as conn:
+        stmt = select(
+            dbms.playlist_info.c.uuid,
+            dbms.playlist_info.c.subsonic_playlist_id,
+            dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
+            dbms.playlist_info.c.spotify_playlist_uri,
+            dbms.playlist_info.c.ignored,
+            dbms.playlist_info.c.type)
+        stmt = stmt.join(
+            dbms.subsonic_spotify_relation,
+            dbms.playlist_info.c.subsonic_playlist_id == dbms.subsonic_spotify_relation.c.subsonic_playlist_id).where(
+            dbms.playlist_info.c.subsonic_playlist_id == subsonic_playlist_id)
+
+        stmt = stmt.group_by(
+            dbms.playlist_info.c.uuid)
+
+        stmt.compile()
+        cursor = conn.execute(stmt)
+        records = cursor.fetchall()
+
+        for row in records:
+            value = row
+        cursor.close()
+        conn.close()
+
+    return value
+
+
+
 def select_playlist_relation(conn, subsonic_song_id,
                              subsonic_artist_id, playlist_info, spotify_song_uuid):
     value = None
@@ -400,9 +434,8 @@ def select_playlist_relation(conn, subsonic_song_id,
 
     return value
 
-
 def select_all_songs(conn_ext=None, missing_only=False, page=None,
-                         limit=None, order=None, asc=None, search=None, song_uuid = None):
+                         limit=None, order=None, asc=None, search=None, song_uuid=None, subsonic_song_id=None, playlist_uuid=None):
     """select playlists from database"""
     records = []
     stmt = None
@@ -414,6 +447,8 @@ def select_all_songs(conn_ext=None, missing_only=False, page=None,
             dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
             dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
             dbms.subsonic_spotify_relation.c.spotify_song_uuid,
+            dbms.playlist_info.c.type,
+            dbms.playlist_info.c.ignored.label('ignored_whole_pl'),
             dbms.subsonic_spotify_relation.c.ignored.label('ignored_pl'),
             dbms.spotify_song.c.ignored,
             dbms.spotify_song.c.title.label('spotify_song_title'),
@@ -441,6 +476,9 @@ def select_all_songs(conn_ext=None, missing_only=False, page=None,
         stmt = stmt.join(
             dbms.spotify_artist,
             dbms.spotify_song_artist_relation.c.artist_uuid == dbms.spotify_artist.c.uuid)
+        stmt = stmt.join(
+            dbms.playlist_info,
+            dbms.playlist_info.c.subsonic_playlist_id == dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
         if missing_only:
             stmt = stmt.where(
                 dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
@@ -448,6 +486,12 @@ def select_all_songs(conn_ext=None, missing_only=False, page=None,
         if song_uuid is not None:
             stmt = stmt.where(
                 dbms.spotify_song.c.uuid == song_uuid)
+        if subsonic_song_id is not None:
+            stmt = stmt.where(
+                dbms.subsonic_spotify_relation.c.subsonic_song_id == subsonic_song_id)
+        if playlist_uuid is not None:
+            stmt = stmt.where(
+                dbms.subsonic_spotify_relation.c.subsonic_playlist_id == playlist_uuid)
         if search is not None:
             stmt = stmt.filter(or_(dbms.spotify_song.c.title.ilike(f'%{search}%'),
                                    dbms.spotify_album.c.name.ilike(
@@ -561,14 +605,16 @@ def insert_spotify_song(conn, artist_spotify, track_spotify):
     return_dict = {}
     return_dict["song_uuid"] = None
     return_dict["song_ignored"] = False
-    return_dict["song_ignored_pl"] = False
+    return_dict["ignored_pl"] = False
     return_dict["album_ignored"] = False
     return_dict["artist_ignored"] = False
     song_db = select_spotify_song_by_uri(conn, track_spotify["uri"])
     song_uuid = None
     if song_db is None:
         song_uuid = str(uuid.uuid4().hex)
-        album = insert_spotify_album(conn, track_spotify["album"])
+        album = None
+        if "album" in track_spotify:
+            album = insert_spotify_album(conn, track_spotify["album"])
         if album is not None:
             return_dict["album_ignored"] = (album.ignored==1)
             stmt = insert(
@@ -712,7 +758,7 @@ def select_spotify_artist_by_uri(conn, spotify_uri: str):
         dbms.spotify_artist.c.uuid,
         dbms.spotify_artist.c.name,
         dbms.spotify_artist.c.spotify_uri,
-        dbms.spotify_album.c.ignored).where(
+        dbms.spotify_artist.c.ignored).where(
         dbms.spotify_artist.c.spotify_uri == spotify_uri)
     stmt.compile()
     cursor = conn.execute(stmt)
@@ -890,19 +936,24 @@ def select_songs_by_artist_uuid(
         dbms.spotify_song.c.title,
         dbms.spotify_song.c.album_uuid,
         dbms.spotify_song.c.ignored,
+        dbms.playlist_info.c.ignored.label('ignored_whole_pl'),
         dbms.spotify_album.c.name.label('album_name'),
         dbms.spotify_album.c.ignored.label('spotify_album_ignored'),
+        dbms.subsonic_spotify_relation.c.uuid.label('subsonic_spotify_relation_uuid'),
         dbms.subsonic_spotify_relation.c.subsonic_song_id,
         dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
         dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
         dbms.subsonic_spotify_relation.c.ignored.label('ignored_pl'),
         func.group_concat(dbms.spotify_artist.c.name).label(
             'spotify_artist_names'),
-        func.group_concat(dbms.spotify_artist.c.uuid).label('spotify_artist_uuids')).join(
+        func.group_concat(dbms.spotify_artist.c.uuid).label('spotify_artist_uuids'),
+        func.group_concat(dbms.spotify_artist.c.ignored).label('spotify_artist_ignored')).join(
         dbms.subsonic_spotify_relation, dbms.subsonic_spotify_relation.c.spotify_song_uuid == dbms.spotify_song.c.uuid).join(
         dbms.spotify_album, dbms.spotify_song.c.album_uuid == dbms.spotify_album.c.uuid).join(
         dbms.spotify_artist, dbms.spotify_artist.c.uuid == dbms.spotify_song_artist_relation.c.artist_uuid).join(
-        dbms.spotify_song_artist_relation, dbms.spotify_song.c.uuid == dbms.spotify_song_artist_relation.c.song_uuid).where(
+        dbms.spotify_song_artist_relation, dbms.spotify_song.c.uuid == dbms.spotify_song_artist_relation.c.song_uuid).join(
+            dbms.playlist_info,
+            dbms.playlist_info.c.subsonic_playlist_id == dbms.subsonic_spotify_relation.c.subsonic_playlist_id).where(
         dbms.spotify_song_artist_relation.c.artist_uuid == artist_uuid)
 
     stmt = limit_and_order_stmt(
@@ -943,11 +994,14 @@ def select_songs_by_album_uuid(
         dbms.spotify_song.c.title,
         dbms.spotify_song.c.album_uuid,
         dbms.spotify_song.c.ignored,
+        dbms.playlist_info.c.ignored.label('ignored_whole_pl'),
         dbms.spotify_album.c.name.label('album_name'),
+        dbms.spotify_album.c.ignored.label('spotify_album_ignored'),
         dbms.subsonic_spotify_relation.c.subsonic_song_id,
         dbms.subsonic_spotify_relation.c.ignored.label('ignored_pl'),
         dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
         dbms.subsonic_spotify_relation.c.subsonic_playlist_id,
+        dbms.subsonic_spotify_relation.c.uuid.label('subsonic_spotify_relation_uuid'),
         func.group_concat(dbms.spotify_artist.c.name).label(
             'spotify_artist_names'),
         func.group_concat(dbms.spotify_artist.c.uuid).label('spotify_artist_uuids'),
@@ -955,7 +1009,9 @@ def select_songs_by_album_uuid(
         dbms.subsonic_spotify_relation, dbms.subsonic_spotify_relation.c.spotify_song_uuid == dbms.spotify_song.c.uuid).join(
         dbms.spotify_album, dbms.spotify_song.c.album_uuid == dbms.spotify_album.c.uuid).join(
         dbms.spotify_song_artist_relation, dbms.spotify_song.c.uuid == dbms.spotify_song_artist_relation.c.song_uuid).join(
-        dbms.spotify_artist, dbms.spotify_artist.c.uuid == dbms.spotify_song_artist_relation.c.artist_uuid).where(
+        dbms.spotify_artist, dbms.spotify_artist.c.uuid == dbms.spotify_song_artist_relation.c.artist_uuid).join(
+            dbms.playlist_info,
+            dbms.playlist_info.c.subsonic_playlist_id == dbms.subsonic_spotify_relation.c.subsonic_playlist_id).where(
         dbms.spotify_song.c.album_uuid == album_uuid)
 
     stmt = limit_and_order_stmt(
@@ -994,8 +1050,10 @@ def select_all_playlists(conn_ext=None, page=None, limit=None, order=None, asc=N
         stmt = select(
             dbms.playlist_info.c.subsonic_playlist_id,
             dbms.subsonic_spotify_relation.c.subsonic_playlist_name,
+            dbms.subsonic_spotify_relation.c.uuid,
             dbms.playlist_info.c.spotify_playlist_uri,
-            dbms.playlist_info.c.type).join(
+            dbms.playlist_info.c.type,
+            dbms.playlist_info.c.ignored).join(
             dbms.subsonic_spotify_relation,
             dbms.playlist_info.c.subsonic_playlist_id == dbms.subsonic_spotify_relation.c.subsonic_playlist_id)
         
@@ -1013,8 +1071,10 @@ def select_all_playlists(conn_ext=None, page=None, limit=None, order=None, asc=N
         for row in rows:
             total, matched, missing = get_playlist_counts(conn, row.subsonic_playlist_id)
             record = {}
+            record["uuid"] = row.uuid
             record["subsonic_playlist_id"] = row.subsonic_playlist_id
             record["subsonic_playlist_name"] = row.subsonic_playlist_name
+            record["ignored_info"] = row.ignored
             record["type"] = row.type
             record["type_desc"] = string.capwords(row.type.replace("_"," "))
             record["spotify_playlist_link"] = "" if row.spotify_playlist_uri is None else str(row.spotify_playlist_uri).replace(":","/").replace("spotify","https://open.spotify.com")
@@ -1063,6 +1123,66 @@ def get_playlist_counts(conn, subsonic_playlist_id):
 
     return total, matched, missing
 
+
+def update_ignored_song(uuid, value):
+    with dbms.db_engine.connect() as conn:
+        stmt = update(
+                dbms.spotify_song).where(
+                dbms.spotify_song.c.uuid == uuid).values(
+                ignored=value)
+        stmt.compile()
+        conn.execute(stmt)
+        conn.commit()
+        conn.close()
+
+
+def update_ignored_artist(uuid, value):
+    with dbms.db_engine.connect() as conn:
+        stmt = update(
+                dbms.spotify_artist).where(
+                dbms.spotify_artist.c.uuid == uuid).values(
+                ignored=value)
+
+        stmt.compile()
+        conn.execute(stmt)
+        conn.commit()
+        conn.close()
+
+def update_ignored_album(uuid, value):
+    with dbms.db_engine.connect() as conn:
+        stmt = update(
+                dbms.spotify_album).where(
+                dbms.spotify_album.c.uuid == uuid).values(
+                ignored=value)
+
+        stmt.compile()
+        conn.execute(stmt)
+        conn.commit()
+        conn.close()
+
+def update_ignored_song_pl(uuid, value):
+    with dbms.db_engine.connect() as conn:
+        stmt = update(
+                dbms.subsonic_spotify_relation).where(
+                dbms.subsonic_spotify_relation.c.uuid == uuid).values(
+                ignored=value)
+
+        stmt.compile()
+        conn.execute(stmt)
+        conn.commit()
+        conn.close()
+
+def update_ignored_playlist(subsonic_playlist_id, value):
+    with dbms.db_engine.connect() as conn:
+        stmt = update(
+                dbms.playlist_info).where(
+                dbms.playlist_info.c.subsonic_playlist_id == subsonic_playlist_id).values(
+                ignored=value)
+
+        stmt.compile()
+        conn.execute(stmt)
+        conn.commit()
+        conn.close()
 
 dbms = Database(SQLITE, dbname=Config.SQLALCHEMY_DATABASE_NAME)
 create_db_tables()
