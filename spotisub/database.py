@@ -209,11 +209,13 @@ def upgrade():
         fconfig = select_config_by_name(conn, 'VERSION')
         if fconfig is None or fconfig.value not in VERSIONS:
             # FIRST RELEASE 3.0.0 DROPPING ENTIRE DATABASE
-            drop_table(conn, SPOTIFY_SONG)
-            drop_table(conn, SPOTIFY_ALBUM)
-            drop_table(conn, SPOTIFY_ARTIST)
-            drop_table(conn, SPOTIFY_SONG_ARTIST_RELATION)
-            drop_table(conn, SUBSONIC_SPOTIFY_RELATION)
+            backup_table(conn, SPOTIFY_SONG)
+            backup_table(conn, SPOTIFY_ALBUM)
+            backup_table(conn, SPOTIFY_ARTIST)
+            backup_table(conn, SPOTIFY_SONG_ARTIST_RELATION)
+            backup_table(conn, SUBSONIC_SPOTIFY_RELATION)
+            backup_table(conn, PLAYLIST_INFO)
+            upgraded = True
         if fconfig is None or fconfig.value != VERSION:
             insert_or_update_config(conn, 'VERSION', VERSION)
             conn.commit()
@@ -221,12 +223,43 @@ def upgrade():
         conn.close()
     if upgraded:
         dbms.metadata.create_all(dbms.db_engine)
+        with dbms.db_engine.connect() as conn:
+            clone_table_from_bak(conn, SPOTIFY_SONG)
+            clone_table_from_bak(conn, SPOTIFY_ALBUM)
+            clone_table_from_bak(conn, SPOTIFY_ARTIST)
+            clone_table_from_bak(conn, SPOTIFY_SONG_ARTIST_RELATION)
+            clone_table_from_bak(conn, SUBSONIC_SPOTIFY_RELATION)
+            clone_table_from_bak(conn, PLAYLIST_INFO)
+            conn.commit()
+            conn.close()
 
 
 def drop_table(conn, table_name):
     """Drops single table"""
     query = "DROP TABLE IF EXISTS " + table_name
     conn.execute(text(query))
+
+def backup_table(conn, table_name):
+    """Backup single table"""
+    bak_name = table_name + "_bak"
+    query_drop = "DROP TABLE IF EXISTS " + bak_name
+    conn.execute(text(query_drop))
+    if check_table(conn, table_name) == 1:
+        query_alter = "ALTER TABLE " + table_name + " RENAME TO " + bak_name
+        conn.execute(text(query_alter))
+
+def check_table(conn, table_name):
+    query_check = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='" + table_name + "'"
+    count = conn.execute(text(query_check)).scalar()
+    return count
+
+def clone_table_from_bak(conn, table_name):
+    """Clone table from bak"""
+    if check_table(conn, table_name) == 1:
+        bak_name = table_name + "_bak"
+        if check_table(conn, bak_name) == 1:
+            query = "INSERT INTO " + table_name + " SELECT * FROM " + bak_name
+            conn.execute(text(query))
 
 
 def user_exists():
@@ -512,14 +545,14 @@ def select_all_songs(conn_ext=None, missing_only=False, page=None,
 
         cursor.close()
 
-        count = count_songs(conn, missing_only=missing_only, search=search, song_uuid = song_uuid)
+        count = count_songs(conn, missing_only=missing_only, search=search, song_uuid = song_uuid, playlist_id = playlist_uuid)
         if conn_ext is None:
             conn.close()
 
     return records, count
 
 
-def count_songs(conn, missing_only=False, search=None, song_uuid=None):
+def count_songs(conn, missing_only=False, search=None, song_uuid=None, playlist_id=None):
     """select playlists from database"""
     count = 0
 
@@ -569,6 +602,10 @@ def count_songs(conn, missing_only=False, search=None, song_uuid=None):
         if where != "":
             where = where + " and "
         where = where + " spotify_song.uuid = '" + song_uuid + "' "
+    if playlist_id is not None:
+        if where != "":
+            where = where + " and "
+        where = where + " subsonic_spotify_relation.subsonic_playlist_id = '" + playlist_id + "' "
 
     if where != "":
         query = query + " where " + where

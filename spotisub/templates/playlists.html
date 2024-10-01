@@ -17,14 +17,8 @@
             <img class="InfoDetails-poster" src="{% if playlist_info["image"] != '' %}{{ playlist_info["image"] }}{% else %}{{ url_for('static', filename='img/logo.png') }}{% endif %}">
             <div class="InfoDetails-info">
                Playlist
-               {% if playlist_info["ignored"] == 1 %}(Ignored)
-                <a href="javascript:callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["subsonic_playlist_id"], value='0')}}');" class="normal-href">
-                    <i class="fa fa-plus-square fa-custom-link" title="Mark this playlist as not ignored" aria-hidden="true"></i>
-                </a>
-               {% else %}
-               <a href="javascript:callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["subsonic_playlist_id"], value='1')}}');" class="normal-href">
-                   <i class="fa fa-trash fa-custom-link" title="Mark this playlist as ignored" aria-hidden="true"></i>
-                </a>                
+               {% if playlist_info["ignored"] == 1 %}
+               (Ignored)
                {% endif %}
                <div class="InfoDetails-titleRow">
                   <div class="InfoDetails-titleContainer">
