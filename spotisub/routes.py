@@ -57,6 +57,7 @@ def after_request(response):
 
 @spotisub.errorhandler(Exception)
 def all_exception_handler(error):
+    utils.write_exception()
     return render_template('errors/404.html',
         title='Error!',
         errors=[repr(error)])
@@ -90,7 +91,7 @@ def get_json_message(message, is_ok):
 @spotisub.route('/overview/<int:page>/<int:limit>/<string:order>/')
 @spotisub.route('/overview/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def overview(page=1, limit=100, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1):
+def overview(page=1, limit=100, order='playlist_info.subsonic_playlist_name', asc=1):
     title = 'Overview'
     spotipy_helper.get_secrets()
     all_playlists, song_count = subsonic_helper.select_all_playlists(spotipy_helper,
@@ -99,7 +100,7 @@ def overview(page=1, limit=100, order='subsonic_spotify_relation.subsonic_playli
     pagination_array, prev_page, next_page = utils.get_pagination(
         page, total_pages)
     sorting_dict = {}
-    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+    sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
     sorting_dict["Type"] = "playlist_info.type"
     return render_template('overview.html',
                            title=title,
@@ -123,12 +124,12 @@ def overview(page=1, limit=100, order='subsonic_spotify_relation.subsonic_playli
 @spotisub.route('/overview_content/<int:page>/<int:limit>/<string:order>/')
 @spotisub.route('/overview_content/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def overview_content(page=1, limit=25, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1):
+def overview_content(page=1, limit=25, order='playlist_info.subsonic_playlist_name', asc=1):
     spotipy_helper.get_secrets()
     all_playlists, song_count = subsonic_helper.select_all_playlists(spotipy_helper,
         page=page - 1, limit=limit, order=order, asc=(asc == 1))
     sorting_dict = {}
-    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+    sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
     sorting_dict["Type"] = "playlist_info.type"
     return render_template('overview_content.html',
                            playlists=all_playlists,
@@ -155,14 +156,14 @@ def playlist(uuid=None, page=1, limit=25,
     pagination_array, prev_page, next_page = utils.get_pagination(
         page, total_pages)
 
-    playlist_info = subsonic_helper.select_playlist_info_by_subsonic_id(spotipy_helper, uuid)
+    playlist_info = subsonic_helper.select_playlist_info_by_uuid(spotipy_helper, uuid)
         
     sorting_dict = {}
     sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
     sorting_dict["Spotify Song Title"] = "spotify_song.title"
     sorting_dict["Spotify Artist"] = "spotify_artist.name"
     sorting_dict["Spotify Album"] = "spotify_album.name"
-    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+    sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
 
     return render_template('playlists.html',
                            title=title,
@@ -204,7 +205,7 @@ def playlists(missing_only=0, page=1, limit=25,
     sorting_dict["Spotify Song Title"] = "spotify_song.title"
     sorting_dict["Spotify Artist"] = "spotify_artist.name"
     sorting_dict["Spotify Album"] = "spotify_album.name"
-    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+    sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
 
 
     return render_template('playlists.html',
@@ -244,7 +245,7 @@ def song(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
     sorting_dict["Spotify Song Title"] = "spotify_song.title"
     sorting_dict["Spotify Artist"] = "spotify_artist.name"
     sorting_dict["Spotify Album"] = "spotify_album.name"
-    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+    sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
 
     return render_template('song.html',
                            title=title,
@@ -281,7 +282,7 @@ def album(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
     sorting_dict["Spotify Song Title"] = "spotify_song.title"
     sorting_dict["Spotify Artist"] = "spotify_artist.name"
     sorting_dict["Spotify Album"] = "spotify_album.name"
-    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+    sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
     return render_template('album.html',
                            title=title,
                            album=album1,
@@ -318,7 +319,7 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
     sorting_dict["Spotify Song Title"] = "spotify_song.title"
     sorting_dict["Spotify Artist"] = "spotify_artist.name"
     sorting_dict["Spotify Album"] = "spotify_album.name"
-    sorting_dict["Playlist Name"] = "subsonic_spotify_relation.subsonic_playlist_name"
+    sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
     return render_template('artist.html',
                            title=title,
                            artist=artist1,
@@ -340,16 +341,6 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
 def ignore(type=None, uuid=None, value = None):
     """Set ignored value to an object"""
     subsonic_helper.set_ignore(type,uuid,value)
-    if type == 'song':
-        database.update_ignored_song(uuid,value)
-    elif type == 'artist':
-        database.update_ignored_artist(uuid,value)
-    elif type == 'album':
-        database.update_ignored_album(uuid,value)
-    elif type == 'song_pl':
-        database.update_ignored_song_pl(uuid,value)
-    elif type == 'playlist':
-        database.update_ignored_playlist(uuid,value)
     return get_response_json(get_json_message(
         "Setting ignored to " +str(value)+ " to object with uuid " + uuid +", type: " + type, True), 200)
 
@@ -583,6 +574,12 @@ def remove_subsonic_deleted_playlist():
     subsonic_helper.remove_subsonic_deleted_playlist()
 
 
+@scheduler.task('interval', id='scan_library', hours=1)
+def scan_library():
+    """remove_subsonic_deleted_playlist task"""
+    generator.scan_library()
+
+
 scheduler.init_app(spotisub)
 scheduler.start(paused=(os.environ.get(constants.SCHEDULER_ENABLED,
                                        constants.SCHEDULER_ENABLED_DEFAULT_VALUE) != "1"))
@@ -590,6 +587,6 @@ scheduler.start(paused=(os.environ.get(constants.SCHEDULER_ENABLED,
 
 # Used to initialize cache for the first 100 playlists
 try:
-    subsonic_helper.select_all_playlists(spotipy_helper, page=0, limit=100, order='subsonic_spotify_relation.subsonic_playlist_name', asc=True)
+    subsonic_helper.select_all_playlists(spotipy_helper, page=0, limit=100, order='playlist_info.subsonic_playlist_name', asc=True)
 except:
     pass

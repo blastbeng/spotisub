@@ -1,23 +1,22 @@
 <div class="PageToolbar-toolbar">
     <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
        <div class="PageToolbarSection-section PageToolbarSection-left">
-          <button type="button" onClick="window.location.reload();return false;" class="PageToolbarButton-toolbarButton Link-link Link-link">
+          <button type="button" onClick="window.location.reload();return false;" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
              <i class="svg-fa fa fa-refresh svg-fa" aria-hidden="true"></i>
              <div class="PageToolbarButton-labelContainer">
-                <div class="PageToolbarButton-label">Refresh</div>
+                <div class="PageToolbarButton-label">Rescan</div>
              </div>
           </button>
-          <div class="PageToolbarSeparator-separator"></div>
           {% if title == 'Playlist' %} 
             {% if playlist_info["ignored"] == 1 %} 
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["subsonic_playlist_id"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as not ignored" >
+            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as not ignored" >
                <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
                <div class="PageToolbarButton-labelContainer">
                   <div class="PageToolbarButton-label">Add</div>
                </div>
             </button>
             {% else %}
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["subsonic_playlist_id"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as ignored" >
+            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as ignored" >
                <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
                <div class="PageToolbarButton-labelContainer">
                   <div class="PageToolbarButton-label">Ignore</div>
@@ -73,6 +72,7 @@
             </button>
             {% endif %} 
           {% endif %} 
+          <div class="PageToolbarSeparator-separator"></div>
        </div>
     </div>
     <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">

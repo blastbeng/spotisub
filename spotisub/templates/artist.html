@@ -91,14 +91,14 @@
                         {% endif %}
                     </th>
                     <th>
-                        {% if order == 'subsonic_spotify_relation.subsonic_playlist_name' %}
+                        {% if order == 'playlist_info.subsonic_playlist_name' %}
                             {% if asc == 1 %}
-                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='playlist_info.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
                             {% else %}
-                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
+                                <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='playlist_info.subsonic_playlist_name', asc=1) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
                             {% endif %}
                         {% else %}
-                            <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name</a>   
+                            <a href="{{ url_for('artist', uuid=uuid, page=current_page, limit=limit, order='playlist_info.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name</a>   
                         {% endif %}
                     </th>
                     <th>
@@ -146,15 +146,15 @@
                         {% if song.ignored_whole_pl == 1 %}
                         <i class="fa fa-ban" aria-hidden="true" title="This playlist is marked as ignored"></i>
                         {% endif %}
-                        <a href="{{ url_for('playlist', uuid=song.subsonic_playlist_id, page=1, limit=limit, order='spotify_song.title', asc=1) }}" class="normal-href">{{ song.subsonic_playlist_name }}</a></td>
+                        <a href="{{ url_for('playlist', uuid=song.playlist_info_uuid, page=1, limit=limit, order='spotify_song.title', asc=1) }}" class="normal-href">{{ song.subsonic_playlist_name }}</a></td>
                     <td>
 
                         {% if song.ignored_pl == 1 %}
-                            <a href="javascript:callUrlAndReload('{{url_for('ignore', type='song_pl', uuid=song.subsonic_spotify_relation_uuid, value='0')}}');" class="normal-href">
+                            <a href="javascript:callUrlAndReload('{{url_for('ignore', type='song_pl', uuid=song.relation_uuid, value='0')}}');" class="normal-href">
                                 <i class="fa fa-plus fa-custom-link" title="Mark this song as not ignored in this playlist" aria-hidden="true"></i>
                             </a>
                         {% else %}
-                            <a href="javascript:callUrlAndReload('{{url_for('ignore', type='song_pl', uuid=song.subsonic_spotify_relation_uuid, value='1')}}');" class="normal-href">
+                            <a href="javascript:callUrlAndReload('{{url_for('ignore', type='song_pl', uuid=song.relation_uuid, value='1')}}');" class="normal-href">
                                 <i class="fa fa-eraser fa-custom-link" title="Mark this song as ignored in this playlist" aria-hidden="true"></i>
                             </a>
                         {% endif %}

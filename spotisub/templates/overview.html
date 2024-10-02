@@ -19,14 +19,14 @@
                 <thead>
                 <tr>
                     <th>
-                        {% if order == 'subsonic_spotify_relation.subsonic_playlist_name' %}
+                        {% if order == 'playlist_info.subsonic_playlist_name' %}
                             {% if asc == 1 %}
-                                <a href="{{ url_for('overview', page=1, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
+                                <a href="{{ url_for('overview', page=1, limit=limit, order='playlist_info.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-asc" aria-hidden="true"></i></a>
                             {% else %}
-                                <a href="{{ url_for('overview', page=1, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=1) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
+                                <a href="{{ url_for('overview', page=1, limit=limit, order='playlist_info.subsonic_playlist_name', asc=1) }}" class="normal-href">Playlist Name<i class="sorting fa fa-sort-desc" aria-hidden="true"></i></a>
                             {% endif %}
                         {% else %}
-                            <a href="{{ url_for('overview', page=1, limit=limit, order='subsonic_spotify_relation.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name</a>   
+                            <a href="{{ url_for('overview', page=1, limit=limit, order='playlist_info.subsonic_playlist_name', asc=0) }}" class="normal-href">Playlist Name</a>   
                         {% endif %}
                         <th>
                         {% if order == 'playlist_info.type' %}
