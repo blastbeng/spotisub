@@ -570,13 +570,13 @@ if os.environ.get(constants.SAVED_GEN_SCHED,
 
 @scheduler.task('interval', id='remove_subsonic_deleted_playlist', hours=12)
 def remove_subsonic_deleted_playlist():
-    """remove_subsonic_deleted_playlist task"""
+    """remove subsonic deleted playlist task"""
     subsonic_helper.remove_subsonic_deleted_playlist()
 
 
 @scheduler.task('interval', id='scan_library', hours=1)
 def scan_library():
-    """remove_subsonic_deleted_playlist task"""
+    """scan library task"""
     generator.scan_library()
 
 
