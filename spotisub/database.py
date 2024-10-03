@@ -1350,20 +1350,5 @@ def update_ignored_playlist(uuid, value):
         conn.commit()
         conn.close()
 
-def get_job_status(uuid):
-    with dbms.db_engine.connect() as conn:
-
-        query = """select * from apscheduler_jobs"""
-        cursor = conn.execute(text(query))
-        records = cursor.fetchall()
-
-        for row in records:
-            cursor.close()
-            conn.close()
-            return row
-        conn.close()
-
-    return None
-
 dbms = Database(SQLITE, dbname=Config.SQLALCHEMY_DATABASE_NAME)
 create_db_tables()

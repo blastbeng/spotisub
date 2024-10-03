@@ -21,7 +21,7 @@ def prechecks():
     subsonic_helper.check_pysonic_connection()
 
 
-def artist_top_tracks(name, init=False):
+def artist_top_tracks(name):
     """artist top tracks"""
     sp = spotipy_helper.get_spotipy_client()
     artist = get_artist(name)
@@ -31,35 +31,40 @@ def artist_top_tracks(name, init=False):
         playlist_info["name"] = playlist_name
         playlist_info["spotify_uri"] = artist["uri"]
         playlist_info["type"] = constants.JOB_ATT_ID
-        if init:
-            return subsonic_helper.generate_playlist(playlist_info)
-        else:
-            logging.info('(%s) Searching top tracks for for: %s',
+        logging.info('(%s) Searching top tracks for for: %s',
                 str(threading.current_thread().ident), artist_name)
-            artist_top = sp.artist_top_tracks(artists_uri[artist_name])
-            subsonic_helper.write_playlist(sp, playlist_info, artist_top)
+        artist_top = sp.artist_top_tracks(artists_uri[artist_name])
+        subsonic_helper.write_playlist(sp, playlist_info, artist_top)
+
+        if os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) == "0":
+            scheduler.remove_job(id=constants.JOB_ATT_ID)
+        else:
+            artist_names = subsonic_helper.get_artists_array_names()
+            if len(artist_names) > 0 and os.environ.get(constants.ARTIST_TOP_GEN_SCHED, constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
+                artist_name = random.choice(artist_names)
+                scheduler.modify_job(
+                        args=[artist_name],
+                        hours=int(os.environ.get(constants.ARTIST_TOP_GEN_SCHED, constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE)),
+                        id=constants.JOB_ATT_ID
+                )
+            else:
+                scheduler.remove_job(id=constants.JOB_ATT_ID)
 
 def init_my_reccomendations():
-    for i in range(int(os.environ.get(constants.NUM_USER_PLAYLISTS,
-                   constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))):
-        playlist_name = "My Recommendations " + str(i + 1)
-        playlist_info = {}
-        playlist_info["name"] = playlist_name
-        playlist_info["spotify_uri"] = None
-        playlist_info["type"] = constants.JOB_MR_ID
-        playlist_info = subsonic_helper.generate_playlist(playlist_info)
-        if playlist_info is not None and os.environ.get(constants.RECOMEND_GEN_SCHED, constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
-            old_job = scheduler.get_job(playlist_info.uuid)
-            if old_job == None:
-                scheduler.add_job(
-                    func=my_recommendations,
-                    trigger="interval",
-                    args=[i],
-                    hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED, constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)),
-                    id=playlist_info.uuid,
-                    replace_existing=True,
-                    max_instances=1
-                )
+    i = random.randrange(int(os.environ.get(constants.NUM_USER_PLAYLISTS,
+                   constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE)))
+    if os.environ.get(constants.RECOMEND_GEN_SCHED, constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
+        old_job = scheduler.get_job(constants.JOB_MR_ID)
+        if old_job is None:
+            scheduler.add_job(
+                func=my_recommendations,
+                trigger="interval",
+                args=[i],
+                hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED, constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)),
+                id=constants.JOB_MR_ID,
+                replace_existing=True,
+                max_instances=1
+            )
 
 def my_recommendations(playlist_num):
     """my recommendations"""
@@ -99,6 +104,14 @@ def my_recommendations(playlist_num):
     playlist_info["type"] = constants.JOB_MR_ID
     subsonic_helper.write_playlist(
                 sp, playlist_info, results)
+    
+    i = random.randrange(int(os.environ.get(constants.NUM_USER_PLAYLISTS,
+                   constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE)))
+    scheduler.modify_job(
+                args=[i],
+                hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED, constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)),
+                id=constants.JOB_MR_ID
+            )
 
 
 def get_artist(name):
@@ -111,7 +124,7 @@ def get_artist(name):
     return None
 
 
-def show_recommendations_for_artist(name, init=False):
+def show_recommendations_for_artist(name):
     """show recommendations for artist"""
     sp = spotipy_helper.get_spotipy_client()
     artist = get_artist(name)
@@ -121,19 +134,30 @@ def show_recommendations_for_artist(name, init=False):
         playlist_info["name"] = playlist_name
         playlist_info["spotify_uri"] = artist["uri"]
         playlist_info["type"] = constants.JOB_AR_ID
-        if init:
-            return subsonic_helper.generate_playlist(playlist_info)
+        logging.info('(%s) Searching recommendations for: %s',
+            str(threading.current_thread().ident), name)
+        results = sp.recommendations(
+            seed_artists=[
+                artist['id']],
+            limit=int(
+                os.environ.get(
+                    constants.ITEMS_PER_PLAYLIST,
+                    constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
+        subsonic_helper.write_playlist(sp, playlist_info, results)
+
+        if os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) == "0":
+            scheduler.remove_job(id=constants.JOB_AR_ID)
         else:
-            logging.info('(%s) Searching recommendations for: %s',
-                str(threading.current_thread().ident), name)
-            results = sp.recommendations(
-                seed_artists=[
-                    artist['id']],
-                limit=int(
-                    os.environ.get(
-                        constants.ITEMS_PER_PLAYLIST,
-                        constants.ITEMS_PER_PLAYLIST_DEFAULT_VALUE)))
-            subsonic_helper.write_playlist(sp, playlist_info, results)
+            artist_names = subsonic_helper.get_artists_array_names()
+            if len(artist_names) > 0:
+                artist_name = random.choice(artist_names)
+                scheduler.modify_job(
+                                args=[artist_name],
+                                hours=int(os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)),
+                                id=constants.JOB_AR_ID
+                            )
+            else:
+                scheduler.remove_job(id=constants.JOB_AR_ID)
     else:
         logging.warning('(%s) Artist: %s Not found!',
             str(threading.current_thread().ident), name)
@@ -183,12 +207,12 @@ def get_user_playlist_by_name(playlist_name, offset=0):
     return name_found
 
 
-def get_user_playlists(playlist_name, offset=0, single_execution=False, init=False):
+def get_user_playlists(playlist_name, offset=0):
     """get user playlists"""
     sp = spotipy_helper.get_spotipy_client()
 
     playlist_result = sp.current_user_playlists(
-        limit=(50 if single_execution is False else 1), offset=offset)
+        limit=50, offset=offset)
 
     for item in playlist_result['items']:
         if item['name'] is not None and item['name'].strip() != '' and (playlist_name is None or (
@@ -197,31 +221,29 @@ def get_user_playlists(playlist_name, offset=0, single_execution=False, init=Fal
             playlist_info["name"] = item['name'].strip()
             playlist_info["spotify_uri"] = item["uri"]
             playlist_info["type"] = constants.JOB_UP_ID
-            if init:
-                playlist_info = subsonic_helper.generate_playlist(playlist_info)
-                if playlist_info is not None and os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
-                    old_job = scheduler.get_job(playlist_info.uuid)
-                    if old_job == None:
-                        scheduler.add_job(
-                            func=get_user_playlists,
-                            trigger="interval",
-                            args=[playlist_name],
-                            hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)),
-                            id=playlist_info.uuid,
-                            replace_existing=True,
-                            max_instances=1
-                        )
-            else:
-                logging.info('(%s) Importing playlist: %s',
-                    str(threading.current_thread().ident), item['name'])
-                result = dict({'tracks': []})
-                result = get_playlist_tracks(item, result)
-                subsonic_helper.write_playlist(sp, playlist_info, result)
-            if single_execution:
-                break
+            logging.info('(%s) Importing playlist: %s',
+                str(threading.current_thread().ident), item['name'])
+            result = dict({'tracks': []})
+            result = get_playlist_tracks(item, result)
+            subsonic_helper.write_playlist(sp, playlist_info, result)
 
-    if not single_execution and len(playlist_result['items']) != 0:
-        get_user_playlists(offset=offset + 50, playlist_name=None, init=init)
+            if os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) == "0":
+                scheduler.remove_job(id=constants.JOB_UP_ID)
+            else:
+                playlists = get_user_playlists_array([])
+                if len(playlists) > 0 and os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
+                    item = random.choice(playlists)
+                    scheduler.modify_job(
+                                    args=["name"],
+                                    hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)),
+                                    id=constants.JOB_UP_ID
+                                )
+                else:
+                    scheduler.remove_job(id=constants.JOB_UP_ID)
+            
+
+    if len(playlist_result['items']) != 0:
+        get_user_playlists(playlist_name, offset=offset + 50)
 
 
 def count_user_playlists(count, offset=0):
@@ -234,73 +256,90 @@ def count_user_playlists(count, offset=0):
         count = count_user_playlists(count, offset=offset + 50)
     return count
 
+def get_user_playlists_array(array, offset=0):
+    """get list of user playlists"""
+    sp = spotipy_helper.get_spotipy_client()
+    playlist_result = sp.current_user_playlists(limit=50, offset=offset)
 
-def all_artists_recommendations(artist_names):
+    for item in playlist_result['items']:
+        if item['name'] is not None and item['name'].strip() != '':
+            array.append(item)
+
+    if len(playlist_result['items']) != 0:
+        array = get_user_playlists_array(array, offset=offset + 50)
+    return array
+
+
+def init_artists_recommendations():
     """all artists recommendations"""
+    artist_names = subsonic_helper.get_artists_array_names()
     if len(artist_names) > 0:
-        random.shuffle(artist_names)
-        for artist_name in artist_names:
-            playlist_info = show_recommendations_for_artist(artist_name, init=True)
-            if playlist_info is not None and os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) != "0":
-                old_job = scheduler.get_job(playlist_info.uuid)
-                if old_job == None:
-                    scheduler.add_job(
+        artist_name = random.choice(artist_names)
+        if os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) != "0":
+            old_job = scheduler.get_job(constants.JOB_AR_ID)
+            if old_job is None:
+                scheduler.add_job(
                         func=show_recommendations_for_artist,
                         trigger="interval",
                         args=[artist_name],
                         hours=int(os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)),
-                        id=playlist_info.uuid,
+                        id=constants.JOB_AR_ID,
                         replace_existing=True,
                         max_instances=1
-                    )
+                )
 
 
-def all_artists_top_tracks(artist_names, schedler=None):
+def init_artists_top_tracks():
     """all artists top tracks"""
+    artist_names = subsonic_helper.get_artists_array_names()
     if len(artist_names) > 0:
-        random.shuffle(artist_names)
-        for artist_name in artist_names:
-            playlist_info = artist_top_tracks(artist_name, init=True)
-            if os.environ.get(constants.ARTIST_TOP_GEN_SCHED, constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
-                old_job = scheduler.get_job(playlist_info.uuid)
-                if old_job == None:
-                    scheduler.add_job(
-                        func=show_recommendations_for_artist,
+        artist_name = random.choice(artist_names)
+        if os.environ.get(constants.ARTIST_TOP_GEN_SCHED, constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
+            old_job = scheduler.get_job(constants.JOB_ATT_ID)
+            if old_job is None:
+                scheduler.add_job(
+                        func=artist_top_tracks,
                         trigger="interval",
                         args=[artist_name],
                         hours=int(os.environ.get(constants.ARTIST_TOP_GEN_SCHED, constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE)),
-                        id=playlist_info.uuid,
+                        id=constants.JOB_ATT_ID,
                         replace_existing=True,
                         max_instances=1
                     )
 
 
-def get_user_saved_tracks(result, init=True):
+def get_user_saved_tracks(result):
     """get user saved tracks"""
     playlist_info = {}
     playlist_info["name"] = "Saved Tracks"
     playlist_info["spotify_uri"] = None
     playlist_info["type"] = constants.JOB_ST_ID
-    if init:
-        playlist_info = subsonic_helper.generate_playlist(playlist_info)
-        if playlist_info is not None and os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
-            old_job = scheduler.get_job(playlist_info.uuid)
-            if old_job == None:
-                scheduler.add_job(
+    sp = spotipy_helper.get_spotipy_client()
+    result = get_user_saved_tracks_playlist(result)
+    subsonic_helper.write_playlist(sp, playlist_info, result)
+    if os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
+        scheduler.modify_job(
+                hours=int(os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE)),
+                id=constants.JOB_ST_ID
+        )
+    else:
+        scheduler.remove_job(id=constants.JOB_ST_ID)
+
+def init_user_saved_tracks():
+    """init user saved tracks"""
+    if os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
+        old_job = scheduler.get_job(constants.JOB_ST_ID)
+        if old_job is None:
+            scheduler.add_job(
                     func=get_user_saved_tracks,
                     trigger="interval",
                     args=[dict({'tracks': []})],
                     hours=int(os.environ.get(constants.SAVED_GEN_SCHED, constants.SAVED_GEN_SCHED_DEFAULT_VALUE)),
-                    id=playlist_info.uuid,
+                    id=constants.JOB_ST_ID,
                     replace_existing=True,
                     max_instances=1
-                )
-    else:
-        sp = spotipy_helper.get_spotipy_client()
-        result = get_user_saved_tracks_playlist(result)
-        subsonic_helper.write_playlist(sp, playlist_info, result)
-
-
+            )
+    
 def get_user_saved_tracks_playlist(result, offset_tracks=0):
     """get user saved tracks playlist"""
     sp = spotipy_helper.get_spotipy_client()
@@ -324,6 +363,23 @@ def get_user_saved_tracks_playlist(result, offset_tracks=0):
             result, offset_tracks=offset_tracks + 50)
     return result
 
+def init_user_playlists():
+    playlists = get_user_playlists_array([])
+    if len(playlists) > 0:
+        item = random.choice(playlists)
+        if os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
+            old_job = scheduler.get_job(constants.JOB_UP_ID)
+            if old_job is None:
+                scheduler.add_job(
+                func=get_user_playlists,
+                trigger="interval",
+                args=[item['name'].strip()],
+                hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)),
+                id=constants.JOB_UP_ID,
+                replace_existing=True,
+                max_instances=1
+                )
+
 def scan_library(init):
     """Used to scan the spotify library"""
     old_job = scheduler.get_job(id="scan_library_task")
@@ -336,12 +392,11 @@ def scan_library(init):
             id="scan_library_task",
             max_instances=1
         )
-    #get_user_saved_tracks(None, init=True)
+    init_user_saved_tracks()
     init_my_reccomendations()
-    #artist_names = subsonic_helper.get_artists_array_names()
-    #all_artists_recommendations(artist_names)
-    #all_artists_top_tracks(artist_names)
-    #get_user_playlists(None, init=True)
+    init_artists_recommendations()
+    init_artists_top_tracks()
+    init_user_playlists()
 
 
 scheduler.add_job(

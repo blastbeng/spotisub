@@ -24,8 +24,5 @@ class Config(object):
 
     SCHEDULER_API_ENABLED = True
     SCHEDULER_API_PREFIX = "/api/v1/scheduler"
-    SCHEDULER_EXECUTORS = {"default": {"type": "threadpool", "max_workers": 2}}
-    SCHEDULER_JOBSTORES = {
-        "default": SQLAlchemyJobStore(url=SQLALCHEMY_DATABASE_URI)
-    }
+    SCHEDULER_EXECUTORS = {"default": {"type": "threadpool", "max_workers": 10}}
 
