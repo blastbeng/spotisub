@@ -342,13 +342,21 @@ def create_playlist(playlist_info):
 
 def insert_playlist_type(conn, playlist_info):
     """insert playlist into database"""
-    playlist_info_db = select_playlist_info_by_name(conn, playlist_info["name"])
+    playlist_info_db = None
+    uuid_input=None
+    if "uuid" in playlist_info and playlist_info["uuid"] is not None:
+        uuid_input = playlist_info["uuid"]
+        playlist_info_db = select_playlist_info_by_uuid(uuid_input)
+        if playlist_info_db is None:
+            playlist_info_db = select_playlist_info_by_name(playlist_info["name"])
+    else:
+        uuid_input = str(uuid.uuid4().hex)
+        playlist_info_db = select_playlist_info_by_name(playlist_info["name"])
     subsonic_playlist_id_info = playlist_info["subsonic_playlist_id"] if "subsonic_playlist_id" in playlist_info else None
     if playlist_info_db is None:
         stmt = insert(
             dbms.playlist_info).values(
-            uuid=str(
-                uuid.uuid4().hex),
+            uuid=uuid_input,
             spotify_playlist_uri=playlist_info["spotify_uri"],
             type=playlist_info["type"],
             subsonic_playlist_id=subsonic_playlist_id_info,
@@ -358,7 +366,7 @@ def insert_playlist_type(conn, playlist_info):
         conn.execute(stmt)
         logging.info('(%s) Initializing empty playlist %s, to trigger the manual population use the Rescan function.', 
             str(threading.current_thread().ident), playlist_info["name"])
-        return select_playlist_info_by_name(conn, playlist_info["name"])
+        return select_playlist_info_by_uuid(uuid_input)
     else:
         stmt = update(
             dbms.playlist_info).where(
@@ -369,7 +377,7 @@ def insert_playlist_type(conn, playlist_info):
             subsonic_playlist_name=playlist_info["name"])
         stmt.compile()
         conn.execute(stmt)
-        return select_playlist_info_by_name(conn, playlist_info["name"])
+        return select_playlist_info_by_uuid(uuid_input)
 
 
 
@@ -390,24 +398,51 @@ def select_ignore_playlist_by_name(name):
 
     return value
 
-def select_playlist_info_by_name(conn, name):
+def select_playlist_info_by_name(name):
     """select spotify artists by uuid"""
-    value = None
-    stmt = select(
-        dbms.playlist_info.c.uuid,
-        dbms.playlist_info.c.subsonic_playlist_id,
-        dbms.playlist_info.c.subsonic_playlist_name,
-        dbms.playlist_info.c.spotify_playlist_uri,
-        dbms.playlist_info.c.ignored,
-        dbms.playlist_info.c.type).where(
-        dbms.playlist_info.c.subsonic_playlist_name == name)
-    stmt.compile()
-    cursor = conn.execute(stmt)
-    records = cursor.fetchall()
+    with dbms.db_engine.connect() as conn:
+        value = None
+        stmt = select(
+            dbms.playlist_info.c.uuid,
+            dbms.playlist_info.c.subsonic_playlist_id,
+            dbms.playlist_info.c.subsonic_playlist_name,
+            dbms.playlist_info.c.spotify_playlist_uri,
+            dbms.playlist_info.c.ignored,
+            dbms.playlist_info.c.type,
+            dbms.playlist_info.c.import_arg).where(
+            dbms.playlist_info.c.subsonic_playlist_name == name)
+        stmt.compile()
+        cursor = conn.execute(stmt)
+        records = cursor.fetchall()
 
-    for row in records:
-        value = row
-    cursor.close()
+        for row in records:
+            value = row
+        cursor.close()
+        conn.close()
+
+    return value
+
+def select_playlist_info_by_arg(arg):
+    """select spotify artists by uuid"""
+    with dbms.db_engine.connect() as conn:
+        value = None
+        stmt = select(
+            dbms.playlist_info.c.uuid,
+            dbms.playlist_info.c.subsonic_playlist_id,
+            dbms.playlist_info.c.subsonic_playlist_name,
+            dbms.playlist_info.c.spotify_playlist_uri,
+            dbms.playlist_info.c.ignored,
+            dbms.playlist_info.c.type,
+            dbms.playlist_info.c.import_arg).where(
+            dbms.playlist_info.c.import_arg == arg)
+        stmt.compile()
+        cursor = conn.execute(stmt)
+        records = cursor.fetchall()
+
+        for row in records:
+            value = row
+        cursor.close()
+        conn.close()
 
     return value
 
@@ -421,7 +456,8 @@ def select_playlist_info_by_uuid(uuid):
             dbms.playlist_info.c.subsonic_playlist_name,
             dbms.playlist_info.c.spotify_playlist_uri,
             dbms.playlist_info.c.ignored,
-            dbms.playlist_info.c.type).where(
+            dbms.playlist_info.c.type,
+            dbms.playlist_info.c.import_arg).where(
             dbms.playlist_info.c.uuid == uuid)
         stmt.compile()
         cursor = conn.execute(stmt)

@@ -34,6 +34,7 @@ function showSort(){
         element.classList.add("nodisplay");
     }
 }
+
 function callUrlAndReload(url){
     let xhr = new XMLHttpRequest();
 
@@ -42,7 +43,20 @@ function callUrlAndReload(url){
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             location.reload();
-        } 
+        }
+    }
+    xhr.send();
+}
+
+function callUrl(url){
+    let xhr = new XMLHttpRequest();
+
+    xhr.open("GET", url, true);
+
+    xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            alert("Rescan job has been started!")
+        }
     }
     xhr.send();
 }

@@ -333,12 +333,23 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
                            order=order,
                            asc=asc,
                            sorting_dict=sorting_dict)
+                           
 @spotisub.route('/tasks')
 @login_required
 def tasks():
     title = 'Tasks'
     return render_template('tasks.html',
                            title=title)
+                           
+@spotisub.route('/poll_playlist/<string:uuid>/')
+@login_required
+def poll_playlist(uuid=None):
+    if generator.poll_playlist(uuid):
+        return get_response_json(get_json_message(
+            "Job with uuid " + uuid + " is running", True), 200)
+    else:
+        return get_response_json(get_json_message(
+            "Job with uuid " + uuid + " is running", True), 204)
 
 @spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')
 @login_required

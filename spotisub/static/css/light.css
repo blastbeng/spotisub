@@ -343,7 +343,7 @@ a.article-active:hover {
 .table-card [id=table-type] { 
     text-align: center;
 }
-.table-href [id=table-type] { 
+.table-card [id=table-href] { 
      text-align: center;
 }
 .pagination a {
@@ -566,6 +566,24 @@ a.article-active:hover {
     margin-top:6px;
     margin-left:19px;
     font-size:22px;
+}
+
+.svg-fa-spin {
+    -webkit-animation:spin 4s linear infinite;
+    -moz-animation:spin 4s linear infinite;
+    animation:spin 4s linear infinite;
+}
+@-moz-keyframes spin { 
+    100% { -moz-transform: rotate(360deg); } 
+}
+@-webkit-keyframes spin { 
+    100% { -webkit-transform: rotate(360deg); } 
+}
+@keyframes spin { 
+    100% { 
+        -webkit-transform: rotate(360deg); 
+        transform:rotate(360deg); 
+    } 
 }
 
 .toolbar-root{
