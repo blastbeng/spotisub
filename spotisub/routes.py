@@ -333,6 +333,12 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
                            order=order,
                            asc=asc,
                            sorting_dict=sorting_dict)
+@spotisub.route('/tasks')
+@login_required
+def tasks():
+    title = 'Tasks'
+    return render_template('tasks.html',
+                           title=title)
 
 @spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')
 @login_required
@@ -341,6 +347,15 @@ def ignore(type=None, uuid=None, value = None):
     subsonic_helper.set_ignore(type,uuid,value)
     return get_response_json(get_json_message(
         "Setting ignored to " +str(value)+ " to object with uuid " + uuid +", type: " + type, True), 200)
+
+
+@spotisub.route('/reimport/<string:uuid>/')
+@login_required
+def reimport(uuid=None):
+    """Reimport a playlist"""
+    generator.reimport(uuid)
+    return get_response_json(get_json_message(
+        "Reimporting playlist with uuid " + uuid, True), 200)
 
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():

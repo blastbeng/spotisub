@@ -194,8 +194,6 @@ def generate_playlist(playlist_info):
             constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
             "\"",
             "") + playlist_info["name"])
-    logging.debug('(%s) Scanning for playlist %s', 
-        str(threading.current_thread().ident), playlist_info["name"])
     return database.create_playlist(playlist_info)
 
 def write_playlist(sp, playlist_info, results):
@@ -564,12 +562,11 @@ def select_all_playlists(spotipy_helper, page=None,
                 spotify_playlist = get_spotify_object_from_cache(spotipy_helper.get_spotipy_client(), playlist["spotify_playlist_uri"])
                 if spotify_playlist is not None and "images" in spotify_playlist and spotify_playlist["images"] is not None and len(spotify_playlist["images"]) > 0:
                     playlist["image"] = spotify_playlist["images"][0]["url"]
-            prefix = os.environ.get(
-                        constants.PLAYLIST_PREFIX,
-                        constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
-                        "\"",
-                        "")
-            playlist["subsonic_playlist_name"] = playlist["subsonic_playlist_name"].replace(prefix,"")
+            
+            if playlist["type"] == constants.JOB_MR_ID:
+                playlist["subsonic_playlist_name"] = "My Recommendations " + playlist["import_arg"]
+            else:
+                playlist["subsonic_playlist_name"] = playlist["import_arg"]
 
         for plid in ids:
             playlist_search, has_been_deleted = get_playlist_from_cache(
@@ -817,5 +814,6 @@ def set_ignore(type, uuid, value):
         database.update_ignored_song_pl(uuid, value)
     elif type == 'playlist':
         database.update_ignored_playlist(uuid, value)
+    
 
 spotify_cache = load_spotify_cache_from_file()

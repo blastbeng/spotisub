@@ -125,7 +125,7 @@
                                     <a href="#">UI</a>
                                 </li>
                             </ul>
-                        </li>
+                        </li>-->
                         <li>
                             <a href="#systemSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-laptop"></i>
@@ -147,24 +147,24 @@
                                 {% else %}
                                 <li>
                                 {% endif %}  
-                                    <a href="#">Tasks</a>
+                                    <a href="{{ url_for('tasks') }}">Tasks</a>
                                 </li>
-                                {% if title == "Updates" %}
+                                <!--{% if title == "Updates" %}
                                 <li class="active">
                                 {% else %}
                                 <li>
                                 {% endif %}  
                                     <a href="#">Updates</a>
-                                </li>
-                                {% if title == "Log Files" %}
+                                </li>-->
+                                {% if title == "Logs" %}
                                 <li class="active">
                                 {% else %}
                                 <li>
                                 {% endif %}  
-                                    <a href="#">Log Files</a>
+                                    <a href="#">Logs</a>
                                 </li>
                             </ul>
-                        </li>-->
+                        </li>
                     </ul>
                 </nav>
 

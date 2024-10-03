@@ -340,10 +340,12 @@ a.article-active:hover {
   .table-card [id=table-spotify-link] { 
     display: none;
    }
-
-   .table-card [id=table-type] { 
-     display: none;
-    }
+.table-card [id=table-type] { 
+    text-align: center;
+}
+.table-href [id=table-type] { 
+     text-align: center;
+}
 .pagination a {
   color: black;
   float: right;
@@ -638,10 +640,10 @@ progress[value]::-webkit-progress-value {
     max-height: 352px;
     width: 200px;
     will-change: transform;
-    top: 0px;
-    left: 0px;
+    top: 108px;
+    right: 20px;
     color: white;
-    transform: translate3d(2325px, 108px, 0px);
+    
     border: 1px solid;
     border-color: black;
 }

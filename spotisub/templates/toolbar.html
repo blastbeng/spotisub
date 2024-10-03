@@ -1,12 +1,21 @@
 <div class="PageToolbar-toolbar">
     <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
        <div class="PageToolbarSection-section PageToolbarSection-left">
-          <button type="button" onClick="window.location.reload();return false;" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
-             <i class="svg-fa fa fa-refresh svg-fa" aria-hidden="true"></i>
-             <div class="PageToolbarButton-labelContainer">
-                <div class="PageToolbarButton-label">Rescan</div>
-             </div>
-          </button>
+            {% if title == 'Playlist' %} 
+               <button type="button" onClick="location.href='{{url_for('reimport', uuid=playlist_info["uuid"])}}';" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
+                  <i class="svg-fa fa fa-refresh svg-fa" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Rescan</div>
+                  </div>
+               </button>
+            {% elif title == 'Overview' %} 
+               <button type="button" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">         
+                  <i class="svg-fa fa fa-refresh svg-fa" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Rescan</div>
+                  </div>
+               </button>
+            {% endif %}
           {% if title == 'Playlist' %} 
             {% if playlist_info["ignored"] == 1 %} 
             <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as not ignored" >

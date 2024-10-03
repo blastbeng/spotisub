@@ -2,6 +2,7 @@
 import uuid
 import string
 import logging
+import threading
 from config import Config
 from sqlalchemy import create_engine
 from sqlalchemy import insert
@@ -93,6 +94,8 @@ class Database:
                                           'subsonic_playlist_name', String(500), unique=True, nullable=False),
                                       Column(
                                           'spotify_playlist_uri', String(36), nullable=True),
+                                      Column(
+                                          'import_arg', String(500), nullable=False),
                                       Column(
                                           'type', String(36), nullable=False),
                                       Column(
@@ -349,9 +352,12 @@ def insert_playlist_type(conn, playlist_info):
             spotify_playlist_uri=playlist_info["spotify_uri"],
             type=playlist_info["type"],
             subsonic_playlist_id=subsonic_playlist_id_info,
-            subsonic_playlist_name=playlist_info["name"])
+            subsonic_playlist_name=playlist_info["name"],
+            import_arg=playlist_info["import_arg"])
         stmt.compile()
         conn.execute(stmt)
+        logging.info('(%s) Initializing empty playlist %s, to trigger the manual population use the Rescan function.', 
+            str(threading.current_thread().ident), playlist_info["name"])
         return select_playlist_info_by_name(conn, playlist_info["name"])
     else:
         stmt = update(
@@ -1221,7 +1227,8 @@ def select_all_playlists(conn_ext=None, page=None, limit=None, order=None, asc=N
             dbms.playlist_info.c.uuid,
             dbms.playlist_info.c.spotify_playlist_uri,
             dbms.playlist_info.c.type,
-            dbms.playlist_info.c.ignored)
+            dbms.playlist_info.c.ignored,
+            dbms.playlist_info.c.import_arg)
         
 
         stmt = limit_and_order_stmt(
@@ -1241,6 +1248,7 @@ def select_all_playlists(conn_ext=None, page=None, limit=None, order=None, asc=N
             record["subsonic_playlist_id"] = row.subsonic_playlist_id
             record["subsonic_playlist_name"] = row.subsonic_playlist_name
             record["ignored_info"] = row.ignored
+            record["import_arg"] = row.import_arg
             record["type"] = row.type
             record["type_desc"] = string.capwords(row.type.replace("_"," "))
             record["spotify_playlist_link"] = "" if row.spotify_playlist_uri is None else str(row.spotify_playlist_uri).replace(":","/").replace("spotify","https://open.spotify.com")
