@@ -20,8 +20,8 @@ from sqlalchemy import desc
 from sqlalchemy import or_
 from sqlalchemy import collate
 
-VERSION = "0.3.2-alpha1"
-VERSIONS = ["0.3.0-alpha-01", "0.3.1", "0.3.2-alpha1"]
+VERSION = "0.3.2-alpha2"
+VERSIONS = ["0.3.0-alpha-01", "0.3.1", "0.3.2-alpha2"]
 
 SQLITE = 'sqlite'
 USER = 'user'
@@ -326,7 +326,7 @@ def insert_song(playlist_info, subsonic_track,
 
 def create_playlist(playlist_info):
     """Create empty playlist into database"""
-    return_dict = None
+    pl_info = None
     with dbms.db_engine.connect() as conn:
         pl_info = insert_playlist_type(
                 conn, playlist_info)
@@ -335,6 +335,7 @@ def create_playlist(playlist_info):
         else:
             conn.rollback()
         conn.close()
+    return pl_info
 
 def insert_playlist_type(conn, playlist_info):
     """insert playlist into database"""
@@ -481,7 +482,7 @@ def insert_playlist_relation(conn, subsonic_song_id,
             playlist_info_uuid=pl_info_uuid)
         stmt.compile()
         conn.execute(stmt)
-        return select_playlist_relation_by_uuid(conn, new_uuid)
+        return select_playlist_relation_by_uuid(new_uuid, conn_ext=conn)
     else:
         stmt = update(
             dbms.subsonic_spotify_relation).where(
@@ -492,7 +493,7 @@ def insert_playlist_relation(conn, subsonic_song_id,
             spotify_song_uuid=spotify_song_uuid)
         stmt.compile()
         conn.execute(stmt)
-        return select_playlist_relation_by_uuid(conn, old_relation.uuid)
+        return select_playlist_relation_by_uuid(old_relation.uuid, conn_ext=conn)
 
 def select_playlist_info_by_subsonic_id(subsonic_playlist_uuid, conn_ext=None):
     """select spotify artists by uuid"""
@@ -550,24 +551,27 @@ def select_playlist_relation(conn, subsonic_song_id,
     return value
 
 
-def select_playlist_relation_by_uuid(conn, uuid):
+def select_playlist_relation_by_uuid(uuid, conn_ext=None):
     value = None
     """select playlist relation"""
-    stmt = select(dbms.subsonic_spotify_relation.c.uuid,
-        dbms.subsonic_spotify_relation.c.subsonic_song_id,
-        dbms.subsonic_spotify_relation.c.subsonic_artist_id,
-        dbms.subsonic_spotify_relation.c.spotify_song_uuid,
-        dbms.subsonic_spotify_relation.c.ignored).where(
-        dbms.subsonic_spotify_relation.c.uuid==uuid)
-    stmt.compile()
+    with conn_ext if conn_ext is not None else dbms.db_engine.connect() as conn:
+        stmt = select(dbms.subsonic_spotify_relation.c.uuid,
+            dbms.subsonic_spotify_relation.c.subsonic_song_id,
+            dbms.subsonic_spotify_relation.c.subsonic_artist_id,
+            dbms.subsonic_spotify_relation.c.spotify_song_uuid,
+            dbms.subsonic_spotify_relation.c.ignored).where(
+            dbms.subsonic_spotify_relation.c.uuid==uuid)
+        stmt.compile()
 
 
-    cursor = conn.execute(stmt)
-    records = cursor.fetchall()
+        cursor = conn.execute(stmt)
+        records = cursor.fetchall()
 
-    for row in records:
-        value = row
-    cursor.close()
+        for row in records:
+            value = row
+        cursor.close()
+        if conn_ext is None:
+            conn.close()
 
     return value
 
@@ -1345,6 +1349,21 @@ def update_ignored_playlist(uuid, value):
         conn.execute(stmt)
         conn.commit()
         conn.close()
+
+def get_job_status(uuid):
+    with dbms.db_engine.connect() as conn:
+
+        query = """select * from apscheduler_jobs"""
+        cursor = conn.execute(text(query))
+        records = cursor.fetchall()
+
+        for row in records:
+            cursor.close()
+            conn.close()
+            return row
+        conn.close()
+
+    return None
 
 dbms = Database(SQLITE, dbname=Config.SQLALCHEMY_DATABASE_NAME)
 create_db_tables()

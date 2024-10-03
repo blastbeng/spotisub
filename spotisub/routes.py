@@ -22,7 +22,6 @@ from flask_login import current_user
 from flask_login import login_user
 from flask_login import logout_user
 from flask_login import login_required
-from flask_apscheduler import APScheduler
 from spotipy.exceptions import SpotifyException
 from spotisub import spotisub
 from spotisub import configuration_db
@@ -34,7 +33,6 @@ from spotisub.classes import User
 from spotisub import utils
 from spotisub import constants
 from spotisub import generator
-from spotisub import database
 from spotisub.generator import subsonic_helper
 from spotisub.generator import spotipy_helper
 from spotisub.exceptions import SubsonicOfflineException
@@ -507,86 +505,3 @@ class Healthcheck(Resource):
         return "Ok!"
 
 
-
-scheduler = APScheduler()
-
-
-if os.environ.get(constants.ARTIST_GEN_SCHED,
-                  constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) != "0":
-    @scheduler.task('interval',
-                    id=constants.JOB_AR_ID,
-                    hours=int(os.environ.get(constants.ARTIST_GEN_SCHED,
-                                             constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)))
-    def artist_recommendations():
-        """artist_recommendations task"""
-        generator.show_recommendations_for_artist(
-            random.choice(subsonic_helper.get_artists_array_names()))
-
-if os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
-                  constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE) != "0":
-    @scheduler.task('interval',
-                    id=constants.JOB_ATT_ID,
-                    hours=int(os.environ.get(constants.ARTIST_TOP_GEN_SCHED,
-                                             constants.ARTIST_TOP_GEN_SCHED_DEFAULT_VALUE)))
-    def artist_top_tracks():
-        """artist_top_tracks task"""
-        generator.artist_top_tracks(
-            random.choice(subsonic_helper.get_artists_array_names()))
-
-if os.environ.get(constants.RECOMEND_GEN_SCHED,
-                  constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
-    @scheduler.task('interval',
-                    id=constants.JOB_MR_ID,
-                    hours=int(os.environ.get(constants.RECOMEND_GEN_SCHED,
-                                             constants.RECOMEND_GEN_SCHED_DEFAULT_VALUE)))
-    def my_recommendations():
-        """my_recommendations task"""
-        generator.my_recommendations(count=random.randrange(int(os.environ.get(
-            constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))))
-
-if os.environ.get(constants.PLAYLIST_GEN_SCHED,
-                  constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
-    @scheduler.task('interval',
-                    id=constants.JOB_UP_ID,
-                    hours=int(os.environ.get(constants.PLAYLIST_GEN_SCHED,
-                                             constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE)))
-    def user_playlists():
-        """user_playlists task"""
-        generator.get_user_playlists(
-            random.randrange(
-                generator.count_user_playlists(0)),
-            single_execution=True)
-
-if os.environ.get(constants.SAVED_GEN_SCHED,
-                  constants.SAVED_GEN_SCHED_DEFAULT_VALUE) != "0":
-    @scheduler.task('interval',
-                    id=constants.JOB_ST_ID,
-                    hours=int(os.environ.get(constants.SAVED_GEN_SCHED,
-                                             constants.SAVED_GEN_SCHED_DEFAULT_VALUE)))
-    def saved_tracks():
-        """saved_tracks task"""
-        generator.get_user_saved_tracks(dict({'tracks': []}))
-
-
-@scheduler.task('interval', id='remove_subsonic_deleted_playlist', hours=12)
-def remove_subsonic_deleted_playlist():
-    """remove subsonic deleted playlist task"""
-    subsonic_helper.remove_subsonic_deleted_playlist()
-
-
-@scheduler.task('interval', id='scan_library', hours=1)
-def scan_library():
-    """scan library task"""
-    generator.scan_library()
-
-
-scheduler.init_app(spotisub)
-scheduler.start(paused=(os.environ.get(constants.SCHEDULER_ENABLED,
-                                       constants.SCHEDULER_ENABLED_DEFAULT_VALUE) != "1"))
-
-
-# Used to initialize cache for the first 100 playlists
-try:
-    subsonic_helper.select_all_playlists(spotipy_helper, page=0, limit=100, order='playlist_info.subsonic_playlist_name', asc=True)
-except:
-    pass

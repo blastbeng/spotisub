@@ -194,9 +194,9 @@ def generate_playlist(playlist_info):
             constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
             "\"",
             "") + playlist_info["name"])
-    database.create_playlist(playlist_info)
-    logging.info('(%s) Scanning for playlist %s', 
+    logging.debug('(%s) Scanning for playlist %s', 
         str(threading.current_thread().ident), playlist_info["name"])
+    return database.create_playlist(playlist_info)
 
 def write_playlist(sp, playlist_info, results):
     """write playlist to subsonic db"""
@@ -663,11 +663,11 @@ def remove_subsonic_deleted_playlist():
     ids = []
     
     for row1 in spotisub_playlists:
-        if row1["subsonic_playlist_id"] not in ids:
+        if row1["subsonic_playlist_id"] is not None and row1["subsonic_playlist_id"] not in ids:
             ids.append(row1["subsonic_playlist_id"])
 
     for row2 in spotisub_songs:
-        if row2.subsonic_playlist_id not in ids:
+        if row2.subsonic_playlist_id is not None and row2.subsonic_playlist_id not in ids:
             ids.append(row2.subsonic_playlist_id)
 
     for key in ids:

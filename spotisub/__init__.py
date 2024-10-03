@@ -24,7 +24,7 @@ logging.basicConfig(
 log = logging.getLogger('werkzeug')
 log.setLevel(int(os.environ.get(constants.LOG_LEVEL,
              constants.LOG_LEVEL_DEFAULT_VALUE)))
-
+             
 spotisub = Flask(__name__)
 spotisub.config.from_object(Config)
 
