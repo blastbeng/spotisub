@@ -199,11 +199,11 @@ def artist_top_tracks_run(uuid):
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
         artist = get_artist(playlist_info_db.import_arg)
         if artist is not None and "uri" in artist and artist["uri"] is not None:
-            playlist_name = playlist_info_db.name + " - Top Tracks"
+            playlist_name = playlist_info_db.import_arg + " - Top Tracks"
             playlist_info = {}
             playlist_info["uuid"] = playlist_info_db.uuid
             playlist_info["name"] = playlist_name
-            playlist_info["import_arg"] = name
+            playlist_info["import_arg"] = playlist_info_db.import_arg
             playlist_info["spotify_uri"] = artist["uri"]
             playlist_info["type"] = constants.JOB_ATT_ID
             logging.info('(%s) Searching top tracks for: %s',
@@ -211,6 +211,9 @@ def artist_top_tracks_run(uuid):
             sp = spotipy_helper.get_spotipy_client()
             artist_top = sp.artist_top_tracks(artists_uri[artist_name])
             subsonic_helper.write_playlist(sp, playlist_info, artist_top)
+        else:
+            logging.warning('(%s) Artist: %s Not found!',
+                str(threading.current_thread().ident), playlist_info_db.import_arg)
 
     if os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) == "0":
         scheduler.remove_job(id=constants.JOB_ATT_ID)
@@ -243,15 +246,15 @@ def show_recommendations_for_artist_run(uuid):
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
         artist = get_artist(playlist_info_db.import_arg)
         if artist is not None and "uri" in artist and artist["uri"] is not None:
-            playlist_name = playlist_info_db.name + " - Recommendations"
+            playlist_name = playlist_info_db.import_arg + " - Recommendations"
             playlist_info = {}
             playlist_info["uuid"] = playlist_info_db.uuid
             playlist_info["name"] = playlist_name
             playlist_info["spotify_uri"] = artist["uri"]
             playlist_info["type"] = constants.JOB_AR_ID
-            playlist_info["import_arg"] = name
+            playlist_info["import_arg"] = playlist_info_db.import_arg
             logging.info('(%s) Searching recommendations for: %s',
-                str(threading.current_thread().ident), name)
+                str(threading.current_thread().ident), playlist_info_db.import_arg)
             sp = spotipy_helper.get_spotipy_client()
             results = sp.recommendations(
                 seed_artists=[
@@ -263,7 +266,7 @@ def show_recommendations_for_artist_run(uuid):
             subsonic_helper.write_playlist(sp, playlist_info, results)
         else:
             logging.warning('(%s) Artist: %s Not found!',
-                str(threading.current_thread().ident), name)
+                str(threading.current_thread().ident), playlist_info_db.import_arg)
             
     if os.environ.get(constants.ARTIST_GEN_SCHED, constants.ARTIST_GEN_SCHED_DEFAULT_VALUE) == "0":
         scheduler.remove_job(id=constants.JOB_AR_ID)
@@ -363,7 +366,7 @@ def get_user_saved_tracks_run(uuid):
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
         playlist_info = {}
         playlist_info["uuid"] = playlist_info_db.uuid
-        playlist_info["name"] = playlist_info_db.name
+        playlist_info["name"] = playlist_info_db.subsonic_playlist_name
         playlist_info["spotify_uri"] = None
         playlist_info["type"] = constants.JOB_ST_ID
         playlist_info["import_arg"] = ""
