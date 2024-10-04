@@ -25,11 +25,13 @@ function showRescanAlert(){
     } else {
         element.classList.add("nodisplay");
     }
+    hideToolbarElement("toolbar-root-sort")
 }
 
 function closeRescanAlert(){
     var element = document.getElementById("toolbar-root-rescan");
-    if ( element.classList.contains("nodisplay") ) {
-        element.classList.remove("nodisplay");
-    } 
+    if ( !element.classList.contains("nodisplay") ) {
+        element.classList.add("nodisplay");
+    }
+    hideToolbarElement("toolbar-root-sort")
 }

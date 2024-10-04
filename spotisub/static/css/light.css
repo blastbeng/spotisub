@@ -684,7 +684,7 @@ progress[value]::-webkit-progress-value {
     line-height: 20px;
     position: absolute;
     max-height: 352px;
-    width: 400px;
+    width: 300px;
     will-change: transform;
     top: 108px;
     left: 270px;
@@ -705,6 +705,10 @@ progress[value]::-webkit-progress-value {
 .MenuContent-scroller {
     display: flex;
     flex-direction: column;
+}
+.MenuContent-scroller-buttons {
+    display: inline;
+    padding: 20px;
 }
 
 .MenuItem-menuItem {
@@ -739,3 +743,48 @@ progress[value]::-webkit-progress-value {
     white-space: nowrap;
     padding: 10px;
 }
+
+
+.button-alert-confirm {
+    display: inline-block;
+    padding: 10px 15px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    outline: none;
+    color: #fff;
+    background-color: #04AA6D;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 9px #999;
+  }
+  
+  .button-alert-confirm:hover {background-color: #3e8e41}
+  
+  .button-alert-confirm:active {
+    background-color: #3e8e41;
+    box-shadow: 0 5px #666;
+    transform: translateY(4px);
+  }
+
+  .button-alert-close {
+      display: inline-block;
+      padding: 10px 15px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      outline: none;
+      color: #fff;
+      background-color: #ff0000;
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 9px #999;
+    }
+    
+    .button-alert-close:hover {background-color: #3e8e41}
+    
+    .button-alert-close:active {
+      background-color: #ff0000;
+      box-shadow: 0 5px #666;
+      transform: translateY(4px);
+    }

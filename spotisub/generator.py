@@ -412,11 +412,11 @@ def get_user_playlists_run(uuid, offset=0):
     if os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) == "0":
         scheduler.remove_job(id=constants.JOB_UP_ID)
     else:
-        playlists = get_user_playlists_array([])
-        if len(playlists) > 0 and os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
-            item = random.choice(playlists)
+        playlist_infos = database.select_playlist_info_by_type(constants.JOB_UP_ID)
+        if len(playlist_infos) > 0 and os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
+            playlist_info = random.choice(playlist_infos)
             scheduler.modify_job(
-                            args=[item.uuid],
+                            args=[playlist_info.uuid],
                             id=constants.JOB_UP_ID
                         )
         else:

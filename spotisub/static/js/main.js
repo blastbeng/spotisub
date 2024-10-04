@@ -52,19 +52,13 @@ function callUrl(url){
     let xhr = new XMLHttpRequest();
 
     xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            alert("Rescan job has been started!")
-        }
-    }
     xhr.send();
 }
 
 
 
 window.addEventListener('click', function(e){
-  if (e.target.id !== 'show-toolbar-popup') {
+  if (e.target.id !== 'show-toolbar-popup' && e.target.id !== 'rescan-button') {
     var element1 = document.getElementById("toolbar-root-sort");
     if (element1 != null && element1 !== 'undefined' && !element1.contains(e.target) && !element1.classList.contains("nodisplay") ) {
         element1.classList.add("nodisplay");
@@ -78,7 +72,7 @@ window.addEventListener('click', function(e){
         element3.classList.add("nodisplay");
     } 
     var element4 = document.getElementById("toolbar-root-rescan");
-    if (element4 != null && element3 !== 'undefined' && !element3.contains(e.target) && !element4.classList.contains("nodisplay") ) {
+    if (element4 != null && element4 !== 'undefined' && !element4.contains(e.target) && !element4.classList.contains("nodisplay") ) {
         element4.classList.add("nodisplay");
     } 
         
