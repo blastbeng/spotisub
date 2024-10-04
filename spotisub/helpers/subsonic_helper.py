@@ -189,36 +189,34 @@ def add_missing_values_to_track(sp, track):
 
 def generate_playlist(playlist_info):
     """generate empty playlist if not exists"""
-    playlist_info["name"] = (os.environ.get(
+    playlist_info["prefix"] = os.environ.get(
             constants.PLAYLIST_PREFIX,
             constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
             "\"",
-            "") + playlist_info["name"])
+            "")
     return database.create_playlist(playlist_info)
 
 def write_playlist(sp, playlist_info, results):
     """write playlist to subsonic db"""
     try:
-        playlist_info["name"] = (os.environ.get(
+        playlist_info["prefix"] = os.environ.get(
             constants.PLAYLIST_PREFIX,
-            constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
-            "\"",
-            "") + playlist_info["name"])
-        playlist_id = get_playlist_id_by_name(playlist_info["name"])
+            constants.PLAYLIST_PREFIX_DEFAULT_VALUE)
+        playlist_id = get_playlist_id_by_name(playlist_info["prefix"] + playlist_info["name"])
         song_ids = []
         old_song_ids = []
         if playlist_id is None:
-            check_pysonic_connection().createPlaylist(name=playlist_info["name"], songIds=[])
+            check_pysonic_connection().createPlaylist(name=playlist_info["prefix"] + playlist_info["name"], songIds=[])
             logging.info('(%s) Creating playlist %s', 
                 str(threading.current_thread().ident), playlist_info["name"])
-            playlist_id = get_playlist_id_by_name(playlist_info["name"])
+            playlist_id = get_playlist_id_by_name(playlist_info["prefix"] + playlist_info["name"])
             database.delete_playlist_relation_by_id(playlist_id)
         else:
             old_song_ids = get_playlist_songs_ids_by_id(playlist_id)
 
         if playlist_id is not None:
-            ignored = database.select_ignore_playlist_by_name(playlist_info["name"])
-            if ignored is not None and ignored == 1:
+            pl_info_db = database.select_playlist_info_by_uuid(playlist_info["uuid"])
+            if pl_info_db is not None and pl_info_db.ignored is not None and pl_info_db.ignored == 1:
                 logging.warning(
                     '(%s) Skipping playlist %s because it was marked as ignored',
                     playlist_info["name"])
@@ -780,14 +778,9 @@ def load_song(uuid, spotipy_helper, page=None,
 def select_playlist_info_by_uuid(spotipy_helper, uuid):
     playlist_info_db = database.select_playlist_info_by_uuid(uuid)
     playlist_info = {}
-    prefix = os.environ.get(
-                constants.PLAYLIST_PREFIX,
-                constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
-                "\"",
-                "")
     playlist_info["uuid"] = playlist_info_db.uuid
     playlist_info["subsonic_playlist_id"] = playlist_info_db.subsonic_playlist_id
-    playlist_info["subsonic_playlist_name"] = playlist_info_db.subsonic_playlist_name.replace(prefix,"")
+    playlist_info["subsonic_playlist_name"] = playlist_info_db.subsonic_playlist_name
     playlist_info["spotify_playlist_uri"] = playlist_info_db.spotify_playlist_uri
     playlist_info["ignored"] = playlist_info_db.ignored
     playlist_info["type"] = playlist_info_db.type

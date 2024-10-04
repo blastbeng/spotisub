@@ -21,8 +21,8 @@ from sqlalchemy import desc
 from sqlalchemy import or_
 from sqlalchemy import collate
 
-VERSION = "0.3.2-alpha2"
-VERSIONS = ["0.3.0-alpha-01", "0.3.1", "0.3.2-alpha2"]
+VERSION = "0.3.2-alpha3"
+VERSIONS = ["0.3.0-alpha-01", "0.3.1", "0.3.2-alpha3"]
 
 SQLITE = 'sqlite'
 USER = 'user'
@@ -96,6 +96,8 @@ class Database:
                                           'spotify_playlist_uri', String(36), nullable=True),
                                       Column(
                                           'import_arg', String(500), nullable=False),
+                                      Column(
+                                          'prefix', String(500), nullable=False),
                                       Column(
                                           'type', String(36), nullable=False),
                                       Column(
@@ -343,30 +345,26 @@ def create_playlist(playlist_info):
 def insert_playlist_type(conn, playlist_info):
     """insert playlist into database"""
     playlist_info_db = None
-    uuid_input=None
     if "uuid" in playlist_info and playlist_info["uuid"] is not None:
-        uuid_input = playlist_info["uuid"]
-        playlist_info_db = select_playlist_info_by_uuid(uuid_input)
-        if playlist_info_db is None:
-            playlist_info_db = select_playlist_info_by_name(playlist_info["name"])
-    else:
-        uuid_input = str(uuid.uuid4().hex)
-        playlist_info_db = select_playlist_info_by_name(playlist_info["name"])
+        playlist_info_db = select_playlist_info_by_uuid_with_conn(conn, playlist_info["uuid"])
+    elif "name" in playlist_info and playlist_info["name"] is not None:
+        playlist_info_db = select_playlist_info_by_name_with_conn(conn, playlist_info["name"])
     subsonic_playlist_id_info = playlist_info["subsonic_playlist_id"] if "subsonic_playlist_id" in playlist_info else None
     if playlist_info_db is None:
         stmt = insert(
             dbms.playlist_info).values(
-            uuid=uuid_input,
+            uuid=str(uuid.uuid4().hex),
             spotify_playlist_uri=playlist_info["spotify_uri"],
             type=playlist_info["type"],
             subsonic_playlist_id=subsonic_playlist_id_info,
             subsonic_playlist_name=playlist_info["name"],
-            import_arg=playlist_info["import_arg"])
+            import_arg=playlist_info["import_arg"],
+            prefix=playlist_info["prefix"])
         stmt.compile()
         conn.execute(stmt)
         logging.info('(%s) Initializing empty playlist %s, to trigger the manual population use the Rescan function.', 
             str(threading.current_thread().ident), playlist_info["name"])
-        return select_playlist_info_by_uuid(uuid_input)
+        return select_playlist_info_by_name_with_conn(conn, playlist_info["name"])
     else:
         stmt = update(
             dbms.playlist_info).where(
@@ -374,10 +372,11 @@ def insert_playlist_type(conn, playlist_info):
             spotify_playlist_uri=playlist_info["spotify_uri"],
             type=playlist_info["type"],
             subsonic_playlist_id=subsonic_playlist_id_info,
-            subsonic_playlist_name=playlist_info["name"])
+            subsonic_playlist_name=playlist_info["name"],
+            prefix=playlist_info["prefix"])
         stmt.compile()
         conn.execute(stmt)
-        return select_playlist_info_by_uuid(uuid_input)
+        return select_playlist_info_by_uuid_with_conn(conn, playlist_info_db.uuid)
 
 
 
@@ -422,6 +421,28 @@ def select_playlist_info_by_name(name):
 
     return value
 
+def select_playlist_info_by_name_with_conn(conn, name):
+    """select spotify artists by uuid"""
+    value = None
+    stmt = select(
+        dbms.playlist_info.c.uuid,
+        dbms.playlist_info.c.subsonic_playlist_id,
+        dbms.playlist_info.c.subsonic_playlist_name,
+        dbms.playlist_info.c.spotify_playlist_uri,
+        dbms.playlist_info.c.ignored,
+        dbms.playlist_info.c.type,
+        dbms.playlist_info.c.import_arg).where(
+        dbms.playlist_info.c.subsonic_playlist_name == name)
+    stmt.compile()
+    cursor = conn.execute(stmt)
+    records = cursor.fetchall()
+
+    for row in records:
+        value = row
+    cursor.close()
+
+    return value
+
 def select_playlist_info_by_arg(arg):
     """select spotify artists by uuid"""
     with dbms.db_engine.connect() as conn:
@@ -446,6 +467,28 @@ def select_playlist_info_by_arg(arg):
 
     return value
 
+def select_playlist_info_by_type(type):
+    """select spotify artists by uuid"""
+    records = []
+    with dbms.db_engine.connect() as conn:
+        value = None
+        stmt = select(
+            dbms.playlist_info.c.uuid,
+            dbms.playlist_info.c.subsonic_playlist_id,
+            dbms.playlist_info.c.subsonic_playlist_name,
+            dbms.playlist_info.c.spotify_playlist_uri,
+            dbms.playlist_info.c.ignored,
+            dbms.playlist_info.c.type,
+            dbms.playlist_info.c.import_arg).where(
+            dbms.playlist_info.c.type == type)
+        stmt.compile()
+        cursor = conn.execute(stmt)
+        records = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+    return records
+
 def select_playlist_info_by_uuid(uuid):
     """select spotify artists by uuid"""
     with dbms.db_engine.connect() as conn:
@@ -467,6 +510,27 @@ def select_playlist_info_by_uuid(uuid):
             value = row
         cursor.close()
         conn.close()
+    return value
+
+def select_playlist_info_by_uuid_with_conn(conn, uuid):
+    """select spotify artists by uuid"""
+    value = None
+    stmt = select(
+        dbms.playlist_info.c.uuid,
+        dbms.playlist_info.c.subsonic_playlist_id,
+        dbms.playlist_info.c.subsonic_playlist_name,
+        dbms.playlist_info.c.spotify_playlist_uri,
+        dbms.playlist_info.c.ignored,
+        dbms.playlist_info.c.type,
+        dbms.playlist_info.c.import_arg).where(
+        dbms.playlist_info.c.uuid == uuid)
+    stmt.compile()
+    cursor = conn.execute(stmt)
+    records = cursor.fetchall()
+
+    for row in records:
+        value = row
+    cursor.close()
     return value
 
 def delete_playlist_relation_by_id(playlist_id: str):
