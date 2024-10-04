@@ -48,6 +48,15 @@
             setInterval(function(){pollPlaylistJob('{{url_for("poll_playlist", uuid=playlist_info["uuid"])}}')}, 5000);
         </script>
     {% endif %}
+    {% if title == "Logs" %}
+        <script src="{{ url_for('static', filename='js/logs.js') }}"></script>
+        <script>
+            pollLogsJob('{{url_for("streamlog")}}')
+            setInterval(function(){pollLogsJob('{{url_for("streamlog")}}')}, 1000);
+        </script>
+        <script>
+        </script>
+    {% endif %}
 
 </head>
 <body>
@@ -139,7 +148,7 @@
                             <a href="#systemSubMenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
                                 <i class="fas fa-laptop"></i>
                                 System</a>
-                            {% if ((title == "Status") or (title == "Tasks") or (title == "Updates") or (title == "Log Files")) %}
+                            {% if ((title == "Status") or (title == "Tasks") or (title == "Updates") or (title == "Logs")) %}
                             <ul class="show collapse list-unstyled" id="systemSubMenu">
                             {% else %}
                             <ul class="collapse list-unstyled" id="systemSubMenu">
@@ -170,7 +179,7 @@
                                 {% else %}
                                 <li>
                                 {% endif %}  
-                                    <a href="#">Logs</a>
+                                    <a href="{{ url_for('logs') }}">Logs</a>
                                 </li>
                             </ul>
                         </li>

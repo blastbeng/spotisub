@@ -195,9 +195,9 @@ def artist_top_tracks(uuid):
 
 def artist_top_tracks_run(uuid):
     """artist top tracks"""
-    playlist_info_db = select_playlist_info_by_uuid(uuid)
+    playlist_info_db = database.select_playlist_info_by_uuid(uuid)
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
-        artist = get_artist(playlist_info.import_arg)
+        artist = get_artist(playlist_info_db.import_arg)
         if artist is not None and "uri" in artist and artist["uri"] is not None:
             playlist_name = playlist_info_db.name + " - Top Tracks"
             playlist_info = {}
@@ -239,9 +239,9 @@ def show_recommendations_for_artist(uuid):
 def show_recommendations_for_artist_run(uuid):
     """show recommendations for artist"""
     
-    playlist_info_db = select_playlist_info_by_uuid(uuid)
+    playlist_info_db = database.select_playlist_info_by_uuid(uuid)
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
-        artist = get_artist(playlist_info.import_arg)
+        artist = get_artist(playlist_info_db.import_arg)
         if artist is not None and "uri" in artist and artist["uri"] is not None:
             playlist_name = playlist_info_db.name + " - Recommendations"
             playlist_info = {}
@@ -291,7 +291,7 @@ def my_recommendations(uuid):
 
 def my_recommendations_run(uuid):
     """my recommendations"""
-    playlist_info_db = select_playlist_info_by_uuid(uuid)
+    playlist_info_db = database.select_playlist_info_by_uuid(uuid)
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
         playlist_num = int(playlist_info_db.import_arg)
         sp = spotipy_helper.get_spotipy_client()
@@ -359,7 +359,7 @@ def get_user_saved_tracks(uuid):
 
 def get_user_saved_tracks_run(uuid):
     """get user saved tracks run"""
-    playlist_info_db = select_playlist_info_by_uuid(uuid)
+    playlist_info_db = database.select_playlist_info_by_uuid(uuid)
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
         playlist_info = {}
         playlist_info["uuid"] = playlist_info_db.uuid
@@ -382,7 +382,7 @@ def get_user_playlists(uuid):
 
 def get_user_playlists_run(uuid, offset=0):
     """get user playlists"""
-    playlist_info_db = select_playlist_info_by_uuid(uuid)
+    playlist_info_db = database.select_playlist_info_by_uuid(uuid)
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
 
         sp = spotipy_helper.get_spotipy_client()
@@ -391,8 +391,8 @@ def get_user_playlists_run(uuid, offset=0):
             limit=50, offset=offset)
 
         for item in playlist_result['items']:
-            if item['name'] is not None and item['name'].strip() != '' and (playlist_info_db.name is None or (
-                    playlist_info_db.name is not None and item['name'].lower().strip() == playlist_info_db.name.lower().strip())):
+            if item['name'] is not None and item['name'].strip() != '' and (playlist_info_db.import_arg is None or (
+                    playlist_info_db.import_arg is not None and item['name'].lower().strip() == playlist_info_db.import_arg.lower().strip())):
                 playlist_info = {}
                 playlist_info["uuid"] = playlist_info_db.uuid
                 playlist_info["name"] = item['name'].strip()
@@ -407,7 +407,7 @@ def get_user_playlists_run(uuid, offset=0):
                 
 
         if len(playlist_result['items']) != 0:
-            get_user_playlists(playlist_name, offset=offset + 50)
+            get_user_playlists_run(uuid, offset=offset + 50)
 
     if os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) == "0":
         scheduler.remove_job(id=constants.JOB_UP_ID)
@@ -416,7 +416,7 @@ def get_user_playlists_run(uuid, offset=0):
         if len(playlists) > 0 and os.environ.get(constants.PLAYLIST_GEN_SCHED, constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
             item = random.choice(playlists)
             scheduler.modify_job(
-                            args=item["name"],
+                            args=[item.uuid],
                             id=constants.JOB_UP_ID
                         )
         else:

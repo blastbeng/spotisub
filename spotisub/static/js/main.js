@@ -60,3 +60,27 @@ function callUrl(url){
     }
     xhr.send();
 }
+
+
+
+window.addEventListener('click', function(e){
+  if (e.target.id !== 'show-toolbar-popup') {
+    var element1 = document.getElementById("toolbar-root-sort");
+    if (element1 != null && element1 !== 'undefined' && !element1.contains(e.target) && !element1.classList.contains("nodisplay") ) {
+        element1.classList.add("nodisplay");
+    } 
+    var element2 = document.getElementById("toolbar-root-view");
+    if (element2 != null && element2 !== 'undefined' && !element2.contains(e.target) && !element2.classList.contains("nodisplay") ) {
+        element2.classList.add("nodisplay");
+    } 
+    var element3 = document.getElementById("toolbar-root-filter");
+    if (element3 != null && element3 !== 'undefined' && !element3.contains(e.target) && !element3.classList.contains("nodisplay") ) {
+        element3.classList.add("nodisplay");
+    } 
+    var element4 = document.getElementById("toolbar-root-rescan");
+    if (element4 != null && element3 !== 'undefined' && !element3.contains(e.target) && !element4.classList.contains("nodisplay") ) {
+        element4.classList.add("nodisplay");
+    } 
+        
+    }
+});

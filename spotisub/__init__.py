@@ -14,12 +14,14 @@ from spotisub import utils
 utils.print_logo(database.VERSION)
 
 logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=int(
-        os.environ.get(
-            constants.LOG_LEVEL,
-            constants.LOG_LEVEL_DEFAULT_VALUE)),
-    datefmt='%Y-%m-%d %H:%M:%S')
+        handlers=[
+            logging.FileHandler(os.path.abspath(os.curdir) + "/cache/spotisub.log", mode="w"),
+            logging.StreamHandler()
+        ],
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=int(os.environ.get("LOG_LEVEL")),
+        datefmt='%Y-%m-%d %H:%M:%S')
+
 
 log = logging.getLogger('werkzeug')
 log.setLevel(int(os.environ.get(constants.LOG_LEVEL,

@@ -5,6 +5,7 @@ import random
 import threading
 import json
 import math
+from time import sleep
 from time import strftime
 from requests import ConnectionError
 from requests import ReadTimeout
@@ -341,6 +342,28 @@ def tasks():
     return render_template('tasks.html',
                            title=title)
                            
+@spotisub.route('/logs')
+@login_required
+def logs():
+    title = 'Logs'
+    return render_template('logs.html',
+                           title=title)
+
+@spotisub.route('/streamlog')
+@login_required
+def streamlog():
+    def generate():
+        with open(os.path.abspath(os.curdir) + '/cache/spotisub.log') as f:
+            while True:
+                yield f.read()
+                sleep(1)
+
+    r = Response(response=generate(), status=200, mimetype="text/plain")
+    r.headers["Content-Type"] = "text/plain; charset=utf-8"
+    r.headers["Accept"] = "text/plain"
+    return r           
+
+
 @spotisub.route('/poll_playlist/<string:uuid>/')
 @login_required
 def poll_playlist(uuid=None):

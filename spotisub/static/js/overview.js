@@ -52,8 +52,6 @@ function updateData(fromFilter){
 
 }
 
-
-
 function showSort(){
     var element = document.getElementById("toolbar-root-sort");
     if ( element.classList.contains("nodisplay") ) {
@@ -113,6 +111,7 @@ function filterOverview() {
     // Declare variables
     var input, filter, table, tr, td, i, txtValue;
     input = document.getElementById("filter-overview-text");
+    hide_empty = document.getElementById("hide-empty-overview-check");
     filter = input.value.toUpperCase();
     table = document.getElementById("overview_data");
     tr = table.getElementsByTagName("tr");
@@ -120,18 +119,50 @@ function filterOverview() {
     // Loop through all table rows, and hide those who don't match the search query
     var hidden = false;
     for (i = 0; i < tr.length; i++) {
-      td = tr[i].getElementsByTagName("td")[1];
-      if (td) {
-        txtValue = td.textContent || td.innerText;
-        if (txtValue.toUpperCase().indexOf(filter) > -1) {
-          tr[i].style.display = "";
-        } else {
-          tr[i].style.display = "none";
-          hidden = true;
+        var hide_text = false;
+        var hide_progress = false;
+        for (j = 0; j < tr[i].children.length; j++) {
+            var td = tr[i].children[j]
+            if (td.id == "table-type" || td.id == "table-href") {
+                txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    hide_text = false;
+                } else {
+                    hide_text = true;
+                }
+            }
+            if (td.id == "table-progress") {
+                if (td.children != null && td.children.item.length > 0){
+                    if (td.children[0].children.length > 0){
+                        var progress_bar = td.children[0].children[1]
+                        txtValue = td.textContent || td.innerText;
+                        if (progress_bar.value == 0) {
+                            if (hide_empty.checked) {
+                                hide_progress = true;
+                            } else if (!hide_empty.checked){
+                                hide_progress = false;
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
+        if (hide_progress || hide_text) {
+            tr[i].style.display = "none";
+            hidden = true;
+        } else if(!hide_progress && !hide_text) {
+            tr[i].style.display = "";
+        }
     }
     if (hidden) {
         updateData(hidden);
     }
+}
+
+function clearFilters(){
+    input = document.getElementById("filter-overview-text");
+    input.value = "";
+    hide_empty = document.getElementById("hide-empty-overview-check");
+    hide_empty.checked = false;
+    filterOverview();
 }

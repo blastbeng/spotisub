@@ -3,10 +3,10 @@
        <div class="PageToolbarSection-section PageToolbarSection-left">
          
          {% if title == 'Playlist' %} 
-            <button type="button" onClick="callUrl('{{url_for('reimport', uuid=playlist_info["uuid"])}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
-               <i id="rescan-button" class="svg-fa fa fa-sync" aria-hidden="true"></i>
-               <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Rescan</div>
+            <button type="button" id="show-toolbar-popup" onClick="showRescanAlert();" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
+               <i id="rescan-button" id="show-toolbar-popup" class="svg-fa fa fa-sync" aria-hidden="true"></i>
+               <div id="show-toolbar-popup" class="PageToolbarButton-labelContainer">
+                  <div id="show-toolbar-popup" class="PageToolbarButton-label">Rescan</div>
                </div>
             </button>
          {% elif title == 'Overview' %} 
@@ -98,24 +98,24 @@
           {% endif %} 
           
           {% if ( page_type and page_type == 'overview' ) %} 
-          <button type="button" onClick="showView();" class="PageToolbarButton-toolbarButton Link-link Link-link">
-            <i class="svg-fa fa fa-eye" aria-hidden="true"></i>
-            <div class="PageToolbarButton-labelContainer">
-               <div class="PageToolbarButton-label">View</div>
+          <button type="button" id="show-toolbar-popup" onClick="showView();" class="PageToolbarButton-toolbarButton Link-link Link-link">
+            <i class="svg-fa fa fa-eye" id="show-toolbar-popup" aria-hidden="true"></i>
+            <div class="PageToolbarButton-labelContainer" id="show-toolbar-popup" >
+               <div class="PageToolbarButton-label" id="show-toolbar-popup" >View</div>
             </div>
          </button>
-         <button type="button" onClick="showFilter();" class="PageToolbarButton-toolbarButton Link-link Link-link">
-           <i class="svg-fa fa fa-filter" aria-hidden="true"></i>
-           <div class="PageToolbarButton-labelContainer">
-              <div class="PageToolbarButton-label">Filter</div>
+         <button type="button" id="show-toolbar-popup" onClick="showFilter();" class="PageToolbarButton-toolbarButton Link-link Link-link">
+           <i class="svg-fa fa fa-filter" id="show-toolbar-popup" aria-hidden="true"></i>
+           <div class="PageToolbarButton-labelContainer" id="show-toolbar-popup" >
+              <div class="PageToolbarButton-label" id="show-toolbar-popup" >Filter</div>
            </div>
         </button>
          {% endif %} 
          {% if sorting_dict %} 
-         <button type="button" onClick="showSort();" class="PageToolbarButton-toolbarButton Link-link Link-link">
-           <i class="svg-fa fa fa-sort" aria-hidden="true"></i>
-           <div class="PageToolbarButton-labelContainer">
-              <div class="PageToolbarButton-label">Sort</div>
+         <button type="button" id="show-toolbar-popup" onClick="showSort();" class="PageToolbarButton-toolbarButton Link-link Link-link">
+           <i class="svg-fa fa fa-sort" id="show-toolbar-popup" aria-hidden="true"></i>
+           <div class="PageToolbarButton-labelContainer" id="show-toolbar-popup" >
+              <div class="PageToolbarButton-label" id="show-toolbar-popup" >Sort</div>
            </div>
         </button>
         {% endif %} 
@@ -194,6 +194,50 @@
                <input type="text" id="filter-overview-text" onkeyup="filterOverview()" placeholder="Filter...">
          </div> 
       </div>
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <div class="SelectedMenuItem-item">
+            Show empty playlists<input type="checkbox" id="hide-empty-overview-check" onclick="filterOverview()" placeholder="Show empty"></input>
+         </div>   
+      </div>
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="clearFilters()">
+            <div class="SelectedMenuItem-item">
+               Clear filters
+            </div>
+         </button>  
+      </div>
    </div>
 </div>
 {% endif %} 
+
+{% if title == 'Playlist' %} 
+<div id="toolbar-root-rescan" class="nodisplay">
+   <div class="MenuContent-menuContent-rescan">
+      <span class="span-rescan">
+         This action will reimport this playlist from Spotify.
+      </span>
+      <span class="span-rescan">
+         This process may take some time.
+      </span>   
+      <span class="span-rescan">
+         Are you sure?
+      </span>   
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <button name="status" onClick="callUrl('{{url_for('reimport', uuid=playlist_info["uuid"])}}');" type="button" class="MenuItem-menuItem Link-link" onclick="clearFilters()">
+            <div class="SelectedMenuItem-item">
+               Confirm
+            </div>
+         </button>  
+      </div>
+      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="clearFilters()">
+            <div class="SelectedMenuItem-item">
+               Close
+            </div>
+         </button>  
+      </div>
+   </div>
+</div>
+{% endif %} 
+
+

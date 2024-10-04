@@ -578,17 +578,17 @@ def insert_playlist_relation(conn, subsonic_song_id,
     old_relation = select_playlist_relation(conn, subsonic_song_id,
                             subsonic_artist_id, spotify_song_uuid, pl_info_uuid)
     if old_relation is None:
-        new_uuid = str(uuid.uuid4().hex)
         stmt = insert(
             dbms.subsonic_spotify_relation).values(
-            uuid=new_uuid,
+            uuid=str(uuid.uuid4().hex),
             subsonic_song_id=subsonic_song_id,
             subsonic_artist_id=subsonic_artist_id,
             spotify_song_uuid=spotify_song_uuid,
             playlist_info_uuid=pl_info_uuid)
         stmt.compile()
         conn.execute(stmt)
-        return select_playlist_relation_by_uuid(new_uuid, conn_ext=conn)
+        return select_playlist_relation(conn, subsonic_song_id,
+                            subsonic_artist_id, spotify_song_uuid, pl_info_uuid)
     else:
         stmt = update(
             dbms.subsonic_spotify_relation).where(
@@ -599,7 +599,7 @@ def insert_playlist_relation(conn, subsonic_song_id,
             spotify_song_uuid=spotify_song_uuid)
         stmt.compile()
         conn.execute(stmt)
-        return select_playlist_relation_by_uuid(old_relation.uuid, conn_ext=conn)
+        return select_playlist_relation_by_uuid(old_relation.uuid)
 
 def select_playlist_info_by_subsonic_id(subsonic_playlist_uuid, conn_ext=None):
     """select spotify artists by uuid"""
@@ -657,10 +657,10 @@ def select_playlist_relation(conn, subsonic_song_id,
     return value
 
 
-def select_playlist_relation_by_uuid(uuid, conn_ext=None):
+def select_playlist_relation_by_uuid(uuid):
     value = None
     """select playlist relation"""
-    with conn_ext if conn_ext is not None else dbms.db_engine.connect() as conn:
+    with dbms.db_engine.connect() as conn:
         stmt = select(dbms.subsonic_spotify_relation.c.uuid,
             dbms.subsonic_spotify_relation.c.subsonic_song_id,
             dbms.subsonic_spotify_relation.c.subsonic_artist_id,
@@ -676,8 +676,6 @@ def select_playlist_relation_by_uuid(uuid, conn_ext=None):
         for row in records:
             value = row
         cursor.close()
-        if conn_ext is None:
-            conn.close()
 
     return value
 
@@ -713,20 +711,20 @@ def select_all_songs(conn_ext=None, missing_only=False, page=None,
                 'spotify_artist_ignored'),
             dbms.spotify_song.c.tms_insert)
         stmt = stmt.join(
-            dbms.playlist_info,
-            dbms.playlist_info.c.uuid == dbms.subsonic_spotify_relation.c.playlist_info_uuid)
+            dbms.subsonic_spotify_relation,
+            dbms.subsonic_spotify_relation.c.playlist_info_uuid == dbms.playlist_info.c.uuid, isouter=True)
         stmt = stmt.join(
             dbms.spotify_song,
-            dbms.subsonic_spotify_relation.c.spotify_song_uuid == dbms.spotify_song.c.uuid)
+            dbms.subsonic_spotify_relation.c.spotify_song_uuid == dbms.spotify_song.c.uuid, isouter=True)
         stmt = stmt.join(
             dbms.spotify_album,
-            dbms.spotify_song.c.album_uuid == dbms.spotify_album.c.uuid)
+            dbms.spotify_song.c.album_uuid == dbms.spotify_album.c.uuid, isouter=True)
         stmt = stmt.join(
             dbms.spotify_song_artist_relation,
-            dbms.spotify_song.c.uuid == dbms.spotify_song_artist_relation.c.song_uuid)
+            dbms.spotify_song.c.uuid == dbms.spotify_song_artist_relation.c.song_uuid, isouter=True)
         stmt = stmt.join(
             dbms.spotify_artist,
-            dbms.spotify_song_artist_relation.c.artist_uuid == dbms.spotify_artist.c.uuid)
+            dbms.spotify_song_artist_relation.c.artist_uuid == dbms.spotify_artist.c.uuid, isouter=True)
         if missing_only:
             stmt = stmt.where(
                 dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
@@ -786,11 +784,11 @@ def count_songs(conn, missing_only=False, search=None, song_uuid=None, playlist_
             group_concat(spotify_artist.name) AS spotify_artist_names,
             group_concat(spotify_artist.uuid) AS spotify_artist_uuids,
             spotify_song.tms_insert FROM playlist_info
-        JOIN subsonic_spotify_relation ON playlist_info.uuid = subsonic_spotify_relation.playlist_info_uuid
-        JOIN spotify_song ON subsonic_spotify_relation.spotify_song_uuid = spotify_song.uuid
-        JOIN spotify_album ON spotify_song.album_uuid = spotify_album.uuid
-        JOIN spotify_song_artist_relation ON spotify_song.uuid = spotify_song_artist_relation.song_uuid
-        JOIN spotify_artist ON spotify_song_artist_relation.artist_uuid = spotify_artist.uuid """
+        LEFT OUTER JOIN subsonic_spotify_relation ON playlist_info.uuid = subsonic_spotify_relation.playlist_info_uuid
+        LEFT OUTER JOIN spotify_song ON subsonic_spotify_relation.spotify_song_uuid = spotify_song.uuid
+        LEFT OUTER JOIN spotify_album ON spotify_song.album_uuid = spotify_album.uuid
+        LEFT OUTER JOIN spotify_song_artist_relation ON spotify_song.uuid = spotify_song_artist_relation.song_uuid
+        LEFT OUTER JOIN spotify_artist ON spotify_song_artist_relation.artist_uuid = spotify_artist.uuid """
     where = ""
     if missing_only:
         where = where + """ subsonic_spotify_relation.subsonic_song_id is null

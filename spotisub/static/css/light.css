@@ -573,6 +573,16 @@ a.article-active:hover {
     -moz-animation:spin 4s linear infinite;
     animation:spin 4s linear infinite;
 }
+.svg-fa-spin-loading {
+    overflow: visible;
+    box-sizing: content-box;
+    margin-top:0px;
+    margin-left:0px;
+    font-size:30px;
+    -webkit-animation:spin 4s linear infinite;
+    -moz-animation:spin 4s linear infinite;
+    animation:spin 4s linear infinite;
+}
 @-moz-keyframes spin { 
     100% { -moz-transform: rotate(360deg); } 
 }
@@ -656,7 +666,7 @@ progress[value]::-webkit-progress-value {
     line-height: 20px;
     position: absolute;
     max-height: 352px;
-    width: 200px;
+    width: 231px;
     will-change: transform;
     top: 108px;
     right: 20px;
@@ -664,6 +674,28 @@ progress[value]::-webkit-progress-value {
     
     border: 1px solid;
     border-color: black;
+}
+  
+.MenuContent-menuContent-rescan {
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    background-color: #6d7fcc;
+    line-height: 20px;
+    position: absolute;
+    max-height: 352px;
+    width: 400px;
+    will-change: transform;
+    top: 108px;
+    left: 270px;
+    color: white;
+    
+    border: 1px solid;
+    border-color: black;
+}
+
+.span-rescan{
+    padding: 10px;
 }
 
 .Scroller-vertical.Scroller-autoScroll {

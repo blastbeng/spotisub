@@ -560,11 +560,6 @@ def select_all_playlists(spotipy_helper, page=None,
                 spotify_playlist = get_spotify_object_from_cache(spotipy_helper.get_spotipy_client(), playlist["spotify_playlist_uri"])
                 if spotify_playlist is not None and "images" in spotify_playlist and spotify_playlist["images"] is not None and len(spotify_playlist["images"]) > 0:
                     playlist["image"] = spotify_playlist["images"][0]["url"]
-            
-            if playlist["type"] == constants.JOB_MR_ID:
-                playlist["subsonic_playlist_name"] = "My Recommendations " + playlist["import_arg"]
-            else:
-                playlist["subsonic_playlist_name"] = playlist["import_arg"]
 
         for plid in ids:
             playlist_search, has_been_deleted = get_playlist_from_cache(
