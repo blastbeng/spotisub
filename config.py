@@ -24,5 +24,7 @@ class Config(object):
 
     SCHEDULER_API_ENABLED = True
     SCHEDULER_API_PREFIX = "/api/v1/scheduler"
-    SCHEDULER_EXECUTORS = {"default": {"type": "threadpool", "max_workers": 10}}
-
+    SCHEDULER_EXECUTORS = {
+        "default": {
+            "type": "threadpool",
+            "max_workers": 10}}

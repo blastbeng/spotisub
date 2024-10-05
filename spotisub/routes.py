@@ -54,12 +54,14 @@ def after_request(response):
                      response.status)
     return response
 
+
 @spotisub.errorhandler(Exception)
 def all_exception_handler(error):
     utils.write_exception()
     return render_template('errors/404.html',
-        title='Error!',
-        errors=[repr(error)])
+                           title='Error!',
+                           errors=[repr(error)])
+
 
 blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
 api = Api(blueprint, doc='/docs/')
@@ -90,11 +92,15 @@ def get_json_message(message, is_ok):
 @spotisub.route('/overview/<int:page>/<int:limit>/<string:order>/')
 @spotisub.route('/overview/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def overview(page=1, limit=100, order='playlist_info.subsonic_playlist_name', asc=1):
+def overview(
+        page=1,
+        limit=100,
+        order='playlist_info.subsonic_playlist_name',
+        asc=1):
     title = 'Overview'
     spotipy_helper.get_secrets()
-    all_playlists, song_count = subsonic_helper.select_all_playlists(spotipy_helper,
-        page=page - 1, limit=limit, order=order, asc=(asc == 1))
+    all_playlists, song_count = subsonic_helper.select_all_playlists(
+        spotipy_helper, page=page - 1, limit=limit, order=order, asc=(asc == 1))
     total_pages = math.ceil(song_count / limit)
     pagination_array, prev_page, next_page = utils.get_pagination(
         page, total_pages)
@@ -123,10 +129,14 @@ def overview(page=1, limit=100, order='playlist_info.subsonic_playlist_name', as
 @spotisub.route('/overview_content/<int:page>/<int:limit>/<string:order>/')
 @spotisub.route('/overview_content/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
-def overview_content(page=1, limit=25, order='playlist_info.subsonic_playlist_name', asc=1):
+def overview_content(
+        page=1,
+        limit=25,
+        order='playlist_info.subsonic_playlist_name',
+        asc=1):
     spotipy_helper.get_secrets()
-    all_playlists, song_count = subsonic_helper.select_all_playlists(spotipy_helper,
-        page=page - 1, limit=limit, order=order, asc=(asc == 1))
+    all_playlists, song_count = subsonic_helper.select_all_playlists(
+        spotipy_helper, page=page - 1, limit=limit, order=order, asc=(asc == 1))
     sorting_dict = {}
     sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
     sorting_dict["Type"] = "playlist_info.type"
@@ -135,8 +145,7 @@ def overview_content(page=1, limit=25, order='playlist_info.subsonic_playlist_na
                            limit=limit,
                            result_size=song_count,
                            order=order,
-                           asc=asc)                               
-
+                           asc=asc)
 
 
 @spotisub.route('/playlist/')
@@ -147,7 +156,7 @@ def overview_content(page=1, limit=25, order='playlist_info.subsonic_playlist_na
 @spotisub.route('/playlist/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
 def playlist(uuid=None, page=1, limit=25,
-              order='spotify_song.title', asc=1):
+             order='spotify_song.title', asc=1):
     title = 'Playlist'
     playlists, song_count = subsonic_helper.select_all_songs(
         page=page - 1, limit=limit, order=order, asc=(asc == 1), playlist_uuid=uuid)
@@ -155,8 +164,9 @@ def playlist(uuid=None, page=1, limit=25,
     pagination_array, prev_page, next_page = utils.get_pagination(
         page, total_pages)
 
-    playlist_info = subsonic_helper.select_playlist_info_by_uuid(spotipy_helper, uuid)
-        
+    playlist_info = subsonic_helper.select_playlist_info_by_uuid(
+        spotipy_helper, uuid)
+
     sorting_dict = {}
     sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
     sorting_dict["Spotify Song Title"] = "spotify_song.title"
@@ -198,14 +208,13 @@ def playlists(missing_only=0, page=1, limit=25,
     total_pages = math.ceil(song_count / limit)
     pagination_array, prev_page, next_page = utils.get_pagination(
         page, total_pages)
-        
+
     sorting_dict = {}
     sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
     sorting_dict["Spotify Song Title"] = "spotify_song.title"
     sorting_dict["Spotify Artist"] = "spotify_artist.name"
     sorting_dict["Spotify Album"] = "spotify_album.name"
     sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
-
 
     return render_template('playlists.html',
                            title=title,
@@ -223,6 +232,7 @@ def playlists(missing_only=0, page=1, limit=25,
                            search=search,
                            sorting_dict=sorting_dict)
 
+
 @spotisub.route('/song/<string:uuid>/')
 @spotisub.route('/song/<string:uuid>/<int:page>/')
 @spotisub.route('/song/<string:uuid>/<int:page>/<int:limit>/')
@@ -233,12 +243,11 @@ def song(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
     title = 'Song'
     spotipy_helper.get_secrets()
     song1, songs, song_count = subsonic_helper.load_song(
-        uuid, spotipy_helper, page=page-1, limit=limit, order=order, asc=(asc == 1))
+        uuid, spotipy_helper, page=page - 1, limit=limit, order=order, asc=(asc == 1))
     total_pages = math.ceil(song_count / limit)
     pagination_array, prev_page, next_page = utils.get_pagination(
         page, total_pages)
 
-    
     sorting_dict = {}
     sorting_dict["Status"] = "subsonic_spotify_relation.subsonic_song_id"
     sorting_dict["Spotify Song Title"] = "spotify_song.title"
@@ -261,6 +270,7 @@ def song(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
                            order=order,
                            asc=asc,
                            sorting_dict=sorting_dict)
+
 
 @spotisub.route('/album/<string:uuid>/')
 @spotisub.route('/album/<string:uuid>/<int:page>/')
@@ -334,20 +344,23 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
                            order=order,
                            asc=asc,
                            sorting_dict=sorting_dict)
-                           
+
+
 @spotisub.route('/tasks')
 @login_required
 def tasks():
     title = 'Tasks'
     return render_template('tasks.html',
                            title=title)
-                           
+
+
 @spotisub.route('/logs')
 @login_required
 def logs():
     title = 'Logs'
     return render_template('logs.html',
                            title=title)
+
 
 @spotisub.route('/streamlog')
 @login_required
@@ -361,7 +374,7 @@ def streamlog():
     r = Response(response=generate(), status=200, mimetype="text/plain")
     r.headers["Content-Type"] = "text/plain; charset=utf-8"
     r.headers["Accept"] = "text/plain"
-    return r           
+    return r
 
 
 @spotisub.route('/poll_playlist/<string:uuid>/')
@@ -374,13 +387,22 @@ def poll_playlist(uuid=None):
         return get_response_json(get_json_message(
             "Job with uuid " + uuid + " is running", True), 204)
 
+
 @spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')
 @login_required
-def ignore(type=None, uuid=None, value = None):
+def ignore(type=None, uuid=None, value=None):
     """Set ignored value to an object"""
-    subsonic_helper.set_ignore(type,uuid,value)
-    return get_response_json(get_json_message(
-        "Setting ignored to " +str(value)+ " to object with uuid " + uuid +", type: " + type, True), 200)
+    subsonic_helper.set_ignore(type, uuid, value)
+    return get_response_json(
+        get_json_message(
+            "Setting ignored to " +
+            str(value) +
+            " to object with uuid " +
+            uuid +
+            ", type: " +
+            type,
+            True),
+        200)
 
 
 @spotisub.route('/reimport/<string:uuid>/')
@@ -390,6 +412,7 @@ def reimport(uuid=None):
     generator.reimport(uuid)
     return get_response_json(get_json_message(
         "Reimporting playlist with uuid " + uuid, True), 200)
+
 
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
@@ -427,7 +450,6 @@ def register():
         'register.html', title='Create Spotisub credentials', form=form)
 
 
-
 @spotisub.route('/logout')
 @login_required
 def logout():
@@ -450,13 +472,13 @@ class ArtistRecommendationsClass(Resource):
         artist_names = subsonic_helper.get_artists_array_names()
         if len(artist_names) is None:
             return get_response_json(
-                    get_json_message(
-                        "No artists found in your library",
-                        True),
-                    206)
+                get_json_message(
+                    "No artists found in your library",
+                    True),
+                206)
         threading.Thread(
             target=lambda: scheduler
-                .run_job(constants.JOB_AR_ID)).start()
+            .run_job(constants.JOB_AR_ID)).start()
         return get_response_json(
             get_json_message(
                 "Generating a random artiist recommendations playlist",
@@ -475,14 +497,14 @@ class ArtistTopTracksClass(Resource):
         artist_names = subsonic_helper.get_artists_array_names()
         if len(artist_names) is None:
             return get_response_json(
-                    get_json_message(
-                        "No artists found in your library",
-                        True),
-                    206)
-        
+                get_json_message(
+                    "No artists found in your library",
+                    True),
+                206)
+
         threading.Thread(
             target=lambda: scheduler
-                .run_job(constants.JOB_ATT_ID)).start()
+            .run_job(constants.JOB_ATT_ID)).start()
         return get_response_json(
             get_json_message(
                 "Generating a random artist top tracks playlist",
@@ -500,7 +522,7 @@ class RecommendationsClass(Resource):
         subsonic_helper.check_pysonic_connection()
         threading.Thread(
             target=lambda: scheduler
-                .run_job(constants.JOB_MR_ID)).start()
+            .run_job(constants.JOB_MR_ID)).start()
         return get_response_json(
             get_json_message(
                 "Generating a reccommendation playlist",
@@ -522,7 +544,7 @@ class UserPlaylistsClass(Resource):
         count = generator.count_user_playlists(0)
         threading.Thread(
             target=lambda: scheduler
-                .run_job(constants.JOB_UP_ID)).start()
+            .run_job(constants.JOB_UP_ID)).start()
         return get_response_json(get_json_message(
             "Importing a random playlist", True), 200)
 
@@ -537,7 +559,7 @@ class SavedTracksClass(Resource):
         subsonic_helper.check_pysonic_connection()
         threading.Thread(
             target=lambda: scheduler
-                .run_job(constants.JOB_ST_ID)).start()
+            .run_job(constants.JOB_ST_ID)).start()
         return get_response_json(get_json_message(
             "Importing your saved tracks", True), 200)
 
@@ -552,5 +574,3 @@ class Healthcheck(Resource):
     def get(self):
         """Healthcheck endpoint"""
         return "Ok!"
-
-
