@@ -241,7 +241,7 @@ def artist_top_tracks_run(uuid):
             playlist_info["spotify_uri"] = artist["uri"]
             playlist_info["type"] = constants.JOB_ATT_ID
             logging.info('(%s) Searching top tracks for: %s',
-                         str(threading.current_thread().ident), artist_name)
+                         str(threading.current_thread().ident), playlist_info_db.import_arg)
             sp = spotipy_helper.get_spotipy_client()
             artist_top = sp.artist_top_tracks(artists_uri[artist_name])
             subsonic_helper.write_playlist(sp, playlist_info, artist_top)
