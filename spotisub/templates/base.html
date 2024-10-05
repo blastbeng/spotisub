@@ -40,6 +40,9 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% if title == "Overview" %}
         <script src="{{ url_for('static', filename='js/overview.js') }}"></script>
+        <script>
+            filterOverview()
+        </script>
     {% endif %}
     {% if title == "Playlist" %}
         <script src="{{ url_for('static', filename='js/playlist.js') }}"></script>
