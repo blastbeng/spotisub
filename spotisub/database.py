@@ -330,8 +330,9 @@ def create_playlist(playlist_info):
 def insert_playlist_type(conn, playlist_info):
     """insert playlist into database"""
     playlist_info_db = None
-    playlist_info_db = select_playlist_info_by_uuid_with_conn(
-        conn, playlist_info["uuid"])
+    if "uuid" in playlist_info and playlist_info["uuid"] is not None:
+        playlist_info_db = select_playlist_info_by_uuid_with_conn(
+            conn, playlist_info["uuid"])
     if playlist_info_db is None and "name" in playlist_info and playlist_info["name"] is not None:
         playlist_info_db = select_playlist_info_by_name_with_conn(
             conn, playlist_info["name"])
