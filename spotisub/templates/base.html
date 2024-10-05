@@ -41,21 +41,27 @@
     {% if title == "Overview" %}
         <script src="{{ url_for('static', filename='js/overview.js') }}"></script>
         <script>
-            filterOverview()
+            $( document ).ready(function() {
+                filterOverview()
+            });
         </script>
     {% endif %}
     {% if title == "Playlist" %}
         <script src="{{ url_for('static', filename='js/playlist.js') }}"></script>
         <script>
-            pollPlaylistJob('{{url_for("poll_playlist", uuid=playlist_info["uuid"])}}')
-            setInterval(function(){pollPlaylistJob('{{url_for("poll_playlist", uuid=playlist_info["uuid"])}}')}, 5000);
+            $( document ).ready(function() {
+                pollPlaylistJob('{{url_for("poll_playlist", uuid=playlist_info["uuid"])}}')
+                setInterval(function(){pollPlaylistJob('{{url_for("poll_playlist", uuid=playlist_info["uuid"])}}')}, 5000);
+            });
         </script>
     {% endif %}
     {% if title == "Logs" %}
         <script src="{{ url_for('static', filename='js/logs.js') }}"></script>
         <script>
-            pollLogsJob('{{url_for("streamlog")}}')
-            setInterval(function(){pollLogsJob('{{url_for("streamlog")}}')}, 1000);
+            $( document ).ready(function() {
+                pollLogsJob('{{url_for("streamlog")}}')
+                setInterval(function(){pollLogsJob('{{url_for("streamlog")}}')}, 1000);
+            });
         </script>
         <script>
         </script>

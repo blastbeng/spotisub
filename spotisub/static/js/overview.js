@@ -132,8 +132,8 @@ function filterOverview() {
                 }
             }
             if (td.id == "table-progress") {
-                if (td.children != null && td.children.item.length > 0){
-                    if (td.children[0].children.length > 0){
+                if (td.children != null && td.children != 'undefined' && td.children.item.length > 0){
+                    if (td.children[0] != null && td.children[0] !== 'undefined' && td.children[0].children != null && td.children[0].children !== 'undefined' && td.children[0].children.length > 0){
                         var progress_bar = td.children[0].children[1]
                         txtValue = td.textContent || td.innerText;
                         if (progress_bar.value == 0) {
