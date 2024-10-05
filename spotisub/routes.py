@@ -174,10 +174,10 @@ def playlist(uuid=None, page=1, limit=25,
     sorting_dict["Spotify Album"] = "spotify_album.name"
     sorting_dict["Playlist Name"] = "playlist_info.subsonic_playlist_name"
 
-    return render_template('playlists.html',
+    return render_template('playlist.html',
                            title=title,
                            playlists=playlists,
-                           missing_only=0,
+                           uuid=uuid,
                            pagination_array=pagination_array,
                            prev_page=prev_page,
                            next_page=next_page,
