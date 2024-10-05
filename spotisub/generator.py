@@ -243,7 +243,7 @@ def artist_top_tracks_run(uuid):
             logging.info('(%s) Searching top tracks for: %s',
                          str(threading.current_thread().ident), playlist_info_db.import_arg)
             sp = spotipy_helper.get_spotipy_client()
-            artist_top = sp.artist_top_tracks(artists_uri[artist_name])
+            artist_top = sp.artist_top_tracks(artist["uri"])
             subsonic_helper.write_playlist(sp, playlist_info, artist_top)
         else:
             logging.warning('(%s) Artist: %s Not found!', str(
