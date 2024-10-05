@@ -424,6 +424,7 @@ def get_user_saved_tracks_run(uuid):
         playlist_info["type"] = constants.JOB_ST_ID
         playlist_info["import_arg"] = ""
         sp = spotipy_helper.get_spotipy_client()
+        result = dict({'tracks': []}
         result = get_user_saved_tracks_playlist(result)
         subsonic_helper.write_playlist(sp, playlist_info, result)
 
