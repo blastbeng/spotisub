@@ -347,7 +347,7 @@ def insert_playlist_type(conn, playlist_info):
             subsonic_playlist_id=subsonic_playlist_id_info,
             subsonic_playlist_name=playlist_info["name"],
             import_arg=playlist_info["import_arg"],
-            prefix=playlist_info["prefix"])
+            prefix=playlist_info["prefix"].replace( "\"", ""))
         stmt.compile()
         conn.execute(stmt)
         logging.info(
@@ -363,7 +363,7 @@ def insert_playlist_type(conn, playlist_info):
             type=playlist_info["type"],
             subsonic_playlist_id=subsonic_playlist_id_info,
             subsonic_playlist_name=playlist_info["name"],
-            prefix=playlist_info["prefix"])
+            prefix=playlist_info["prefix"].replace( "\"", ""))
         stmt.compile()
         conn.execute(stmt)
         return select_playlist_info_by_uuid_with_conn(

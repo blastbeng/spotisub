@@ -194,10 +194,7 @@ def add_missing_values_to_track(sp, track):
 def generate_playlist(playlist_info):
     """generate empty playlist if not exists"""
     playlist_info["prefix"] = os.environ.get(
-        constants.PLAYLIST_PREFIX,
-        constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
-        "\"",
-            "")
+        constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace( "\"", "")
     return database.create_playlist(playlist_info)
 
 
@@ -208,17 +205,17 @@ def write_playlist(sp, playlist_info, results):
             constants.PLAYLIST_PREFIX,
             constants.PLAYLIST_PREFIX_DEFAULT_VALUE)
         playlist_id = get_playlist_id_by_name(
-            playlist_info["prefix"] + playlist_info["name"])
+            playlist_info["prefix"].replace( "\"", "") + playlist_info["name"])
         song_ids = []
         old_song_ids = []
         if playlist_id is None:
             check_pysonic_connection().createPlaylist(
-                name=playlist_info["prefix"] + playlist_info["name"], songIds=[])
+                name=playlist_info["prefix"].replace( "\"", "") + playlist_info["name"], songIds=[])
             logging.info(
                 '(%s) Creating playlist %s', str(
                     threading.current_thread().ident), playlist_info["name"])
             playlist_id = get_playlist_id_by_name(
-                playlist_info["prefix"] + playlist_info["name"])
+                playlist_info["prefix"].replace( "\"", "") + playlist_info["name"])
             database.delete_playlist_relation_by_id(playlist_id)
         else:
             old_song_ids = get_playlist_songs_ids_by_id(playlist_id)
