@@ -669,7 +669,7 @@ progress[value]::-webkit-progress-value {
     width: 231px;
     will-change: transform;
     top: 108px;
-    right: 20px;
+    right: 1%;
     color: white;
     
     border: 1px solid;
@@ -687,7 +687,7 @@ progress[value]::-webkit-progress-value {
     width: 300px;
     will-change: transform;
     top: 108px;
-    left: 270px;
+    left: 5%;
     color: white;
     
     border: 1px solid;

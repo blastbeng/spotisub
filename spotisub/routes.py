@@ -385,7 +385,17 @@ def poll_playlist(uuid=None):
             "Job with uuid " + uuid + " is running", True), 200)
     else:
         return get_response_json(get_json_message(
-            "Job with uuid " + uuid + " is running", True), 204)
+            "Job with uuid " + uuid + " is not running", True), 204)
+
+@spotisub.route('/poll_overview/')
+@login_required
+def poll_overview():
+    if generator.check_thread_running_by_name("reimport_all"):
+        return get_response_json(get_json_message(
+            "Job reimport_all is running", True), 200)
+    else:
+        return get_response_json(get_json_message(
+            "Job reimport_all is not running", True), 204)
 
 
 @spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')
@@ -412,6 +422,14 @@ def reimport(uuid=None):
     generator.reimport(uuid)
     return get_response_json(get_json_message(
         "Reimporting playlist with uuid " + uuid, True), 200)
+
+@spotisub.route('/reimport_all/')
+@login_required
+def reimport_all(uuid=None):
+    """Reimport all playlists"""
+    generator.reimport_all()
+    return get_response_json(get_json_message(
+        "Reimporting all playlists", True), 200)
 
 
 @spotisub.route('/login', methods=['GET', 'POST'])

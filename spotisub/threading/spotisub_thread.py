@@ -1,10 +1,8 @@
 import threading
 import ctypes
-import time
 import logging
 
-
-class SpotisubThread(threading.Thread):
+class thread_with_trace(threading.Thread):
 
     def get_id(self):
         if hasattr(self, '_thread_id'):
@@ -13,7 +11,7 @@ class SpotisubThread(threading.Thread):
             if thread is self:
                 return id
 
-    def raise_exception(self):
+    def kill(self):
         thread_id = self.get_id()
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
             ctypes.c_long(thread_id), ctypes.py_object(SystemExit))

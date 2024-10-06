@@ -2,20 +2,13 @@
     <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
        <div class="PageToolbarSection-section PageToolbarSection-left">
          
-         {% if title == 'Playlist' %} 
+         {% if title == 'Playlist' or title == 'Overview' %} 
             <button type="button" id="show-toolbar-popup" onClick="showRescanAlert();" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
                <i id="rescan-button" class="svg-fa fa fa-sync" aria-hidden="true"></i>
                <div id="show-toolbar-popup" class="PageToolbarButton-labelContainer">
                   <div id="show-toolbar-popup" class="PageToolbarButton-label">Rescan</div>
                </div>
             </button>
-         {% elif title == 'Overview' %} 
-            <button type="button" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">       
-               <i id="rescan-button" class="svg-fa fa fa-sync" aria-hidden="true"></i>
-                <div class="PageToolbarButton-labelContainer">
-                   <div class="PageToolbarButton-label">Rescan</div>
-                </div>
-             </button>
          {% endif %}
           {% if title == 'Playlist' %} 
             {% if playlist_info["ignored"] == 1 %} 
@@ -222,14 +215,18 @@
 </div>
 {% endif %} 
 
-{% if title == 'Playlist' %} 
+{% if title == 'Playlist' or title == 'Overview' %} 
 <div id="toolbar-root-rescan" class="nodisplay">
    <div class="MenuContent-menuContent-rescan">
       <span class="span-rescan">
-         This action will reimport this playlist from Spotify.
+         {% if title == 'Playlist' %} 
+         This action will rescan and reimport this playlist from Spotify.
+         {% elif title == 'Overview' %} 
+         This action will rescan and reimport all the playlists from Spotify.
+         {% endif %} 
       </span>
       <span class="span-rescan">
-         This process may take some time.
+         This process may take a lot of time.
       </span>   
       <span class="span-rescan">
          Are you sure?
@@ -240,7 +237,11 @@
                &nbsp;&nbsp;Close&nbsp;&nbsp;
             </div>
          </button>  
+         {% if title == 'Playlist' %} 
          <button name="status" onClick="closeRescanAlert();callUrl('{{url_for('reimport', uuid=playlist_info["uuid"])}}');" type="button" class="button-alert-confirm" onclick="clearFilters()">
+         {% elif title == 'Overview' %} 
+         <button name="status" onClick="closeRescanAlert();callUrl('{{url_for('reimport_all')}}');" type="button" class="button-alert-confirm" onclick="clearFilters()">
+         {% endif %} 
             <div class="SelectedMenuItem-item">
                Confirm
             </div>

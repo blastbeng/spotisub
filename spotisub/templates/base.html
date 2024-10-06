@@ -42,6 +42,7 @@
         <script src="{{ url_for('static', filename='js/overview.js') }}"></script>
         <script>
             $( document ).ready(function() {
+                pollOverviewJob('{{url_for("poll_overview")}}')
                 filterOverview()
             });
         </script>

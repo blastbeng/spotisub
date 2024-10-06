@@ -13,7 +13,7 @@ from spotisub import constants
 from spotisub import database
 from spotisub.helpers import spotipy_helper
 from spotisub.helpers import subsonic_helper
-from spotisub.threading.spotisub_thread import SpotisubThread
+from spotisub.threading.spotisub_thread import thread_with_trace
 
 
 scheduler = APScheduler()
@@ -219,15 +219,6 @@ def init_user_playlists():
 
 
 def artist_top_tracks(uuid):
-    """get user saved tracks"""
-    thread = SpotisubThread(
-        target=lambda: artist_top_tracks_run(uuid),
-        name=constants.JOB_ATT_ID + "_" + uuid)
-    thread.start()
-    thread.join()
-
-
-def artist_top_tracks_run(uuid):
     """artist top tracks"""
     playlist_info_db = database.select_playlist_info_by_uuid(uuid)
     if playlist_info_db is not None and playlist_info_db.uuid is not None:
@@ -273,11 +264,14 @@ def artist_top_tracks_run(uuid):
 
 def show_recommendations_for_artist(uuid):
     """get user saved tracks"""
-    thread = SpotisubThread(
-        target=lambda: show_recommendations_for_artist_run(uuid),
-        name=constants.JOB_AR_ID + "_" + uuid)
-    thread.start()
-    thread.join()
+    if not check_thread_running_by_name("reimport_all"):
+        thread = thread_with_trace(
+            target=lambda: show_recommendations_for_artist_run(uuid),
+            name=constants.JOB_AR_ID + "_" + uuid)
+        thread.start()
+        thread.join()
+    else:
+        logging.info("Skipping thread execution becase a full reimport process is running")
 
 
 def show_recommendations_for_artist_run(uuid):
@@ -331,11 +325,14 @@ def show_recommendations_for_artist_run(uuid):
 
 def my_recommendations(uuid):
     """get user saved tracks"""
-    thread = SpotisubThread(
-        target=lambda: my_recommendations_run(uuid),
-        name=constants.JOB_MR_ID + "_" + uuid)
-    thread.start()
-    thread.join()
+    if not check_thread_running_by_name("reimport_all"):
+        thread = thread_with_trace(
+            target=lambda: my_recommendations_run(uuid),
+            name=constants.JOB_MR_ID + "_" + uuid)
+        thread.start()
+        thread.join()
+    else:
+        logging.info("Skipping thread execution becase a full reimport process is running")
 
 
 def my_recommendations_run(uuid):
@@ -406,11 +403,14 @@ def my_recommendations_run(uuid):
 
 def get_user_saved_tracks(uuid):
     """get user saved tracks"""
-    thread = SpotisubThread(
-        target=lambda: get_user_saved_tracks_run(uuid),
-        name=constants.JOB_ST_ID + "_" + uuid)
-    thread.start()
-    thread.join()
+    if not check_thread_running_by_name("reimport_all"):
+        thread = thread_with_trace(
+            target=lambda: get_user_saved_tracks_run(uuid),
+            name=constants.JOB_ST_ID + "_" + uuid)
+        thread.start()
+        thread.join()
+    else:
+        logging.info("Skipping thread execution becase a full reimport process is running")
 
 
 def get_user_saved_tracks_run(uuid):
@@ -435,11 +435,14 @@ def get_user_saved_tracks_run(uuid):
 
 def get_user_playlists(uuid):
     """get user saved tracks"""
-    thread = SpotisubThread(
-        target=lambda: get_user_playlists_run(uuid),
-        name=constants.JOB_UP_ID + "_" + uuid)
-    thread.start()
-    thread.join()
+    if not check_thread_running_by_name("reimport_all"):
+        thread = thread_with_trace(
+            target=lambda: get_user_playlists_run(uuid),
+            name=constants.JOB_UP_ID + "_" + uuid)
+        thread.start()
+        thread.join()
+    else:
+        logging.info("Skipping thread execution becase a full reimport process is running")
 
 
 def get_user_playlists_run(uuid, offset=0):
@@ -600,7 +603,7 @@ def reimport(uuid):
     for thread in threading.enumerate():
         if (thread.name == playlist_info.type or thread.name.startswith(
                 playlist_info.type)) and thread.is_alive():
-            thread.raise_exception()
+            thread.kill()
             timedelta_sec = timedelta(seconds=30)
             old_uuid = thread.name.split("_")[-1]
             break
@@ -690,6 +693,61 @@ def scan_library():
     scan_artists_recommendations()
     scan_artists_top_tracks()
     scan_user_playlists()
+
+def reimport_all():
+    """Used to reimport everything"""
+    if not check_thread_running_by_name("reimport_all"):
+        thread = thread_with_trace(
+            target=lambda: reimport_all_thread(),
+            name="reimport_all").start()
+
+def check_thread_running_by_name(name):
+    for thread in threading.enumerate():
+        if thread.name == name and thread.is_alive():
+            return True
+    return False
+
+def reimport_all_thread():
+    """Used to reimport everything"""
+    import_all_user_saved_tracks()
+    import_all_my_recommendations()
+    import_all_user_playlists()
+    import_all_artists_recommendations()
+    import_all_artists_top_tracks()
+
+def import_all_user_saved_tracks():
+    playlist_infos = database.select_playlist_info_by_type(
+            constants.JOB_ST_ID)
+    if len(playlist_infos) > 0:
+        get_user_saved_tracks_run(playlist_infos[0].uuid)
+
+def import_all_my_recommendations():
+    playlist_infos = database.select_playlist_info_by_type(
+            constants.JOB_MR_ID)
+    if len(playlist_infos) > 0:
+        for playlist_info in playlist_infos:
+            my_recommendations_run(playlist_info.uuid)
+
+def import_all_artists_recommendations():
+    playlist_infos = database.select_playlist_info_by_type(
+            constants.JOB_AR_ID)
+    if len(playlist_infos) > 0:
+        for playlist_info in playlist_infos:
+            show_recommendations_for_artist_run(playlist_info.uuid)
+
+def import_all_artists_top_tracks():
+    playlist_infos = database.select_playlist_info_by_type(
+            constants.JOB_ATT_ID)
+    if len(playlist_infos) > 0:
+        for playlist_info in playlist_infos:
+            artist_top_tracks_run(playlist_info.uuid)
+
+def import_all_user_playlists():
+    playlist_infos = database.select_playlist_info_by_type(
+            constants.JOB_UP_ID)
+    if len(playlist_infos) > 0:
+        for playlist_info in playlist_infos:
+            get_user_playlists_run(playlist_info.uuid)
 
 
 scheduler.add_job(

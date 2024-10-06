@@ -78,3 +78,21 @@ window.addEventListener('click', function(e){
         
     }
 });
+
+function showRescanAlert(){
+    var element = document.getElementById("toolbar-root-rescan");
+    if ( element.classList.contains("nodisplay") ) {
+        element.classList.remove("nodisplay");
+    } else {
+        element.classList.add("nodisplay");
+    }
+    hideToolbarElement("toolbar-root-sort")
+}
+
+function closeRescanAlert(){
+    var element = document.getElementById("toolbar-root-rescan");
+    if ( !element.classList.contains("nodisplay") ) {
+        element.classList.add("nodisplay");
+    }
+    hideToolbarElement("toolbar-root-sort")
+}
