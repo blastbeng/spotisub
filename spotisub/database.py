@@ -563,7 +563,7 @@ def delete_playlist_relation_by_id(playlist_id: str):
             conn, playlist_id)
         if pl_info is not None:
             stmt1 = delete(dbms.subsonic_spotify_relation).where(
-                dbms.subsonic_spotify_relation.c.playlist_info_uuid == pl_info)
+                dbms.subsonic_spotify_relation.c.playlist_info_uuid == pl_info.uuid)
             stmt1.compile()
             stmt2 = delete(dbms.playlist_info).where(
                 dbms.playlist_info.c.subsonic_playlist_id == playlist_id)
