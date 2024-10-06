@@ -191,18 +191,30 @@
    <div class="MenuContent-menuContent">
       <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
          <div class="SelectedMenuItem-item">
-               <input type="text" id="filter-overview-text" onkeyup="filterOverview()" placeholder="Filter...">
+               <input type="text" id="filter-overview-text" onkeyup="filterOverview()" placeholder="Filter by name...">
          </div> 
       </div>
       <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
          <div class="SelectedMenuItem-item">
-            Show empty playlists<input type="checkbox" id="hide-empty-overview-check" onclick="filterOverview()" placeholder="Show empty" checked></input>
+            Hide empty playlists<input type="checkbox" id="hide-empty-overview-check" onclick="filterOverview()" placeholder="Show empty" checked></input>
          </div>   
       </div>
       <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="clearFilters()">
+         <div class="SelectedMenuItem-item">
+            <select name="typeFilter" id="filter-type-overview-select" class="filterType">
+               <option value="">Filter by type...</option>
+               <option value="Artist Recommendations">Artist Recommendations</option>
+               <option value="Artist Top Tracks">Artist Top Tracks</option>
+               <option value="My Recommendations">My Recommendations</option>
+               <option value="Saved Tracks">Saved Tracks</option>
+               <option value="User Playlists">User Playlists</option>
+            </select>
+         </div>   
+      </div>
+      <div class="MenuContent-scroller-buttons Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+         <button name="status" type="button" class="button-alert-close" onclick="resetFilters()">
             <div class="SelectedMenuItem-item">
-               Clear filters
+               Reset filters
             </div>
          </button>  
       </div>

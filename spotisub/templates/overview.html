@@ -45,21 +45,6 @@
                 </thead>
                 <tbody id="overview_data">
                     {% include 'overview_content.html'%}
-                    {% if result_size > limit %}
-                    <tr id="loading-more">
-                        <td id="table-image"></td>
-                        <td id="table-href"><i class="svg-fa-spin-loading fa fa-sync" aria-hidden="true"></i>
-                            <div class="PageToolbarButton-labelContainer">
-                               <div class="PageToolbarButton-label">Loading More...</div>
-                            </div>
-                        </td>
-                        <td id="table-type"></td>
-                        <td id="table-spotify-link">
-                        </td>
-                        <td id="table-progress">
-                        </td>
-                    </tr>
-                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -72,6 +57,8 @@
         <ul class="pagination footer">
             <li>
                 <span class="text-limit">Found {{ result_size }} Playlists</span>
+                <br />
+                <span class="text-limit">Some results may be hidden by filters</span>
             </li>
         </ul>
 

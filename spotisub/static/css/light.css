@@ -698,6 +698,10 @@ progress[value]::-webkit-progress-value {
     padding: 10px;
 }
 
+.filterType{
+    width:100%;
+}
+
 .Scroller-vertical.Scroller-autoScroll {
     overflow-y: auto;
 }

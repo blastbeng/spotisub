@@ -94,7 +94,7 @@ def get_json_message(message, is_ok):
 @login_required
 def overview(
         page=1,
-        limit=100,
+        limit=25,
         order='playlist_info.subsonic_playlist_name',
         asc=1):
     title = 'Overview'

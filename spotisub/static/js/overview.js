@@ -1,8 +1,6 @@
 $(window).scroll(function() {
     if($(window).scrollTop() == $(document).height() - $(window).height()) {
-
         updateData(false);
-        
     }
 });  
 
@@ -20,34 +18,39 @@ function updateData(fromFilter){
 
             let xhr = new XMLHttpRequest();
 
-            page.value = parseInt(parseInt(row_len) / limit) + 1;
+            let old_page_value = parseInt(page.value);
+            let new_page_value = parseInt((parseInt(row_len)+1) / limit) + 1;
 
-            let url = overview_url + page.value + "/" + limit + "/" + order + "/" + asc + "/"
-            xhr.open("GET", url, true);
+            if (old_page_value != new_page_value){
 
-            xhr.onreadystatechange = function () {
-                if (this.readyState == 4 && this.status == 200) {
-                    var table_resp = document.createElement( 'tbody' );
-                    table_resp.innerHTML = this.responseText;
-                    var update = false;
-                    for (var i = 0, row; row = table_resp.rows[i]; i++) {
-                        var tr = $('#' + row["id"]);
-                        if (tr.length == 0) {
-                            //table_data.append(row);
-                            var row_idx = ((parseInt(limit) * (parseInt(page.value) - 1))) + i;
-                            $(row.outerHTML).insertAfter($("#overview_data > tr").eq(row_idx-1));
-                            update = true;
+                page.value = new_page_value;
+
+                let url = overview_url + new_page_value + "/" + limit + "/" + order + "/" + asc + "/"
+                xhr.open("GET", url, true);
+
+                xhr.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        var table_resp = document.createElement( 'tbody' );
+                        table_resp.innerHTML = this.responseText;
+                        var update = false;
+                        for (var i = 0, row; row = table_resp.rows[i]; i++) {
+                            var tr = $('#' + row["id"]);
+                            if (tr.length == 0) {
+                                //table_data.append(row);
+                                var row_idx = ((parseInt(limit) * (parseInt(page.value) - 1))) + i;
+                                $(row.outerHTML).insertAfter($("#overview_data > tr").eq(row_idx-1));
+                                update = true;
+                            }
                         }
-                    }
-                    if (update && fromFilter) {
-                        filterOverview();
-                    }
-                } 
+                        if (update && fromFilter) {
+                            filterOverview();
+                        } else if($(window).scrollTop() == $(document).height() - $(window).height()) {
+                            updateData(false);
+                        }
+                    } 
+                }
+                xhr.send();
             }
-            xhr.send();
-        } else {
-            loading_elm = document.getElementById("loading-more");
-            loading_elm.style.display = "none";
         }
 
 }
@@ -112,6 +115,8 @@ function filterOverview() {
     var input, filter, table, tr, td, i, txtValue;
     input = document.getElementById("filter-overview-text");
     hide_empty = document.getElementById("hide-empty-overview-check");
+    select = document.getElementById("filter-type-overview-select");
+    filter_type = select.value.toUpperCase();
     filter = input.value.toUpperCase();
     table = document.getElementById("overview_data");
     tr = table.getElementsByTagName("tr");
@@ -123,12 +128,20 @@ function filterOverview() {
         var hide_progress = false;
         for (j = 0; j < tr[i].children.length; j++) {
             var td = tr[i].children[j]
-            if (td.id == "table-type" || td.id == "table-href") {
+            if (td.id == "table-href") {
                 txtValue = td.textContent || td.innerText;
                 if (txtValue.toUpperCase().indexOf(filter) > -1) {
                     hide_text = false;
                 } else {
                     hide_text = true;
+                }
+            }
+            if (td.id == "table-type") {
+                txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter_type) > -1) {
+                    hide_type = false;
+                } else {
+                    hide_type = true;
                 }
             }
             if (td.id == "table-progress") {
@@ -147,10 +160,10 @@ function filterOverview() {
                 }
             }
         }
-        if (hide_progress || hide_text) {
+        if (hide_progress || hide_text || hide_type) {
             tr[i].style.display = "none";
             hidden = true;
-        } else if(!hide_progress && !hide_text) {
+        } else if(!hide_progress && !hide_text && !hide_type) {
             tr[i].style.display = "";
         }
     }
@@ -159,10 +172,12 @@ function filterOverview() {
     }
 }
 
-function clearFilters(){
+function resetFilters(){
     input = document.getElementById("filter-overview-text");
     input.value = "";
     hide_empty = document.getElementById("hide-empty-overview-check");
-    hide_empty.checked = false;
+    hide_empty.checked = true;
+    hide_empty = document.getElementById("filter-type-overview-select");
+    hide_empty.value = "";
     filterOverview();
 }

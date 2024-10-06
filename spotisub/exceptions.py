@@ -10,8 +10,8 @@ class SpotifyDataException(Exception):
 
 
 class SubsonicOfflineException(Exception):
-    "Subsonic is Offline"
+    "Can't reach Subsonic is your server Offline?"
 
 
 class SubsonicDataException(Exception):
-    "Subsonic is Offline"
+    "Error retrieving data from Subsonic"
