@@ -6,7 +6,6 @@ import threading
 import json
 import math
 import subprocess
-import select
 from threading import Lock
 from time import sleep
 from time import strftime
@@ -421,16 +420,7 @@ def poll_tasks():
             socketio.sleep(5)
 
 def poll_log():
-    path = os.path.abspath(os.curdir) + '/cache/spotisub.log'
-    f = subprocess.Popen(['tail','-F',path],\
-        stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    p = select.poll()
-    p.register(f.stdout)
-    with spotisub.test_request_context('/'):
-        while True:
-            if p.poll(1):
-                emit('log_response', {'data': f.stdout.readline().decode("utf-8"), 'status': 1}, namespace='/', broadcast=True)
-            sleep(0.1)
+    return "work in progress"
 
 
 @spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')
