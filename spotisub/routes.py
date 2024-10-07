@@ -5,6 +5,7 @@ import random
 import threading
 import json
 import math
+from threading import Lock
 from time import sleep
 from time import strftime
 from requests import ConnectionError
@@ -23,6 +24,7 @@ from flask_login import current_user
 from flask_login import login_user
 from flask_login import logout_user
 from flask_login import login_required
+from flask_socketio import SocketIO, emit, join_room, leave_room, close_room, rooms, disconnect
 from pygtail import Pygtail
 from spotipy.exceptions import SpotifyException
 from spotisub import spotisub
@@ -40,6 +42,9 @@ from spotisub.generator import spotipy_helper
 from spotisub.exceptions import SubsonicOfflineException
 from spotisub.exceptions import SpotifyApiException
 
+reimport_all_poll_thread = None
+playlist_poll_thread = None
+thread_lock = Lock()
 
 @spotisub.after_request
 def after_request(response):
@@ -68,6 +73,9 @@ blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
 api = Api(blueprint, doc='/docs/')
 spotisub.register_blueprint(blueprint)
 
+socketio = SocketIO(spotisub, async_mode=None)
+thread = None
+thread_lock = Lock()
 
 def get_response_json(data, status):
     """Generates json response"""
@@ -375,25 +383,36 @@ def streamlog():
     return Response(response=generate(), status=200, mimetype= 'text/event-stream')
 
 
-@spotisub.route('/poll_playlist/<string:uuid>/')
-@login_required
-def poll_playlist(uuid=None):
-    if generator.poll_playlist(uuid):
-        return get_response_json(get_json_message(
-            "Job with uuid " + uuid + " is running", True), 200)
-    else:
-        return get_response_json(get_json_message(
-            "Job with uuid " + uuid + " is not running", True), 204)
+@socketio.event
+def connect():
+    global reimport_all_poll_thread
+    global playlist_poll_thread
+    with thread_lock:
+        if reimport_all_poll_thread is None:
+            reimport_all_poll_thread = socketio.start_background_task(poll_overview)
+        if playlist_poll_thread is None:
+            playlist_poll_thread = socketio.start_background_task(poll_playlist)
+    emit('my_response', {'data': 'Connected', 'count': 0})
 
-@spotisub.route('/poll_overview/')
-@login_required
 def poll_overview():
-    if utils.check_thread_running_by_name("reimport_all"):
-        return get_response_json(get_json_message(
-            "Job reimport_all is running", True), 200)
-    else:
-        return get_response_json(get_json_message(
-            "Job reimport_all is not running", True), 204)
+    with spotisub.test_request_context('/'):
+        while True:
+            if utils.check_thread_running_by_name("reimport_all"):
+                emit('reimport_all_response', {'data': 'Reimport All job is running', 'status': 1}, namespace='/', broadcast=True)
+            else:
+                emit('reimport_all_response', {'data': 'Reimport All job is not running', 'status': 0}, namespace='/', broadcast=True)
+            socketio.sleep(5)
+
+
+def poll_playlist():
+    with spotisub.test_request_context('/'):
+        while True:
+            uuid = generator.poll_playlist()
+            if uuid is not None:
+                emit('playlist_response', {'data': 'Playlist import is running', 'uuid': uuid, 'status': 1}, namespace='/', broadcast=True)
+            else:
+                emit('playlist_response', {'data': 'Playlist import is not running', 'uuid': "", 'status': 0}, namespace='/', broadcast=True)
+            socketio.sleep(5)
 
 
 @spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')

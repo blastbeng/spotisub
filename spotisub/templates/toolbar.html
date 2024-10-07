@@ -5,6 +5,9 @@
          {% if title == 'Playlist' or title == 'Overview' %} 
             <button type="button" id="show-toolbar-popup" onClick="showRescanAlert();" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
                <i id="rescan-button" class="svg-fa fa fa-sync" aria-hidden="true"></i>
+               {% if title == 'Playlist' %} 
+               <input type="hidden" id="playlist_info_uuid" value="{{ playlist_info["uuid"] }}" />
+               {% endif %}
                <div id="show-toolbar-popup" class="PageToolbarButton-labelContainer">
                   <div id="show-toolbar-popup" class="PageToolbarButton-label">Rescan</div>
                </div>

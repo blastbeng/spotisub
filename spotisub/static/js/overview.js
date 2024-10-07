@@ -1,3 +1,15 @@
+$(document).ready(function() {
+    socket.on('reimport_all_response', function(msg, cb) {
+        var element = document.getElementById("rescan-button");
+        if (msg.status == 1 && !element.classList.contains("svg-fa-spin") ) {
+            element.classList.add("svg-fa-spin");
+        } else if ( element.classList.contains("svg-fa-spin") ) {
+            element.classList.remove("svg-fa-spin");
+        } 
+    });
+});
+    
+
 $(window).scroll(function() {
     if($(window).scrollTop() == $(document).height() - $(window).height()) {
         updateData(false);
@@ -180,24 +192,4 @@ function resetFilters(){
     hide_empty = document.getElementById("filter-type-overview-select");
     hide_empty.value = "";
     filterOverview();
-}
-
-function pollOverviewJob(url){
-    let xhr = new XMLHttpRequest();
-
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
-        var element = document.getElementById("rescan-button");
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                if ( !element.classList.contains("svg-fa-spin") ) {
-                    element.classList.add("svg-fa-spin");
-                }
-            } else if ( element.classList.contains("svg-fa-spin") ) {
-                element.classList.remove("svg-fa-spin");
-            }
-        }
-    }
-    xhr.send();
 }

@@ -689,11 +689,13 @@ def get_tasks():
     
     return tasks
 
-def poll_playlist(uuid):
+def poll_playlist():
+    types = database.select_distinct_type_name()
     for thread in threading.enumerate():
-        if (thread.name.endswith(uuid)) and thread.is_alive():
-            return True
-    return False
+        for type in types:
+            if (thread.name.startswith(type)) and thread.is_alive():
+                return thread.name.split("_")[-1]
+    return None
 
 
 def run_job_now(

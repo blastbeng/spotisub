@@ -1,3 +1,8 @@
+var socket = null;
+$(document).ready(function() {
+    socket = io();
+});
+    
 function searchPlaylistsResults(missing, page, limit){
     searchValue = document.getElementById('text-search').value
     if( searchValue !== undefined && searchValue !== "" ){

@@ -1,22 +1,14 @@
-function pollPlaylistJob(url){
-    let xhr = new XMLHttpRequest();
-
-    xhr.open("GET", url, true);
-
-    xhr.onreadystatechange = function () {
+$(document).ready(function() {
+    socket.on('playlist_response', function(msg, cb) {
+        var playlist_info_uuid = document.getElementById("playlist_info_uuid").value;
         var element = document.getElementById("rescan-button");
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                if ( !element.classList.contains("svg-fa-spin") ) {
-                    element.classList.add("svg-fa-spin");
-                }
-            } else if ( element.classList.contains("svg-fa-spin") ) {
-                element.classList.remove("svg-fa-spin");
-            }
-        }
-    }
-    xhr.send();
-}
+        if (msg.status == 1 && playlist_info_uuid == msg.uuid && !element.classList.contains("svg-fa-spin") ) {
+            element.classList.add("svg-fa-spin");
+        } else if ( element.classList.contains("svg-fa-spin") ) {
+            element.classList.remove("svg-fa-spin");
+        } 
+    });
+});
 
 function showRescanAlert(){
     var element = document.getElementById("toolbar-root-rescan");
