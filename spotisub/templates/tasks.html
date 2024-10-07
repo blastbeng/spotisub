@@ -21,18 +21,18 @@
                 <tbody>
                 {% for task in tasks %}
                 <tr>
-                    <td id="spinner_{{task["id"]}}" >
+                    <td>
                         {% if task["running"] == "1" %}
-                            <i class="svg-fa-spin-task fa fa-sync" aria-hidden="true"></i>
+                            <i id="spinner_{{task["id"]}}" class="svg-fa-spin-task fa fa-sync" aria-hidden="true"></i>
                         {% else %}
                             {% if task["id"] == "reimport_all" %}
-                                <i class="svg-fa-task fa fa-pause" aria-hidden="true"></i>
+                                <i id="spinner_{{task["id"]}}" class="svg-fa-task fa fa-pause" aria-hidden="true"></i>
                             {% else %}
-                                <i class="svg-fa-spin-task fa fa-spinner" aria-hidden="true"></i>
+                                <i id="spinner_{{task["id"]}}" class="svg-fa-spin-task fa fa-spinner" aria-hidden="true"></i>
                             {% endif %}
                         {% endif %}
                     </td>
-                    <td id="{{task["running"]}}" >
+                    <td>
                         {% if task["running"] == "1" %}
                             Running
                         {% else %}
@@ -55,11 +55,11 @@
                     <td>
                         {{ task["next_execution"] }}
                     </td>
-                    <td id="actions_{{task["id"]}}" >
+                    <td>
                         {% if task["running"] == "1" %}
-                            <i class="fa fa-stop fa-custom-link" aria-hidden="true"></i>
+                            <i id="actions_{{task["id"]}}" class="fa fa-stop fa-custom-link" aria-hidden="true"></i>
                         {% else %}
-                            <i class="fa fa-play fa-custom-link" aria-hidden="true"></i>
+                            <i id="actions_{{task["id"]}}" class="fa fa-play fa-custom-link" aria-hidden="true"></i>
                         {% endif %}
                     </td>
                     </td>

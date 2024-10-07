@@ -665,14 +665,13 @@ def get_tasks():
             task["next_execution"] = job.next_run_time.strftime("%d/%m %H:%M:%S")
             task["interval"] = str( math.trunc(job.trigger.interval_length / 60 / 60) ) + " hour(s)"
             if len(job.args) > 0:
-                thread_name = thread_name+"_"+job.args[0]
                 pl_info = database.select_playlist_info_by_uuid(str( job.args[0] ))
                 if pl_info is not None:
                     task["args"] = pl_info.subsonic_playlist_name
                     
             else:
                 task["args"] = ""
-            task["running"] = "1" if utils.check_thread_running_by_name(thread_name) else "0"
+            task["running"] = "1" if utils.check_thread_running_by_init_name(thread_name) else "0"
             task["id"] = thread_name
             tasks.append(task)
 
@@ -690,12 +689,13 @@ def get_tasks():
     return tasks
 
 def poll_playlist():
+    uuids = []
     types = database.select_distinct_type_name()
     for thread in threading.enumerate():
         for type in types:
             if (thread.name.startswith(type)) and thread.is_alive():
-                return thread.name.split("_")[-1]
-    return None
+                uuids.append(thread.name.split("_")[-1])
+    return uuids
 
 
 def run_job_now(

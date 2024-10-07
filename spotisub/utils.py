@@ -166,9 +166,8 @@ def check_thread_running_by_name(name):
             return True
     return False
 
-def check_thread_count(starts_with):
-    count = 0
+def check_thread_running_by_init_name(starts_with):
     for thread in threading.enumerate():
-        if thread.name.starts_with(starts_with) and thread.is_alive():
-            count = count  + 1
-    return count
+        if thread.name.startswith(starts_with) and thread.is_alive():
+            return True
+    return False

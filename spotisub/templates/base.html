@@ -43,23 +43,15 @@
     {% endif %}
     {% if title == "Overview" %}
         <script src="{{ url_for('static', filename='js/overview.js') }}"></script>
-        <script>
-            $( document ).ready(function() {
-                filterOverview()
-            });
-        </script>
     {% endif %}
     {% if title == "Playlist" %}
         <script src="{{ url_for('static', filename='js/playlist.js') }}"></script>
     {% endif %}
     {% if title == "Logs" %}
         <script src="{{ url_for('static', filename='js/logs.js') }}"></script>
-        <script>
-            $( document ).ready(function() {
-                pollLogsJob('{{url_for("streamlog")}}')
-                setInterval(function(){pollLogsJob('{{url_for("streamlog")}}')}, 1000);
-            });
-        </script>
+    {% endif %}
+    {% if title == "Tasks" %}
+        <script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
     {% endif %}
 
 </head>

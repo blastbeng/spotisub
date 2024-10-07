@@ -5,6 +5,8 @@ import random
 import threading
 import json
 import math
+import subprocess
+import select
 from threading import Lock
 from time import sleep
 from time import strftime
@@ -44,12 +46,14 @@ from spotisub.exceptions import SpotifyApiException
 
 reimport_all_poll_thread = None
 playlist_poll_thread = None
+log_poll_thread = None
+tasks_poll_thread = None
 thread_lock = Lock()
 
 @spotisub.after_request
 def after_request(response):
     """Excluding healthcheck endpoint from logging"""
-    if not request.path.startswith('/api/v1/utils/healthcheck') and not not request.path.startswith('/streamlog'):
+    if not request.path.startswith('/api/v1/utils/healthcheck'):
         timestamp = strftime('[%Y-%b-%d %H:%M]')
         logging.info('%s %s %s %s %s %s',
                      timestamp,
@@ -372,26 +376,21 @@ def logs():
                            title=title)
 
 
-@spotisub.route('/streamlog')
-@login_required
-def streamlog():
-    def generate():
-        path = os.path.abspath(os.curdir) + '/cache/spotisub.log'
-        for line in Pygtail(path, every_n=1):
-            yield str(line)
-            sleep(0.1)
-    return Response(response=generate(), status=200, mimetype= 'text/event-stream')
-
-
 @socketio.event
 def connect():
     global reimport_all_poll_thread
     global playlist_poll_thread
+    global log_poll_thread
+    global tasks_poll_thread
     with thread_lock:
         if reimport_all_poll_thread is None:
             reimport_all_poll_thread = socketio.start_background_task(poll_overview)
         if playlist_poll_thread is None:
             playlist_poll_thread = socketio.start_background_task(poll_playlist)
+        if log_poll_thread is None:
+            log_poll_thread = socketio.start_background_task(poll_log)
+        if tasks_poll_thread is None:
+            tasks_poll_thread = socketio.start_background_task(poll_tasks)
     emit('my_response', {'data': 'Connected', 'count': 0})
 
 def poll_overview():
@@ -407,12 +406,31 @@ def poll_overview():
 def poll_playlist():
     with spotisub.test_request_context('/'):
         while True:
-            uuid = generator.poll_playlist()
-            if uuid is not None:
-                emit('playlist_response', {'data': 'Playlist import is running', 'uuid': uuid, 'status': 1}, namespace='/', broadcast=True)
+            uuids = generator.poll_playlist()
+            if len(uuids) > 0:
+                emit('playlist_response', {'data': 'Playlist import is running', 'uuids': uuids, 'status': 1}, namespace='/', broadcast=True)
             else:
-                emit('playlist_response', {'data': 'Playlist import is not running', 'uuid': "", 'status': 0}, namespace='/', broadcast=True)
+                emit('playlist_response', {'data': 'Playlist import is not running', 'uuids': uuids, 'status': 0}, namespace='/', broadcast=True)
             socketio.sleep(5)
+
+
+def poll_tasks():
+    with spotisub.test_request_context('/'):
+        while True:
+            emit('tasks_response', generator.get_tasks(), namespace='/', broadcast=True)
+            socketio.sleep(5)
+
+def poll_log():
+    path = os.path.abspath(os.curdir) + '/cache/spotisub.log'
+    f = subprocess.Popen(['tail','-F',path],\
+        stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = select.poll()
+    p.register(f.stdout)
+    with spotisub.test_request_context('/'):
+        while True:
+            if p.poll(1):
+                emit('log_response', {'data': f.stdout.readline().decode("utf-8"), 'status': 1}, namespace='/', broadcast=True)
+            sleep(0.1)
 
 
 @spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')

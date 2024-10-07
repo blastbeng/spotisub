@@ -1,4 +1,5 @@
 $(document).ready(function() {
+    filterOverview();
     socket.on('reimport_all_response', function(msg, cb) {
         var element = document.getElementById("rescan-button");
         if (msg.status == 1 && !element.classList.contains("svg-fa-spin") ) {
