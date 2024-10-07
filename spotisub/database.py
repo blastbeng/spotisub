@@ -322,7 +322,6 @@ def insert_song(playlist_info, subsonic_track,
         conn.close()
         return return_dict
 
-
 def create_playlist(playlist_info):
     """Create empty playlist into database"""
     pl_info = None
