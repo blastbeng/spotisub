@@ -475,51 +475,52 @@ def match_with_subsonic_track(
 
 
 def check_ignored(insert_result, song, playlist_info):
-    if insert_result["song_ignored"] is True:
-        logging.info(
-            '(%s) Skipping song "%s - %s - %s" because the matching song is marked as ignored "%s"',
-            str(threading.current_thread().ident),
-            song["artist"],
-            song["title"],
-            song["album"],
-            playlist_info["name"])
-        return True
-    elif insert_result["album_ignored"] is True:
-        logging.info(
-            '(%s) Skipping song "%s - %s - %s" because the matching album is marked as ignored "%s"',
-            str(threading.current_thread().ident),
-            song["artist"],
-            song["title"],
-            song["album"],
-            playlist_info["name"])
-        return True
-    elif insert_result["artist_ignored"] is True:
-        logging.info(
-            '(%s) Skipping song "%s - %s - %s" because the matching artist is marked as ignored "%s"',
-            str(threading.current_thread().ident),
-            song["artist"],
-            song["title"],
-            song["album"],
-            playlist_info["name"])
-        return True
-    elif insert_result["ignored_pl"] is True:
-        logging.info(
-            '(%s) Skipping song "%s - %s - %s" because it is marked as ignored for playlist "%s"',
-            str(threading.current_thread().ident),
-            song["artist"],
-            song["title"],
-            song["album"],
-            playlist_info["name"])
-        return True
-    elif insert_result["ignored_whole_pl"] is True:
-        logging.info(
-            '(%s) Skipping song "%s - %s - %s" because this playlist is marked as ignored"%s"',
-            str(threading.current_thread().ident),
-            song["artist"],
-            song["title"],
-            song["album"],
-            playlist_info["name"])
-        return True
+    if insert_result is not None:
+        if insert_result["song_ignored"] is True:
+            logging.info(
+                '(%s) Skipping song "%s - %s - %s" because the matching song is marked as ignored "%s"',
+                str(threading.current_thread().ident),
+                song["artist"],
+                song["title"],
+                song["album"],
+                playlist_info["name"])
+            return True
+        elif insert_result["album_ignored"] is True:
+            logging.info(
+                '(%s) Skipping song "%s - %s - %s" because the matching album is marked as ignored "%s"',
+                str(threading.current_thread().ident),
+                song["artist"],
+                song["title"],
+                song["album"],
+                playlist_info["name"])
+            return True
+        elif insert_result["artist_ignored"] is True:
+            logging.info(
+                '(%s) Skipping song "%s - %s - %s" because the matching artist is marked as ignored "%s"',
+                str(threading.current_thread().ident),
+                song["artist"],
+                song["title"],
+                song["album"],
+                playlist_info["name"])
+            return True
+        elif insert_result["ignored_pl"] is True:
+            logging.info(
+                '(%s) Skipping song "%s - %s - %s" because it is marked as ignored for playlist "%s"',
+                str(threading.current_thread().ident),
+                song["artist"],
+                song["title"],
+                song["album"],
+                playlist_info["name"])
+            return True
+        elif insert_result["ignored_whole_pl"] is True:
+            logging.info(
+                '(%s) Skipping song "%s - %s - %s" because this playlist is marked as ignored"%s"',
+                str(threading.current_thread().ident),
+                song["artist"],
+                song["title"],
+                song["album"],
+                playlist_info["name"])
+            return True
     return False
 
 

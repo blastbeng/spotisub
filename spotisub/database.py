@@ -311,9 +311,14 @@ def insert_song(playlist_info, subsonic_track,
                     return_dict["uuid"] = pl_relation.uuid
                     return_dict["ignored_pl"] = (pl_relation.ignored == 1)
                     return_dict["ignored_whole_pl"] = (pl_info.ignored == 1)
-            conn.commit()
+                    conn.commit()
+                else:
+                    conn.rollback()
+                    return None
+
         else:
             conn.rollback()
+            return None
         conn.close()
         return return_dict
 
