@@ -7,6 +7,7 @@ import pickle
 import threading
 import libsonic
 import string
+from concurrent.futures import ThreadPoolExecutor
 from expiringdict import ExpiringDict
 from libsonic.errors import DataNotFoundError
 from spotipy.exceptions import SpotifyException
@@ -20,6 +21,7 @@ from spotisub.exceptions import SpotifyDataException
 from spotisub.classes import ComparisonHelper
 from spotisub.helpers import musicbrainz_helper
 
+cache_executor = ThreadPoolExecutor(max_workers=2)
 
 if os.environ.get(constants.SPOTDL_ENABLED,
                   constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1":
@@ -64,10 +66,13 @@ def load_spotify_cache_from_file():
     object = ExpiringDict(max_len=10000, max_age_seconds=43200)
     path = os.path.abspath(os.curdir) + '/cache/spotify_object_cache.pkl'
     if os.path.exists(path):
-        with open(path, 'rb') as f:
-            old_cache_obj = pickle.load(f)
-            for key, value in old_cache_obj.items():
-                object[key] = value
+        if os.stat(path).st_size == 0:
+            os.remove(path)
+        else:
+            with open(path, 'rb') as f:
+                old_cache_obj = pickle.load(f)
+                for key, value in old_cache_obj.items():
+                    object[key] = value
     return object
 
 
@@ -78,27 +83,33 @@ def save_spotify_cache_to_file(object):
 
 
 def get_spotify_object_from_cache(sp, spotify_uri):
-    spotify_object = None
-    if spotify_uri not in spotify_cache:
-        try:
-            spotify_object = None
-            if "track" in spotify_uri:
-                spotify_object = sp.track(spotify_uri)
-            elif "album" in spotify_uri:
-                spotify_object = sp.album(spotify_uri)
-            elif "artist" in spotify_uri:
-                spotify_object = sp.artist(spotify_uri)
-            elif "playlist" in spotify_uri:
-                spotify_object = sp.playlist(spotify_uri)
-            if spotify_object is not None:
-                spotify_cache[spotify_uri] = spotify_object
-                save_spotify_cache_to_file(spotify_cache)
-        except SpotifyException:
-            pass
+    if spotify_uri in spotify_cache:
+        return spotify_cache[spotify_uri]
     else:
-        spotify_object = spotify_cache[spotify_uri]
-    return spotify_object
+        cache_executor.submit(load_spotify_object_to_cache, sp, spotify_uri)
+    return None
 
+
+def load_spotify_object_to_cache(sp, spotify_uri):
+    try:
+        global spotify_cache
+        if spotify_uri in spotify_cache:
+            return
+        spotify_object = None
+        if "track" in spotify_uri:
+            spotify_object = sp.track(spotify_uri)
+        elif "album" in spotify_uri:
+            spotify_object = sp.album(spotify_uri)
+        elif "artist" in spotify_uri:
+            spotify_object = sp.artist(spotify_uri)
+        elif "playlist" in spotify_uri:
+            spotify_object = sp.playlist(spotify_uri)
+        if spotify_object is not None:
+            spotify_cache[spotify_uri] = spotify_object
+            save_spotify_cache_to_file(spotify_cache)
+    except SpotifyException:
+        utils.write_exception()
+        pass
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""

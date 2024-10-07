@@ -159,3 +159,16 @@ def get_pagination(page, total_pages):
 def get_sorting_dic(element):
     if len(element) > 0 and isinstance(element[0], dict):
         print()
+
+def check_thread_running_by_name(name):
+    for thread in threading.enumerate():
+        if thread.name == name and thread.is_alive():
+            return True
+    return False
+
+def check_thread_count(starts_with):
+    count = 0
+    for thread in threading.enumerate():
+        if thread.name.starts_with(starts_with) and thread.is_alive():
+            count = count  + 1
+    return count

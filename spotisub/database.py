@@ -19,6 +19,7 @@ from sqlalchemy import func
 from sqlalchemy import text
 from sqlalchemy import desc
 from sqlalchemy import or_
+from sqlalchemy import distinct
 from sqlalchemy import collate
 
 VERSION = "0.3.3-alpha5"
@@ -418,6 +419,25 @@ def select_playlist_info_by_name(name):
         conn.close()
 
     return value
+
+
+def select_distinct_type_name():
+    """select spotify artists by uuid"""
+    values = []
+    with dbms.db_engine.connect() as conn:
+        value = None
+        stmt = select(
+            distinct(dbms.playlist_info.c.type))
+        stmt.compile()
+        cursor = conn.execute(stmt)
+        records = cursor.fetchall()
+
+        for row in records:
+            values.append(row.type)
+        cursor.close()
+        conn.close()
+
+    return values
 
 
 def select_playlist_info_by_name_with_conn(conn, name):
@@ -1264,6 +1284,7 @@ def limit_and_order_stmt(stmt, page=None, limit=None, order=None, asc=None):
     if page is not None and limit is not None:
         stmt = stmt.limit(limit).offset(page * limit)
     order_by = []
+    order = "case when "+order+" is null then 1 else 0 end, "+order
     if order is not None:
         if asc:
             stmt = stmt.order_by(collate(text(order), 'NOCASE'))

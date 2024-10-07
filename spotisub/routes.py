@@ -23,6 +23,7 @@ from flask_login import current_user
 from flask_login import login_user
 from flask_login import logout_user
 from flask_login import login_required
+from pygtail import Pygtail
 from spotipy.exceptions import SpotifyException
 from spotisub import spotisub
 from spotisub import configuration_db
@@ -94,7 +95,7 @@ def get_json_message(message, is_ok):
 @login_required
 def overview(
         page=1,
-        limit=25,
+        limit=100,
         order='playlist_info.subsonic_playlist_name',
         asc=1):
     title = 'Overview'
@@ -131,7 +132,7 @@ def overview(
 @login_required
 def overview_content(
         page=1,
-        limit=25,
+        limit=100,
         order='playlist_info.subsonic_playlist_name',
         asc=1):
     spotipy_helper.get_secrets()
@@ -351,7 +352,8 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
 def tasks():
     title = 'Tasks'
     return render_template('tasks.html',
-                           title=title)
+                           title=title,
+                           tasks=generator.get_tasks())
 
 
 @spotisub.route('/logs')
@@ -366,15 +368,11 @@ def logs():
 @login_required
 def streamlog():
     def generate():
-        with open(os.path.abspath(os.curdir) + '/cache/spotisub.log') as f:
-            while True:
-                yield f.read()
-                sleep(1)
-
-    r = Response(response=generate(), status=200, mimetype="text/plain")
-    r.headers["Content-Type"] = "text/plain; charset=utf-8"
-    r.headers["Accept"] = "text/plain"
-    return r
+        path = os.path.abspath(os.curdir) + '/cache/spotisub.log'
+        for line in Pygtail(path, every_n=1):
+            yield "data:" + str(line) + "\n"
+            sleep(0.1)
+    return Response(response=generate(), status=200, mimetype= 'text/event-stream')
 
 
 @spotisub.route('/poll_playlist/<string:uuid>/')
@@ -390,7 +388,7 @@ def poll_playlist(uuid=None):
 @spotisub.route('/poll_overview/')
 @login_required
 def poll_overview():
-    if generator.check_thread_running_by_name("reimport_all"):
+    if utils.check_thread_running_by_name("reimport_all"):
         return get_response_json(get_json_message(
             "Job reimport_all is running", True), 200)
     else:

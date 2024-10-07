@@ -5,7 +5,7 @@ function pollLogsJob(url){
 
     xhr.onreadystatechange = function () {
         var output = document.getElementById('output-log');
-        if (this.readyState == 4 && this.status == 200) {
+        if (this.readyState >= 3 && this.status == 200) {
             output.textContent = xhr.responseText;
         }
     }

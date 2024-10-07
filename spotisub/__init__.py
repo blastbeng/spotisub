@@ -1,7 +1,7 @@
 """Spotisub init module"""
 import logging
 import os
-
+from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
@@ -15,11 +15,10 @@ utils.print_logo(database.VERSION)
 
 logging.basicConfig(
     handlers=[
-        logging.FileHandler(
-            os.path.abspath(
+        RotatingFileHandler(os.path.abspath(
                 os.curdir) +
-            "/cache/spotisub.log",
-            mode="w"),
+            "/cache/spotisub.log", maxBytes=1048576,
+                                  backupCount=5),
         logging.StreamHandler()],
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=int(

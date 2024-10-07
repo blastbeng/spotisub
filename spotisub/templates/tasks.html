@@ -5,5 +5,46 @@
     {% include '_flash_message.html' %}
     <!-- End of flash message -->
         {% include 'header.html' %}
-    
+         <div class="table-container">
+            <table id="data" class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>Params</th>
+                    <th>Interval</th>
+                    <th>Status</th>
+                    <th>Started at</th>
+                    <th>Next execution</th>
+                    <th>Last execution</th>
+                    <th>Last duration</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>
+                        {{ task["type_desc"] }}
+                    </td>
+                    <td>
+                        {{ task["args"] }}
+                    </td>
+                    <td>
+                        {{ task["interval"] }}
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                        {{ task["next_execution"] }}
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
 {% endblock %}

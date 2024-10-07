@@ -43,6 +43,7 @@
         <script>
             $( document ).ready(function() {
                 pollOverviewJob('{{url_for("poll_overview")}}')
+                setInterval(function(){pollOverviewJob('{{url_for("poll_overview")}}')}, 5000);
                 filterOverview()
             });
         </script>
@@ -61,7 +62,6 @@
         <script>
             $( document ).ready(function() {
                 pollLogsJob('{{url_for("streamlog")}}')
-                setInterval(function(){pollLogsJob('{{url_for("streamlog")}}')}, 1000);
             });
         </script>
         <script>

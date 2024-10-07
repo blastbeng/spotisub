@@ -4,6 +4,8 @@ import os
 import random
 import time
 import re
+import string
+import math
 import threading
 from datetime import datetime
 from datetime import timedelta
@@ -11,6 +13,7 @@ from flask_apscheduler import APScheduler
 from spotisub import spotisub
 from spotisub import constants
 from spotisub import database
+from spotisub import utils
 from spotisub.helpers import spotipy_helper
 from spotisub.helpers import subsonic_helper
 from spotisub.threading.spotisub_thread import thread_with_trace
@@ -264,7 +267,7 @@ def artist_top_tracks(uuid):
 
 def show_recommendations_for_artist(uuid):
     """get user saved tracks"""
-    if not check_thread_running_by_name("reimport_all"):
+    if not utils.check_thread_running_by_name("reimport_all"):
         thread = thread_with_trace(
             target=lambda: show_recommendations_for_artist_run(uuid),
             name=constants.JOB_AR_ID + "_" + uuid)
@@ -325,7 +328,7 @@ def show_recommendations_for_artist_run(uuid):
 
 def my_recommendations(uuid):
     """get user saved tracks"""
-    if not check_thread_running_by_name("reimport_all"):
+    if not utils.check_thread_running_by_name("reimport_all"):
         thread = thread_with_trace(
             target=lambda: my_recommendations_run(uuid),
             name=constants.JOB_MR_ID + "_" + uuid)
@@ -403,7 +406,7 @@ def my_recommendations_run(uuid):
 
 def get_user_saved_tracks(uuid):
     """get user saved tracks"""
-    if not check_thread_running_by_name("reimport_all"):
+    if not utils.check_thread_running_by_name("reimport_all"):
         thread = thread_with_trace(
             target=lambda: get_user_saved_tracks_run(uuid),
             name=constants.JOB_ST_ID + "_" + uuid)
@@ -435,7 +438,7 @@ def get_user_saved_tracks_run(uuid):
 
 def get_user_playlists(uuid):
     """get user saved tracks"""
-    if not check_thread_running_by_name("reimport_all"):
+    if not utils.check_thread_running_by_name("reimport_all"):
         thread = thread_with_trace(
             target=lambda: get_user_playlists_run(uuid),
             name=constants.JOB_UP_ID + "_" + uuid)
@@ -649,6 +652,23 @@ def reimport(uuid):
                 constants.SAVED_GEN_SCHED,
                 constants.SAVED_GEN_SCHED_DEFAULT_VALUE)
 
+def get_tasks():
+    tasks = []
+    types = database.select_distinct_type_name()
+    for type in types:
+        job = scheduler.get_job(type)
+        if job is not None:
+            task = {}
+            task["type"] = type
+            task["type_desc"] = string.capwords(type.replace("_", " "))
+            task["next_execution"] = job.next_run_time.strftime("%H:%M:%S")
+            task["interval"] = str( math.trunc(job.trigger.interval_length / 60 / 60) ) + " hour(s)"
+            if len(job.args) > 0:
+                task["args"] = str( job.args[0] )
+            else:
+                task["args"] = ""
+            tasks.append(task)
+    return tasks
 
 def poll_playlist(uuid):
     for thread in threading.enumerate():
@@ -696,16 +716,10 @@ def scan_library():
 
 def reimport_all():
     """Used to reimport everything"""
-    if not check_thread_running_by_name("reimport_all"):
+    if not utils.check_thread_running_by_name("reimport_all"):
         thread = thread_with_trace(
             target=lambda: reimport_all_thread(),
             name="reimport_all").start()
-
-def check_thread_running_by_name(name):
-    for thread in threading.enumerate():
-        if thread.name == name and thread.is_alive():
-            return True
-    return False
 
 def reimport_all_thread():
     """Used to reimport everything"""
@@ -791,6 +805,7 @@ try:
         order='playlist_info.subsonic_playlist_name',
         asc=True)
 except BaseException:
+    utils.write_exception()
     pass
 
 scheduler.modify_job(id="init_jobs", next_run_time=datetime.now())
