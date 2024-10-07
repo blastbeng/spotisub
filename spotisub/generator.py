@@ -659,15 +659,34 @@ def get_tasks():
         job = scheduler.get_job(type)
         if job is not None:
             task = {}
+            thread_name = job.id
             task["type"] = type
-            task["type_desc"] = string.capwords(type.replace("_", " "))
-            task["next_execution"] = job.next_run_time.strftime("%H:%M:%S")
+            task["type_desc"] = "Import " + string.capwords(type.replace("_", " "))
+            task["next_execution"] = job.next_run_time.strftime("%d/%m %H:%M:%S")
             task["interval"] = str( math.trunc(job.trigger.interval_length / 60 / 60) ) + " hour(s)"
             if len(job.args) > 0:
-                task["args"] = str( job.args[0] )
+                thread_name = thread_name+"_"+job.args[0]
+                pl_info = database.select_playlist_info_by_uuid(str( job.args[0] ))
+                if pl_info is not None:
+                    task["args"] = pl_info.subsonic_playlist_name
+                    
             else:
                 task["args"] = ""
+            task["running"] = "1" if utils.check_thread_running_by_name(thread_name) else "0"
+            task["id"] = thread_name
             tasks.append(task)
+
+    thread_name = "reimport_all"
+    task = {}
+    task["type"] = "reimport_all"
+    task["type_desc"] = "(Re)Import All"
+    task["args"] = ""
+    task["next_execution"] = "Manual"
+    task["interval"] = ""
+    task["running"] = "1" if utils.check_thread_running_by_name(thread_name) else "0"
+    task["id"] = thread_name
+    tasks.append(task)
+    
     return tasks
 
 def poll_playlist(uuid):

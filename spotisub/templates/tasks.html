@@ -9,19 +9,40 @@
             <table id="data" class="table table-striped">
                 <thead>
                 <tr>
-                    <th>Task Name</th>
-                    <th>Params</th>
-                    <th>Interval</th>
+                    <th></th>
                     <th>Status</th>
-                    <th>Started at</th>
-                    <th>Next execution</th>
-                    <th>Last execution</th>
-                    <th>Last duration</th>
+                    <th>Task Name</th>
+                    <th>Param</th>
+                    <th>Interval</th>
+                    <th>Next Execution</th>
+                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for task in tasks %}
                 <tr>
+                    <td id="spinner_{{task["id"]}}" >
+                        {% if task["running"] == "1" %}
+                            <i class="svg-fa-spin-task fa fa-sync" aria-hidden="true"></i>
+                        {% else %}
+                            {% if task["id"] == "reimport_all" %}
+                                <i class="svg-fa-task fa fa-pause" aria-hidden="true"></i>
+                            {% else %}
+                                <i class="svg-fa-spin-task fa fa-spinner" aria-hidden="true"></i>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td id="{{task["running"]}}" >
+                        {% if task["running"] == "1" %}
+                            Running
+                        {% else %}
+                            {% if task["id"] == "reimport_all" %}
+                                Inactive
+                            {% else %}
+                                Waiting
+                            {% endif %}
+                        {% endif %}
+                    </td>
                     <td>
                         {{ task["type_desc"] }}
                     </td>
@@ -32,15 +53,15 @@
                         {{ task["interval"] }}
                     </td>
                     <td>
-                    </td>
-                    <td>
-                    </td>
-                    <td>
                         {{ task["next_execution"] }}
                     </td>
-                    <td>
+                    <td id="actions_{{task["id"]}}" >
+                        {% if task["running"] == "1" %}
+                            <i class="fa fa-stop fa-custom-link" aria-hidden="true"></i>
+                        {% else %}
+                            <i class="fa fa-play fa-custom-link" aria-hidden="true"></i>
+                        {% endif %}
                     </td>
-                    <td>
                     </td>
                 </tr>
                 {% endfor %}

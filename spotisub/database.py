@@ -1284,8 +1284,8 @@ def limit_and_order_stmt(stmt, page=None, limit=None, order=None, asc=None):
     if page is not None and limit is not None:
         stmt = stmt.limit(limit).offset(page * limit)
     order_by = []
-    order = "case when "+order+" is null then 1 else 0 end, "+order
     if order is not None:
+        order = "case when "+order+" is null then 1 else 0 end, "+order
         if asc:
             stmt = stmt.order_by(collate(text(order), 'NOCASE'))
         else:

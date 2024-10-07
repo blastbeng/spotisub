@@ -573,6 +573,20 @@ a.article-active:hover {
     -moz-animation:spin 4s linear infinite;
     animation:spin 4s linear infinite;
 }
+
+.svg-fa-spin-task {
+    overflow: visible;
+    box-sizing: content-box;
+    margin-right:5px;
+    -webkit-animation:spin 4s linear infinite;
+    -moz-animation:spin 4s linear infinite;
+    animation:spin 4s linear infinite;
+}
+.svg-fa-spin-task {
+    overflow: visible;
+    box-sizing: content-box;
+    margin-right:5px;
+}
 .svg-fa-spin-loading {
     overflow: visible;
     box-sizing: content-box;
