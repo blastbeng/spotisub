@@ -62,6 +62,7 @@
         <script>
             $( document ).ready(function() {
                 pollLogsJob('{{url_for("streamlog")}}')
+                setInterval(function(){pollLogsJob('{{url_for("streamlog")}}')}, 1000);
             });
         </script>
     {% endif %}

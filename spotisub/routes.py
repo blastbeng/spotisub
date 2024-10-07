@@ -44,7 +44,7 @@ from spotisub.exceptions import SpotifyApiException
 @spotisub.after_request
 def after_request(response):
     """Excluding healthcheck endpoint from logging"""
-    if not request.path.startswith('/api/v1/utils/healthcheck'):
+    if not request.path.startswith('/api/v1/utils/healthcheck') and not not request.path.startswith('/streamlog'):
         timestamp = strftime('[%Y-%b-%d %H:%M]')
         logging.info('%s %s %s %s %s %s',
                      timestamp,
@@ -370,7 +370,7 @@ def streamlog():
     def generate():
         path = os.path.abspath(os.curdir) + '/cache/spotisub.log'
         for line in Pygtail(path, every_n=1):
-            yield "data:" + str(line) + "\n"
+            yield str(line)
             sleep(0.1)
     return Response(response=generate(), status=200, mimetype= 'text/event-stream')
 
