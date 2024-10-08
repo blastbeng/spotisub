@@ -887,30 +887,31 @@ def count_songs(
         search=None,
         song_uuid=None,
         subsonic_song_id=None,
-        playlist_uuid=None):
+        playlist_uuid=None,
+        is_outer=True):
     """select playlists from database"""
     stmt = select(
         dbms.playlist_info.c.uuid)
     stmt = stmt.join(
         dbms.subsonic_spotify_relation,
         dbms.subsonic_spotify_relation.c.playlist_info_uuid == dbms.playlist_info.c.uuid,
-        isouter=True)
+        isouter=is_outer)
     stmt = stmt.join(
         dbms.spotify_song,
         dbms.subsonic_spotify_relation.c.spotify_song_uuid == dbms.spotify_song.c.uuid,
-        isouter=True)
+        isouter=is_outer)
     stmt = stmt.join(
         dbms.spotify_album,
         dbms.spotify_song.c.album_uuid == dbms.spotify_album.c.uuid,
-        isouter=True)
+        isouter=is_outer)
     stmt = stmt.join(
         dbms.spotify_song_artist_relation,
         dbms.spotify_song.c.uuid == dbms.spotify_song_artist_relation.c.song_relation_uuid,
-        isouter=True)
+        isouter=is_outer)
     stmt = stmt.join(
         dbms.spotify_artist,
         dbms.spotify_song_artist_relation.c.artist_relation_uuid == dbms.spotify_artist.c.uuid,
-        isouter=True)
+        isouter=is_outer)
     if missing_only:
         stmt = stmt.where(
             dbms.subsonic_spotify_relation.c.subsonic_song_id == None,
@@ -1539,20 +1540,25 @@ def count_playlists(conn):
 
 def get_playlist_counts(conn, pl_info_uuid):
     """select count songs from database"""
-    total = 0
-    missing = 0
-    matched = 0
+    total = count_songs(
+        conn,
+        missing_only=False,
+        search=None,
+        song_uuid=None,
+        subsonic_song_id=None,
+        playlist_uuid=pl_info_uuid,
+        is_outer=False)
 
-    total_query = "SELECT COUNT(*) FROM (SELECT subsonic_spotify_relation.uuid from subsonic_spotify_relation where subsonic_spotify_relation.playlist_info_uuid = '" + \
-        pl_info_uuid + "' and subsonic_spotify_relation.spotify_song_uuid is not null);"
-    matched_query = "SELECT COUNT(*) FROM (SELECT subsonic_spotify_relation.uuid from subsonic_spotify_relation where subsonic_spotify_relation.playlist_info_uuid = '" + \
-        pl_info_uuid + "' and subsonic_spotify_relation.subsonic_song_id is not null and subsonic_spotify_relation.spotify_song_uuid is not null);"
-    missing_query = "SELECT COUNT(*) FROM (SELECT subsonic_spotify_relation.uuid from subsonic_spotify_relation where subsonic_spotify_relation.playlist_info_uuid = '" + \
-        pl_info_uuid + "' and subsonic_spotify_relation.subsonic_song_id is null and subsonic_spotify_relation.spotify_song_uuid is not null);"
+    missing = count_songs(
+        conn,
+        missing_only=True,
+        search=None,
+        song_uuid=None,
+        subsonic_song_id=None,
+        playlist_uuid=pl_info_uuid,
+        is_outer=False)
 
-    total = conn.execute(text(total_query)).scalar()
-    matched = conn.execute(text(matched_query)).scalar()
-    missing = conn.execute(text(missing_query)).scalar()
+    matched = total - missing
 
     return total, matched, missing
 

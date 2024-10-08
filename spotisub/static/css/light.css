@@ -825,3 +825,39 @@ progress[value]::-webkit-progress-value {
         padding: 0px;
         list-style-type: none;
     }
+
+    .custom-alert {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #f1f1f1;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        display: none;
+        max-width: 300px;
+    }
+
+    .custom-alert-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .close-button {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+
+    .show-alert-button {
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }

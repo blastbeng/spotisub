@@ -4,7 +4,7 @@ $(document).ready(function() {
         var element = document.getElementById("rescan-button");
         if (msg.status == 1 && !element.classList.contains("svg-fa-spin") ) {
             element.classList.add("svg-fa-spin");
-        } else if ( element.classList.contains("svg-fa-spin") ) {
+        } else if (msg.status == 0 && !element.classList.contains("svg-fa-spin") ) {
             element.classList.remove("svg-fa-spin");
         } 
     });
@@ -12,7 +12,9 @@ $(document).ready(function() {
     
 
 $(window).scroll(function() {
-    if($(window).scrollTop() == $(document).height() - $(window).height()) {
+    var scrollTop = Math.round($(window).scrollTop()) 
+    var height = $(document).height() - $(window).height() - 1000;
+    if(scrollTop >= height) {
         updateData(false);
     }
 });  
@@ -24,6 +26,7 @@ function updateData(fromFilter){
         var page = document.getElementById("page");
         var result_size = document.getElementById("result_size").value;
         var overview_url = document.getElementById("overview_url").value;
+        var loading_more = document.getElementById("loading-more");
 
         let row_len = document.getElementById("overview_data").rows.length - 1;
 
@@ -35,6 +38,13 @@ function updateData(fromFilter){
             let new_page_value = parseInt((parseInt(row_len)+1) / limit) + 1;
 
             if (old_page_value != new_page_value){
+                loading_more.style.display = "";
+                var loading_more = document.getElementById("loading-overview-span");
+
+                while( loading_more.firstChild ) {
+                    loading_more.removeChild( loading_more.firstChild );
+                }
+                loading_more.appendChild( document.createTextNode(row_len+"/"+result_size) );
 
                 page.value = new_page_value;
 
@@ -64,6 +74,8 @@ function updateData(fromFilter){
                 }
                 xhr.send();
             }
+        } else {
+            loading_more.style.display = "none";
         }
 
 }
@@ -137,47 +149,49 @@ function filterOverview() {
     // Loop through all table rows, and hide those who don't match the search query
     var hidden = false;
     for (i = 0; i < tr.length; i++) {
-        var hide_text = false;
-        var hide_progress = false;
-        for (j = 0; j < tr[i].children.length; j++) {
-            var td = tr[i].children[j]
-            if (td.id == "table-href") {
-                txtValue = td.textContent || td.innerText;
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    hide_text = false;
-                } else {
-                    hide_text = true;
+        if (tr.id != 'loading-more'){
+            var hide_text = false;
+            var hide_progress = false;
+            for (j = 0; j < tr[i].children.length; j++) {
+                var td = tr[i].children[j]
+                if (td.id == "table-href") {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        hide_text = false;
+                    } else {
+                        hide_text = true;
+                    }
                 }
-            }
-            if (td.id == "table-type") {
-                txtValue = td.textContent || td.innerText;
-                if (txtValue.toUpperCase().indexOf(filter_type) > -1) {
-                    hide_type = false;
-                } else {
-                    hide_type = true;
+                if (td.id == "table-type") {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter_type) > -1) {
+                        hide_type = false;
+                    } else {
+                        hide_type = true;
+                    }
                 }
-            }
-            if (td.id == "table-progress") {
-                if (td.children != null && td.children != 'undefined' && td.children.item.length > 0){
-                    if (td.children[0] != null && td.children[0] !== 'undefined' && td.children[0].children != null && td.children[0].children !== 'undefined' && td.children[0].children.length > 0){
-                        var progress_bar = td.children[0].children[1]
-                        txtValue = td.textContent || td.innerText;
-                        if (progress_bar.value == 0) {
-                            if (hide_empty.checked) {
-                                hide_progress = true;
-                            } else if (!hide_empty.checked){
-                                hide_progress = false;
+                if (td.id == "table-progress") {
+                    if (td.children != null && td.children != 'undefined' && td.children.item.length > 0){
+                        if (td.children[0] != null && td.children[0] !== 'undefined' && td.children[0].children != null && td.children[0].children !== 'undefined' && td.children[0].children.length > 0){
+                            var progress_bar = td.children[0].children[1]
+                            txtValue = td.textContent || td.innerText;
+                            if (progress_bar.value == 0) {
+                                if (hide_empty.checked) {
+                                    hide_progress = true;
+                                } else if (!hide_empty.checked){
+                                    hide_progress = false;
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        if (hide_progress || hide_text || hide_type) {
-            tr[i].style.display = "none";
-            hidden = true;
-        } else if(!hide_progress && !hide_text && !hide_type) {
-            tr[i].style.display = "";
+            if (hide_progress || hide_text || hide_type) {
+                tr[i].style.display = "none";
+                hidden = true;
+            } else if(!hide_progress && !hide_text && !hide_type) {
+                tr[i].style.display = "";
+            }
         }
     }
     if (hidden) {

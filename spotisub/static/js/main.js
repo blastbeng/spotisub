@@ -56,6 +56,12 @@ function callUrlAndReload(url){
 function callUrl(url){
     let xhr = new XMLHttpRequest();
 
+    xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 206) {
+            location.reload();
+        }
+    }
+
     xhr.open("GET", url, true);
     xhr.send();
 }
@@ -100,4 +106,22 @@ function closeRescanAlert(){
         element.classList.add("nodisplay");
     }
     hideToolbarElement("toolbar-root-sort")
+}
+
+function showCustomAlert(title, message) {
+    let customAlert = 
+            document.getElementById('customAlert');
+    let customAlertTitle = 
+            document.getElementById('customAlertTitle');
+    let customAlertMessage = 
+            document.getElementById('customAlertMessage');
+
+    customAlertTitle.innerText = title;
+    customAlertMessage.innerText = message;
+    customAlert.style.display = 'block';
+}
+
+function hideCustomAlert() {
+    let customAlert = document.getElementById('customAlert');
+    customAlert.style.display = 'none';
 }

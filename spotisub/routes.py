@@ -5,6 +5,7 @@ import random
 import threading
 import json
 import math
+import string
 import subprocess
 from threading import Lock
 from time import sleep
@@ -133,6 +134,23 @@ def overview(
                            asc=asc,
                            sorting_dict=sorting_dict)
 
+@spotisub.route('/reimport_all/')
+@login_required
+def reimport_all(uuid=None):
+    """Reimport all playlists"""
+    if not generator.reimport_all():
+        flash('This import process is already running, please wait for it to finish or restart Spotisub to stop it.')
+    return redirect(url_for('overview'))
+
+@spotisub.route('/reimport/<string:uuid>/')
+@login_required
+def reimport(uuid=None):
+    """Reimport a playlist"""
+    playlist_info_running = generator.reimport(uuid)
+    if playlist_info_running is not None:
+        type = string.capwords(playlist_info_running.type.replace("_", " "))
+        flash('A ' + type + ' import process is already running, please wait for it to finish or restart Spotisub to stop it. You can check the status going to System > Tasks.')
+    return redirect(url_for('playlist', uuid=uuid))
 
 @spotisub.route('/')
 @spotisub.route('/overview_content/')
@@ -440,23 +458,6 @@ def ignore(type=None, uuid=None, value=None):
         200)
 
 
-@spotisub.route('/reimport/<string:uuid>/')
-@login_required
-def reimport(uuid=None):
-    """Reimport a playlist"""
-    generator.reimport(uuid)
-    return get_response_json(get_json_message(
-        "Reimporting playlist with uuid " + uuid, True), 200)
-
-@spotisub.route('/reimport_all/')
-@login_required
-def reimport_all(uuid=None):
-    """Reimport all playlists"""
-    generator.reimport_all()
-    return get_response_json(get_json_message(
-        "Reimporting all playlists", True), 200)
-
-
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -524,7 +525,7 @@ class ArtistRecommendationsClass(Resource):
             .run_job(constants.JOB_AR_ID)).start()
         return get_response_json(
             get_json_message(
-                "Generating a random artiist recommendations playlist",
+                "Generating a random artist recommendations playlist",
                 True),
             200)
 

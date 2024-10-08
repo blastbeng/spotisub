@@ -602,14 +602,12 @@ def get_user_playlists_array(array, offset=0):
 def reimport(uuid):
     playlist_info = database.select_playlist_info_by_uuid(uuid)
     timedelta_sec = timedelta(seconds=5)
-    old_uuid = None
     for thread in threading.enumerate():
         if (thread.name == playlist_info.type or thread.name.startswith(
                 playlist_info.type)) and thread.is_alive():
-            thread.kill()
+            #thread.kill()
             timedelta_sec = timedelta(seconds=30)
-            old_uuid = thread.name.split("_")[-1]
-            break
+            return playlist_info
     if playlist_info is not None:
         if playlist_info.type == constants.JOB_AR_ID:
             run_job_now(
@@ -651,6 +649,7 @@ def reimport(uuid):
                 [uuid],
                 constants.SAVED_GEN_SCHED,
                 constants.SAVED_GEN_SCHED_DEFAULT_VALUE)
+    return None
 
 def get_tasks():
     tasks = []
@@ -668,6 +667,7 @@ def get_tasks():
                 pl_info = database.select_playlist_info_by_uuid(str( job.args[0] ))
                 if pl_info is not None:
                     task["args"] = pl_info.subsonic_playlist_name
+                task["uuid"] = job.args[0]
                     
             else:
                 task["args"] = ""
@@ -680,6 +680,7 @@ def get_tasks():
     task["type"] = "reimport_all"
     task["type_desc"] = "(Re)Import All"
     task["args"] = ""
+    task["uuid"] = ""
     task["next_execution"] = "Manual"
     task["interval"] = ""
     task["running"] = "1" if utils.check_thread_running_by_name(thread_name) else "0"
@@ -741,6 +742,8 @@ def reimport_all():
         thread = thread_with_trace(
             target=lambda: reimport_all_thread(),
             name="reimport_all").start()
+        return True
+    return False
 
 def reimport_all_thread():
     """Used to reimport everything"""

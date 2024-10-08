@@ -15,7 +15,6 @@
                     <th>Param</th>
                     <th>Interval</th>
                     <th>Next Execution</th>
-                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -47,21 +46,17 @@
                         {{ task["type_desc"] }}
                     </td>
                     <td>
-                        {{ task["args"] }}
+                        {% if task["id"] == "reimport_all" %}
+                            <a href="{{ url_for('overview') }}" class="normal-href">{{ task["type_desc"] }}</a>
+                        {% else %}
+                            <a href="{{ url_for('playlist', uuid=task["uuid"], page=1, limit=25, order='spotify_song.title', asc=1) }}" class="normal-href">{{ task["args"] }}</a>
+                        {% endif %}
                     </td>
                     <td>
                         {{ task["interval"] }}
                     </td>
                     <td>
                         {{ task["next_execution"] }}
-                    </td>
-                    <td>
-                        {% if task["running"] == "1" %}
-                            <i id="actions_{{task["id"]}}" class="fa fa-stop fa-custom-link" aria-hidden="true"></i>
-                        {% else %}
-                            <i id="actions_{{task["id"]}}" class="fa fa-play fa-custom-link" aria-hidden="true"></i>
-                        {% endif %}
-                    </td>
                     </td>
                 </tr>
                 {% endfor %}

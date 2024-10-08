@@ -241,9 +241,9 @@
             </div>
          </button>  
          {% if title == 'Playlist' %} 
-         <button name="status" onClick="closeRescanAlert();callUrl('{{url_for('reimport', uuid=playlist_info["uuid"])}}');" type="button" class="button-alert-confirm" onclick="clearFilters()">
+         <button name="status" onClick="location.href='{{url_for('reimport', uuid=playlist_info["uuid"])}}';" type="button" class="button-alert-confirm" onclick="clearFilters()">
          {% elif title == 'Overview' %} 
-         <button name="status" onClick="closeRescanAlert();callUrl('{{url_for('reimport_all')}}');" type="button" class="button-alert-confirm" onclick="clearFilters()">
+         <button name="status" onClick="location.href='{{url_for('reimport_all')}}';" type="button" class="button-alert-confirm" onclick="clearFilters()">
          {% endif %} 
             <div class="SelectedMenuItem-item">
                Confirm
