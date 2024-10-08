@@ -11,4 +11,4 @@ mkdir -p ${CACHE_DIR}
 chown -R user:user ${CACHE_DIR}
 
 # Run the application as 'user'
-gosu user gunicorn -k eventlet -b 0.0.0.0:5183 spotisub:spotisub --threads=10 --worker-class=gthread
+gosu user gunicorn -k eventlet -b 0.0.0.0:5183 -c config_gunicorn.py spotisub:spotisub

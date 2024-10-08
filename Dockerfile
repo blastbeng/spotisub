@@ -21,7 +21,7 @@ WORKDIR $HOME/spotisub
 
 COPY requirements.txt ./
 RUN pip3 install --no-cache-dir -r requirements.txt
-COPY main.py config.py init.py entrypoint.sh first_run.sh ./
+COPY main.py config.py config_gunicorn.py init.py entrypoint.sh first_run.sh ./
 COPY spotisub spotisub/
 
 USER root
