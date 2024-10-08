@@ -1,257 +1,271 @@
-<div class="PageToolbar-toolbar">
-    <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
-       <div class="PageToolbarSection-section PageToolbarSection-left">
-         
-         {% if title == 'Playlist' or title == 'Overview' %} 
-            <button type="button" id="show-toolbar-popup" onClick="showRescanAlert();" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
-               <i id="rescan-button" class="svg-fa fa fa-sync" aria-hidden="true"></i>
-               {% if title == 'Playlist' %} 
-               <input type="hidden" id="playlist_info_uuid" value="{{ playlist_info["uuid"] }}" />
-               {% endif %}
-               <div id="show-toolbar-popup" class="PageToolbarButton-labelContainer">
-                  <div id="show-toolbar-popup" class="PageToolbarButton-label">Rescan</div>
-               </div>
-            </button>
-         {% endif %}
-          {% if title == 'Playlist' %} 
-            {% if playlist_info["ignored"] == 1 %} 
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as not ignored" >
-               <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
-               <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Add</div>
-               </div>
-            </button>
-            {% else %}
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as ignored" >
-               <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
-               <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Ignore</div>
-               </div>
-            </button>
+{% if title != 'Logs' %} 
+   <div class="PageToolbar-toolbar">
+      <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
+         <div class="PageToolbarSection-section PageToolbarSection-left">
+            
+            {% if title == 'Playlist' or title == 'Overview' %} 
+               <button type="button" id="show-toolbar-popup" onClick="showRescanAlert();" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Rescan and reimport">
+                  <i id="rescan-button" class="svg-fa fa fa-sync" aria-hidden="true"></i>
+                  {% if title == 'Playlist' %} 
+                  <input type="hidden" id="playlist_info_uuid" value="{{ playlist_info["uuid"] }}" />
+                  {% endif %}
+                  <div id="show-toolbar-popup" class="PageToolbarButton-labelContainer">
+                     <div id="show-toolbar-popup" class="PageToolbarButton-label">Rescan</div>
+                  </div>
+               </button>
+            {% endif %}
+            {% if title == 'Playlist' %} 
+               {% if playlist_info["ignored"] == 1 %} 
+               <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as not ignored" >
+                  <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Add</div>
+                  </div>
+               </button>
+               {% else %}
+               <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='playlist', uuid=playlist_info["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this playlist as ignored" >
+                  <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Ignore</div>
+                  </div>
+               </button>
+               {% endif %} 
+            {% elif title == 'Artist' %} 
+               {% if artist["ignored"] == 1 %} 
+               <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='artist', uuid=artist["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this artist as not ignored" >
+                  <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Add</div>
+                  </div>
+               </button>
+               {% else %}
+               <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='artist', uuid=artist["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this artist as ignored" >
+                  <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Ignore</div>
+                  </div>
+               </button>
+               {% endif %} 
+            {% elif title == 'Album' %} 
+               {% if album["ignored"] == 1 %} 
+               <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='album', uuid=album["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this album as not ignored" >
+                  <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Add</div>
+                  </div>
+               </button>
+               {% else %}
+               <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='album', uuid=album["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this album as ignored" >
+                  <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Ignore</div>
+                  </div>
+               </button>
+               {% endif %} 
+            {% elif title == 'Song' %} 
+               {% if song["ignored"] == 1 %} 
+               <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='song', uuid=song["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this song as not ignored" >
+                  <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Add</div>
+                  </div>
+               </button>
+               {% else %}
+               <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='song', uuid=song["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this song as ignored" >
+                  <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
+                  <div class="PageToolbarButton-labelContainer">
+                     <div class="PageToolbarButton-label">Ignore</div>
+                  </div>
+               </button>
+               {% endif %} 
             {% endif %} 
-          {% elif title == 'Artist' %} 
-            {% if artist["ignored"] == 1 %} 
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='artist', uuid=artist["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this artist as not ignored" >
-               <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
+            <div class="PageToolbarSeparator-separator"></div>
+         </div>
+      </div>
+      <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
+         <div class="PageToolbarSection-section PageToolbarSection-right">
+            <!--<button type="button" class="PageToolbarButton-toolbarButton Link-link Link-link">
+               <i class="svg-fa fa fa-table" aria-hidden="true"></i>
                <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Add</div>
+                  <div class="PageToolbarButton-label">Options</div>
                </div>
-            </button>
-            {% else %}
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='artist', uuid=artist["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this artist as ignored" >
-               <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
-               <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Ignore</div>
-               </div>
-            </button>
+            </button>-->
+            {% if sorting_dict or ( page_type and page_type == 'overview' ) %} 
+            <div class="PageToolbarSeparator-separator"></div>
             {% endif %} 
-          {% elif title == 'Album' %} 
-            {% if album["ignored"] == 1 %} 
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='album', uuid=album["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this album as not ignored" >
-               <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
-               <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Add</div>
+            
+            {% if ( page_type and page_type == 'overview' ) %} 
+            <button type="button" id="show-toolbar-popup" onClick="showView();" class="PageToolbarButton-toolbarButton Link-link Link-link">
+               <i class="svg-fa fa fa-eye" id="show-toolbar-popup" aria-hidden="true"></i>
+               <div class="PageToolbarButton-labelContainer" id="show-toolbar-popup" >
+                  <div class="PageToolbarButton-label" id="show-toolbar-popup" >View</div>
                </div>
             </button>
-            {% else %}
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='album', uuid=album["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this album as ignored" >
-               <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
-               <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Ignore</div>
-               </div>
-            </button>
-            {% endif %} 
-          {% elif title == 'Song' %} 
-            {% if song["ignored"] == 1 %} 
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='song', uuid=song["uuid"], value='0')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this song as not ignored" >
-               <i class="svg-fa fa fa-plus-square" aria-hidden="true"></i>
-               <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Add</div>
-               </div>
-            </button>
-            {% else %}
-            <button type="button" onClick="callUrlAndReload('{{url_for('ignore', type='song', uuid=song["uuid"], value='1')}}');" class="PageToolbarButton-toolbarButton Link-link Link-link" title="Mark this song as ignored" >
-               <i class="svg-fa fa fa-trash" aria-hidden="true"></i>
-               <div class="PageToolbarButton-labelContainer">
-                  <div class="PageToolbarButton-label">Ignore</div>
-               </div>
-            </button>
-            {% endif %} 
-          {% endif %} 
-          <div class="PageToolbarSeparator-separator"></div>
-       </div>
-    </div>
-    <div class="PageToolbarSection-sectionContainer" style="flex-grow: 4;">
-       <div class="PageToolbarSection-section PageToolbarSection-right">
-          <!--<button type="button" class="PageToolbarButton-toolbarButton Link-link Link-link">
-             <i class="svg-fa fa fa-table" aria-hidden="true"></i>
-             <div class="PageToolbarButton-labelContainer">
-                <div class="PageToolbarButton-label">Options</div>
-             </div>
-          </button>-->
-          {% if sorting_dict or ( page_type and page_type == 'overview' ) %} 
-          <div class="PageToolbarSeparator-separator"></div>
-          {% endif %} 
-          
-          {% if ( page_type and page_type == 'overview' ) %} 
-          <button type="button" id="show-toolbar-popup" onClick="showView();" class="PageToolbarButton-toolbarButton Link-link Link-link">
-            <i class="svg-fa fa fa-eye" id="show-toolbar-popup" aria-hidden="true"></i>
+            <button type="button" id="show-toolbar-popup" onClick="showFilter();" class="PageToolbarButton-toolbarButton Link-link Link-link">
+            <i class="svg-fa fa fa-filter" id="show-toolbar-popup" aria-hidden="true"></i>
             <div class="PageToolbarButton-labelContainer" id="show-toolbar-popup" >
-               <div class="PageToolbarButton-label" id="show-toolbar-popup" >View</div>
+               <div class="PageToolbarButton-label" id="show-toolbar-popup" >Filter</div>
             </div>
          </button>
-         <button type="button" id="show-toolbar-popup" onClick="showFilter();" class="PageToolbarButton-toolbarButton Link-link Link-link">
-           <i class="svg-fa fa fa-filter" id="show-toolbar-popup" aria-hidden="true"></i>
-           <div class="PageToolbarButton-labelContainer" id="show-toolbar-popup" >
-              <div class="PageToolbarButton-label" id="show-toolbar-popup" >Filter</div>
-           </div>
-        </button>
+            {% endif %} 
+            {% if sorting_dict %} 
+            <button type="button" id="show-toolbar-popup" onClick="showSort();" class="PageToolbarButton-toolbarButton Link-link Link-link">
+            <i class="svg-fa fa fa-sort" id="show-toolbar-popup" aria-hidden="true"></i>
+            <div class="PageToolbarButton-labelContainer" id="show-toolbar-popup" >
+               <div class="PageToolbarButton-label" id="show-toolbar-popup" >Sort</div>
+            </div>
+         </button>
          {% endif %} 
-         {% if sorting_dict %} 
-         <button type="button" id="show-toolbar-popup" onClick="showSort();" class="PageToolbarButton-toolbarButton Link-link Link-link">
-           <i class="svg-fa fa fa-sort" id="show-toolbar-popup" aria-hidden="true"></i>
-           <div class="PageToolbarButton-labelContainer" id="show-toolbar-popup" >
-              <div class="PageToolbarButton-label" id="show-toolbar-popup" >Sort</div>
-           </div>
-        </button>
-        {% endif %} 
-       </div>
-    </div>
- </div>
+         </div>
+      </div>
+   </div>
 
- {% if sorting_dict %} 
-<div id="toolbar-root-sort" class="nodisplay">
-   <div class="MenuContent-menuContent">
-      {% for sorting_value, sorting_key in sorting_dict.items() %}
-      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         {% if order == sorting_key %}
-               {% if asc == 1 %}
-                  <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
-                     <div class="SelectedMenuItem-item">
-                        {{ sorting_value }}<i class="sorting fa fa-sort-asc" aria-hidden="true"></i>
-                     </div>
-                  </button>
-               {% else %}
-                  <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 1 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
-                     <div class="SelectedMenuItem-item">
-                        {{ sorting_value }}<i class="sorting fa fa-sort-desc" aria-hidden="true"></i>
-                     </div>
-                  </button>
-               {% endif %}
-         {% else %}
+   {% if sorting_dict %} 
+   <div id="toolbar-root-sort" class="nodisplay">
+      <div class="MenuContent-menuContent">
+         {% for sorting_value, sorting_key in sorting_dict.items() %}
+         <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            {% if order == sorting_key %}
+                  {% if asc == 1 %}
+                     <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+                        <div class="SelectedMenuItem-item">
+                           {{ sorting_value }}<i class="sorting fa fa-sort-asc" aria-hidden="true"></i>
+                        </div>
+                     </button>
+                  {% else %}
+                     <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 1 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+                        <div class="SelectedMenuItem-item">
+                           {{ sorting_value }}<i class="sorting fa fa-sort-desc" aria-hidden="true"></i>
+                        </div>
+                     </button>
+                  {% endif %}
+            {% else %}
+               <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+                  <div class="SelectedMenuItem-item">
+                     {{ sorting_value }}
+                  </div>
+               </button>   
+            {% endif %}
+         </div>
+         {% endfor %}
+      </div>
+   </div>
+   {% endif %} 
+   {% if ( page_type and page_type == 'overview' ) %} 
+   <div id="toolbar-root-view" class="nodisplay">
+      <div class="MenuContent-menuContent">
+         <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="displayTable()">
+               <div class="SelectedMenuItem-item">
+                  Table
+               </div>
+            </button>  
+         </div>
+         <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="displayPoster()">
+               <div class="SelectedMenuItem-item">
+                  Posters
+               </div>
+            </button>  
+         </div>
+         <!--<div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
             <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
                <div class="SelectedMenuItem-item">
-                  {{ sorting_value }}
+                  Banners
                </div>
-            </button>   
-         {% endif %}
+            </button>  
+         </div>
+         <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
+               <div class="SelectedMenuItem-item">
+                  Overview
+               </div>
+            </button>  
+         </div>-->
       </div>
-      {% endfor %}
    </div>
-</div>
+   <div id="toolbar-root-filter" class="nodisplay">
+      <div class="MenuContent-menuContent">
+         <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            <div class="SelectedMenuItem-item">
+                  <input type="text" id="filter-overview-text" onkeyup="filterOverview()" placeholder="Filter by name...">
+            </div> 
+         </div>
+         <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            <div class="SelectedMenuItem-item">
+               Hide empty playlists<input type="checkbox" id="hide-empty-overview-check" onclick="filterOverview()" placeholder="Show empty" checked></input>
+            </div>   
+         </div>
+         <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            <div class="SelectedMenuItem-item">
+               <select name="typeFilter" id="filter-type-overview-select" onchange="filterOverview()" class="filterType">
+                  <option value="">Filter by type...</option>
+                  <option value="Artist Recommendations">Artist Recommendations</option>
+                  <option value="Artist Top Tracks">Artist Top Tracks</option>
+                  <option value="My Recommendations">My Recommendations</option>
+                  <option value="Saved Tracks">Saved Tracks</option>
+                  <option value="User Playlists">User Playlists</option>
+               </select>
+            </div>   
+         </div>
+         <div class="MenuContent-scroller-buttons Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            <button name="status" type="button" class="button-alert-close" onclick="resetFilters()">
+               <div class="SelectedMenuItem-item">
+                  Reset filters
+               </div>
+            </button>  
+         </div>
+      </div>
+   </div>
+   {% endif %} 
+
+   {% if title == 'Playlist' or title == 'Overview' %} 
+   <div id="toolbar-root-rescan" class="nodisplay">
+      <div class="MenuContent-menuContent-rescan">
+         <span class="span-rescan">
+            {% if title == 'Playlist' %} 
+            This action will rescan and reimport this playlist from Spotify.
+            {% elif title == 'Overview' %} 
+            This action will rescan and reimport all the playlists from Spotify.
+            {% endif %} 
+         </span>
+         <span class="span-rescan">
+            This process may take a lot of time.
+         </span>   
+         <span class="span-rescan">
+            Are you sure?
+         </span>   
+         <div class="MenuContent-scroller-buttons Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
+            <button name="status" type="button" onClick="closeRescanAlert();" class="button-alert-close" onclick="clearFilters()">
+               <div class="SelectedMenuItem-item">
+                  &nbsp;&nbsp;Close&nbsp;&nbsp;
+               </div>
+            </button>  
+            {% if title == 'Playlist' %} 
+            <button name="status" onClick="location.href='{{url_for('reimport', uuid=playlist_info["uuid"])}}';" type="button" class="button-alert-confirm" onclick="clearFilters()">
+            {% elif title == 'Overview' %} 
+            <button name="status" onClick="location.href='{{url_for('reimport_all')}}';" type="button" class="button-alert-confirm" onclick="clearFilters()">
+            {% endif %} 
+               <div class="SelectedMenuItem-item">
+                  Confirm
+               </div>
+            </button>  
+         </div>
+      </div>
+   </div>
+   {% endif %} 
 {% endif %} 
-{% if ( page_type and page_type == 'overview' ) %} 
-<div id="toolbar-root-view" class="nodisplay">
-   <div class="MenuContent-menuContent">
-      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="displayTable()">
-            <div class="SelectedMenuItem-item">
-               Table
-            </div>
-         </button>  
-      </div>
-      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="displayPoster()">
-            <div class="SelectedMenuItem-item">
-               Posters
-            </div>
-         </button>  
-      </div>
-      <!--<div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
-            <div class="SelectedMenuItem-item">
-               Banners
-            </div>
-         </button>  
-      </div>
-      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" class="MenuItem-menuItem Link-link" onclick="location.href='{{ initial_url }}/{{ sorting_key }}/{{ 0 }}{% if search %}/{{ search }}/{% else %}/{% endif %}'">
-            <div class="SelectedMenuItem-item">
-               Overview
-            </div>
-         </button>  
-      </div>-->
-   </div>
-</div>
-<div id="toolbar-root-filter" class="nodisplay">
-   <div class="MenuContent-menuContent">
-      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <div class="SelectedMenuItem-item">
-               <input type="text" id="filter-overview-text" onkeyup="filterOverview()" placeholder="Filter by name...">
-         </div> 
-      </div>
-      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <div class="SelectedMenuItem-item">
-            Hide empty playlists<input type="checkbox" id="hide-empty-overview-check" onclick="filterOverview()" placeholder="Show empty" checked></input>
-         </div>   
-      </div>
-      <div class="MenuContent-scroller Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <div class="SelectedMenuItem-item">
-            <select name="typeFilter" id="filter-type-overview-select" onchange="filterOverview()" class="filterType">
-               <option value="">Filter by type...</option>
-               <option value="Artist Recommendations">Artist Recommendations</option>
-               <option value="Artist Top Tracks">Artist Top Tracks</option>
-               <option value="My Recommendations">My Recommendations</option>
-               <option value="Saved Tracks">Saved Tracks</option>
-               <option value="User Playlists">User Playlists</option>
-            </select>
-         </div>   
-      </div>
+
+{% if title == 'Logs' %} 
+<div id="toolbar-root-logs">
+   <div class="MenuContent-menuContent-Log">
       <div class="MenuContent-scroller-buttons Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" class="button-alert-close" onclick="resetFilters()">
+         <button name="status" type="button" class="button-alert-confirm" onclick="resetFilters()">
             <div class="SelectedMenuItem-item">
-               Reset filters
+               Download Full Log
             </div>
          </button>  
       </div>
    </div>
 </div>
 {% endif %} 
-
-{% if title == 'Playlist' or title == 'Overview' %} 
-<div id="toolbar-root-rescan" class="nodisplay">
-   <div class="MenuContent-menuContent-rescan">
-      <span class="span-rescan">
-         {% if title == 'Playlist' %} 
-         This action will rescan and reimport this playlist from Spotify.
-         {% elif title == 'Overview' %} 
-         This action will rescan and reimport all the playlists from Spotify.
-         {% endif %} 
-      </span>
-      <span class="span-rescan">
-         This process may take a lot of time.
-      </span>   
-      <span class="span-rescan">
-         Are you sure?
-      </span>   
-      <div class="MenuContent-scroller-buttons Scroller-scroller Scroller-vertical Scroller-autoScroll" tabindex="-1">
-         <button name="status" type="button" onClick="closeRescanAlert();" class="button-alert-close" onclick="clearFilters()">
-            <div class="SelectedMenuItem-item">
-               &nbsp;&nbsp;Close&nbsp;&nbsp;
-            </div>
-         </button>  
-         {% if title == 'Playlist' %} 
-         <button name="status" onClick="location.href='{{url_for('reimport', uuid=playlist_info["uuid"])}}';" type="button" class="button-alert-confirm" onclick="clearFilters()">
-         {% elif title == 'Overview' %} 
-         <button name="status" onClick="location.href='{{url_for('reimport_all')}}';" type="button" class="button-alert-confirm" onclick="clearFilters()">
-         {% endif %} 
-            <div class="SelectedMenuItem-item">
-               Confirm
-            </div>
-         </button>  
-      </div>
-   </div>
-</div>
-{% endif %} 
-
-

@@ -5,9 +5,14 @@
     {% include '_flash_message.html' %}
     <!-- End of flash message -->
         {% include 'header.html' %}
-        <div class="output-log-div">
+        {% include 'toolbar.html'%}
+        <div id="output-log-div" class="output-log-div">
             <ul id="output-log" class="output-log-pre">
-                <li></li>
+                {% for line in lines %}
+                <li>
+                    {{ line }}
+                </li>
+                {% endfor %}
             </ul>
         </div>
 {% endblock %}

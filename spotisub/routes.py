@@ -6,6 +6,7 @@ import threading
 import json
 import math
 import string
+import urllib
 import subprocess
 from threading import Lock
 from time import sleep
@@ -77,7 +78,7 @@ blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
 api = Api(blueprint, doc='/docs/')
 spotisub.register_blueprint(blueprint)
 
-socketio = SocketIO(spotisub, async_mode=None)
+socketio = SocketIO(spotisub, async_mode=None, logger=False, engineio_logger=False)
 thread = None
 thread_lock = Lock()
 
@@ -389,8 +390,13 @@ def tasks():
 @login_required
 def logs():
     title = 'Logs'
+    array_lines = []
+    with open(os.path.abspath(os.curdir) + '/cache/spotisub.log', 'r') as file_init:
+        for line in file_init:
+            array_lines.append(line.strip())
     return render_template('logs.html',
-                           title=title)
+                           title=title,
+                           lines = array_lines)
 
 
 @socketio.event
@@ -437,8 +443,28 @@ def poll_tasks():
             emit('tasks_response', generator.get_tasks(), namespace='/', broadcast=True)
             socketio.sleep(5)
 
-def poll_log():
-    return "work in progress"
+def poll_log():   
+    with spotisub.test_request_context('/'):
+        with open(os.path.abspath(os.curdir) + '/cache/spotisub.log', 'rt') as file:
+            seek = 0
+            sleep_t = None
+
+            while True:
+                file.seek(seek)
+                line = file.readline()
+                where = file.tell()
+
+                if line:
+                    if seek != where:
+                        sleep_t = None
+                        emit('log_response', {'data': line.strip(), 'status': 1}, namespace='/', broadcast=True)
+                else:
+                    sleep_t = 0.04
+
+                seek = where
+
+                if sleep_t:
+                    sleep(sleep_t)
 
 
 @spotisub.route('/ignore/<string:type>/<string:uuid>/<int:value>/')

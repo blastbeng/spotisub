@@ -315,7 +315,10 @@ def insert_song(playlist_info, subsonic_track,
                 else:
                     conn.rollback()
                     return None
-
+            
+            else:
+                conn.rollback()
+                return None
         else:
             conn.rollback()
             return None
@@ -979,7 +982,6 @@ def insert_spotify_song(conn, artist_spotify, track_spotify):
     song_db = select_spotify_song_by_uri(conn, track_spotify["uri"])
     song_uuid = None
     if song_db is None:
-        song_uuid = str(uuid.uuid4().hex)
         album = None
         if "album" in track_spotify:
             album = insert_spotify_album(conn, track_spotify["album"])
@@ -987,13 +989,14 @@ def insert_spotify_song(conn, artist_spotify, track_spotify):
             return_dict["album_ignored"] = (album.ignored == 1)
             stmt = insert(
                 dbms.spotify_song).values(
-                uuid=song_uuid,
+                uuid=str(uuid.uuid4().hex),
                 album_uuid=album.uuid,
                 title=track_spotify["name"],
                 spotify_uri=track_spotify["uri"])
             stmt.compile()
             conn.execute(stmt)
-            return_dict["song_uuid"] = song_uuid
+            song_db = select_spotify_song_by_uri(conn, track_spotify["uri"])
+            return_dict["song_uuid"] = song_db.uuid
             return_dict["song_ignored"] = False
     elif song_db is not None and song_db.uuid is not None:
         return_dict["song_uuid"] = song_db.uuid
@@ -1052,10 +1055,9 @@ def insert_spotify_artist(conn, artist_spotify):
     """insert spotify artist"""
     artist_db = select_spotify_artist_by_uri(conn, artist_spotify["uri"])
     if artist_db is None:
-        artist_uuid = str(uuid.uuid4().hex)
         stmt = insert(
             dbms.spotify_artist).values(
-            uuid=artist_uuid,
+            uuid=str(uuid.uuid4().hex),
             name=artist_spotify["name"],
             spotify_uri=artist_spotify["uri"])
         stmt.compile()
@@ -1068,15 +1070,14 @@ def insert_spotify_album(conn, album_spotify):
     """insert spotify artist"""
     album = select_spotify_album_by_uri(conn, album_spotify["uri"])
     if album is None:
-        album_uuid = str(uuid.uuid4().hex)
         stmt = insert(
             dbms.spotify_album).values(
-            uuid=album_uuid,
+            uuid=str(uuid.uuid4().hex),
             name=album_spotify["name"],
             spotify_uri=album_spotify["uri"])
         stmt.compile()
         conn.execute(stmt)
-        return select_spotify_album_by_uuid(conn, album_uuid)
+        return select_spotify_album_by_uri(conn, album_spotify["uri"])
     return album
 
 
