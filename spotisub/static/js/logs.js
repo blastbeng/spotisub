@@ -1,4 +1,13 @@
 $(document).ready(function() {
+    window.addEventListener('resize', function(event){
+        var msgdiv = document.getElementById('output-log-div');
+        msgdiv.scrollIntoView(false);
+        var header_baseh = $("#header-base").height();
+        var height_def = $(window).height() - header_baseh;
+        msgdiv.style.height = height_def + "px";
+        msgdiv.scrollTop = msgdiv.scrollHeight;
+    });
+
     var msgdiv = document.getElementById('output-log-div');
     msgdiv.scrollIntoView(false);
     var header_baseh = $("#header-base").height();
