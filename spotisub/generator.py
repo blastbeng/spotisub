@@ -84,7 +84,7 @@ def scan_user_playlists(offset=0):
     playlist_result = sp.current_user_playlists(limit=50, offset=offset)
 
     for item in playlist_result['items']:
-        if item['name'] is not None and item['name'].strip() != '':
+        if item is not None and item['name'] is not None and item['name'].strip() != '':
             playlist_info = {}
             playlist_info["name"] = item['name'].strip()
             playlist_info["spotify_uri"] = item["uri"]
