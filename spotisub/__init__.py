@@ -16,13 +16,13 @@ utils.print_logo(database.VERSION)
 logging.basicConfig(
     handlers=[
         RotatingFileHandler(os.path.abspath(
-                os.curdir) +
+            os.curdir) +
             "/cache/spotisub.log", maxBytes=1048576,
-                                  backupCount=5),
+            backupCount=5),
         logging.StreamHandler()],
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=int(
-        os.environ.get(constants.LOG_LEVEL,constants.LOG_LEVEL_DEFAULT_VALUE)),
+        os.environ.get(constants.LOG_LEVEL, constants.LOG_LEVEL_DEFAULT_VALUE)),
     datefmt='%Y-%m-%d %H:%M:%S')
 
 

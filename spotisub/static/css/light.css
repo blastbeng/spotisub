@@ -698,10 +698,9 @@ progress[value]::-webkit-progress-value {
     line-height: 20px;
     position: absolute;
     max-height: 352px;
-    width: 300px;
     will-change: transform;
-    bottom: 5%;
-    right: 1%;
+    top: 5%;
+    right: 1px;
     color: white;
     
     border: none;
@@ -826,14 +825,15 @@ progress[value]::-webkit-progress-value {
 
     .output-log-div{
         width: 100%;
-        overflow: scroll;
+        overflow-y: auto;
         display: block;
     }
     .output-log-pre{
         padding: 0px;
-        display: inline;
-        overflow: hidden;
-        list-style-type: none;
+        display: block;
+        white-space: nowrap;
+        overflow-x: auto;
+        font-size: 14px;
     }
 
     .custom-alert {

@@ -51,6 +51,7 @@ log_poll_thread = None
 tasks_poll_thread = None
 thread_lock = Lock()
 
+
 @spotisub.after_request
 def after_request(response):
     """Excluding healthcheck endpoint from logging"""
@@ -78,9 +79,14 @@ blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
 api = Api(blueprint, doc='/docs/')
 spotisub.register_blueprint(blueprint)
 
-socketio = SocketIO(spotisub, async_mode=None, logger=False, engineio_logger=False)
+socketio = SocketIO(
+    spotisub,
+    async_mode=None,
+    logger=False,
+    engineio_logger=False)
 thread = None
 thread_lock = Lock()
+
 
 def get_response_json(data, status):
     """Generates json response"""
@@ -135,6 +141,7 @@ def overview(
                            asc=asc,
                            sorting_dict=sorting_dict)
 
+
 @spotisub.route('/reimport_all/')
 @login_required
 def reimport_all(uuid=None):
@@ -143,6 +150,7 @@ def reimport_all(uuid=None):
         flash('This import process is already running, please wait for it to finish or restart Spotisub to stop it.')
     return redirect(url_for('overview'))
 
+
 @spotisub.route('/reimport/<string:uuid>/')
 @login_required
 def reimport(uuid=None):
@@ -150,8 +158,34 @@ def reimport(uuid=None):
     playlist_info_running = generator.reimport(uuid)
     if playlist_info_running is not None:
         type = string.capwords(playlist_info_running.type.replace("_", " "))
-        flash('A ' + type + ' import process is already running, please wait for it to finish or restart Spotisub to stop it. You can check the status going to System > Tasks.')
+        flash(
+            'A ' +
+            type +
+            ' import process is already running, please wait for it to finish or restart Spotisub to stop it. You can check the status going to System > Tasks.')
     return redirect(url_for('playlist', uuid=uuid))
+
+
+@spotisub.route('/download_song/<string:uri>/')
+@login_required
+def download_song(uuid=None):
+    """Reimport a playlist"""
+    spotipy_helper.get_secrets()
+    status = subsonic_helper.download_song(spotipy_helper, uri)
+    if status is False:
+        return get_response_json(
+            get_json_message(
+                "No download url found from Spotify" +
+                uri,
+                False),
+            206)
+    elif status is True:
+        return get_response_json(
+            get_json_message(
+                "Starting download process song with uri:" +
+                uri,
+                True),
+            200)
+
 
 @spotisub.route('/')
 @spotisub.route('/overview_content/')
@@ -396,7 +430,7 @@ def logs():
             array_lines.append(line.strip())
     return render_template('logs.html',
                            title=title,
-                           lines = array_lines)
+                           lines=array_lines)
 
 
 @socketio.event
@@ -407,22 +441,33 @@ def connect():
     global tasks_poll_thread
     with thread_lock:
         if reimport_all_poll_thread is None:
-            reimport_all_poll_thread = socketio.start_background_task(poll_overview)
+            reimport_all_poll_thread = socketio.start_background_task(
+                poll_overview)
         if playlist_poll_thread is None:
-            playlist_poll_thread = socketio.start_background_task(poll_playlist)
+            playlist_poll_thread = socketio.start_background_task(
+                poll_playlist)
         if log_poll_thread is None:
             log_poll_thread = socketio.start_background_task(poll_log)
         if tasks_poll_thread is None:
             tasks_poll_thread = socketio.start_background_task(poll_tasks)
     emit('my_response', {'data': 'Connected', 'count': 0})
 
+
 def poll_overview():
     with spotisub.test_request_context('/'):
         while True:
             if utils.check_thread_running_by_name("reimport_all"):
-                emit('reimport_all_response', {'data': 'Reimport All job is running', 'status': 1}, namespace='/', broadcast=True)
+                emit('reimport_all_response',
+                     {'data': 'Reimport All job is running',
+                      'status': 1},
+                     namespace='/',
+                     broadcast=True)
             else:
-                emit('reimport_all_response', {'data': 'Reimport All job is not running', 'status': 0}, namespace='/', broadcast=True)
+                emit('reimport_all_response',
+                     {'data': 'Reimport All job is not running',
+                      'status': 0},
+                     namespace='/',
+                     broadcast=True)
             socketio.sleep(5)
 
 
@@ -431,19 +476,34 @@ def poll_playlist():
         while True:
             uuids = generator.poll_playlist()
             if len(uuids) > 0:
-                emit('playlist_response', {'data': 'Playlist import is running', 'uuids': uuids, 'status': 1}, namespace='/', broadcast=True)
+                emit('playlist_response',
+                     {'data': 'Playlist import is running',
+                      'uuids': uuids,
+                      'status': 1},
+                     namespace='/',
+                     broadcast=True)
             else:
-                emit('playlist_response', {'data': 'Playlist import is not running', 'uuids': uuids, 'status': 0}, namespace='/', broadcast=True)
+                emit('playlist_response',
+                     {'data': 'Playlist import is not running',
+                      'uuids': uuids,
+                      'status': 0},
+                     namespace='/',
+                     broadcast=True)
             socketio.sleep(5)
 
 
 def poll_tasks():
     with spotisub.test_request_context('/'):
         while True:
-            emit('tasks_response', generator.get_tasks(), namespace='/', broadcast=True)
+            emit(
+                'tasks_response',
+                generator.get_tasks(),
+                namespace='/',
+                broadcast=True)
             socketio.sleep(5)
 
-def poll_log():   
+
+def poll_log():
     with spotisub.test_request_context('/'):
         with open(os.path.abspath(os.curdir) + '/cache/spotisub.log', 'rt') as file:
             seek = 0
@@ -457,7 +517,9 @@ def poll_log():
                 if line:
                     if seek != where:
                         sleep_t = None
-                        emit('log_response', {'data': line.strip(), 'status': 1}, namespace='/', broadcast=True)
+                        emit(
+                            'log_response', {
+                                'data': line.strip(), 'status': 1}, namespace='/', broadcast=True)
                 else:
                     sleep_t = 0.04
 

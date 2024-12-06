@@ -274,7 +274,8 @@ def show_recommendations_for_artist(uuid):
         thread.start()
         thread.join()
     else:
-        logging.info("Skipping thread execution becase a full reimport process is running")
+        logging.info(
+            "Skipping thread execution becase a full reimport process is running")
 
 
 def show_recommendations_for_artist_run(uuid):
@@ -335,7 +336,8 @@ def my_recommendations(uuid):
         thread.start()
         thread.join()
     else:
-        logging.info("Skipping thread execution becase a full reimport process is running")
+        logging.info(
+            "Skipping thread execution becase a full reimport process is running")
 
 
 def my_recommendations_run(uuid):
@@ -413,7 +415,8 @@ def get_user_saved_tracks(uuid):
         thread.start()
         thread.join()
     else:
-        logging.info("Skipping thread execution becase a full reimport process is running")
+        logging.info(
+            "Skipping thread execution becase a full reimport process is running")
 
 
 def get_user_saved_tracks_run(uuid):
@@ -445,7 +448,8 @@ def get_user_playlists(uuid):
         thread.start()
         thread.join()
     else:
-        logging.info("Skipping thread execution becase a full reimport process is running")
+        logging.info(
+            "Skipping thread execution becase a full reimport process is running")
 
 
 def get_user_playlists_run(uuid, offset=0):
@@ -605,7 +609,7 @@ def reimport(uuid):
     for thread in threading.enumerate():
         if (thread.name == playlist_info.type or thread.name.startswith(
                 playlist_info.type)) and thread.is_alive():
-            #thread.kill()
+            # thread.kill()
             timedelta_sec = timedelta(seconds=30)
             return playlist_info
     if playlist_info is not None:
@@ -651,6 +655,7 @@ def reimport(uuid):
                 constants.SAVED_GEN_SCHED_DEFAULT_VALUE)
     return None
 
+
 def get_tasks():
     tasks = []
     types = database.select_distinct_type_name()
@@ -660,18 +665,24 @@ def get_tasks():
             task = {}
             thread_name = job.id
             task["type"] = type
-            task["type_desc"] = "Import " + string.capwords(type.replace("_", " "))
-            task["next_execution"] = job.next_run_time.strftime("%d/%m %H:%M:%S")
-            task["interval"] = str( math.trunc(job.trigger.interval_length / 60 / 60) ) + " hour(s)"
+            task["type_desc"] = "Import " + \
+                string.capwords(type.replace("_", " "))
+            task["next_execution"] = job.next_run_time.strftime(
+                "%d/%m %H:%M:%S")
+            task["interval"] = str(
+                math.trunc(
+                    job.trigger.interval_length / 60 / 60)) + " hour(s)"
             if len(job.args) > 0:
-                pl_info = database.select_playlist_info_by_uuid(str( job.args[0] ))
+                pl_info = database.select_playlist_info_by_uuid(
+                    str(job.args[0]))
                 if pl_info is not None:
                     task["args"] = pl_info.subsonic_playlist_name
                 task["uuid"] = job.args[0]
-                    
+
             else:
                 task["args"] = ""
-            task["running"] = "1" if utils.check_thread_running_by_init_name(thread_name) else "0"
+            task["running"] = "1" if utils.check_thread_running_by_init_name(
+                thread_name) else "0"
             task["id"] = thread_name
             tasks.append(task)
 
@@ -683,11 +694,13 @@ def get_tasks():
     task["uuid"] = ""
     task["next_execution"] = "Manual"
     task["interval"] = ""
-    task["running"] = "1" if utils.check_thread_running_by_name(thread_name) else "0"
+    task["running"] = "1" if utils.check_thread_running_by_name(
+        thread_name) else "0"
     task["id"] = thread_name
     tasks.append(task)
-    
+
     return tasks
+
 
 def poll_playlist():
     uuids = []
@@ -736,6 +749,7 @@ def scan_library():
     scan_artists_top_tracks()
     scan_user_playlists()
 
+
 def reimport_all():
     """Used to reimport everything"""
     if not utils.check_thread_running_by_name("reimport_all"):
@@ -745,6 +759,7 @@ def reimport_all():
         return True
     return False
 
+
 def reimport_all_thread():
     """Used to reimport everything"""
     import_all_user_saved_tracks()
@@ -753,36 +768,41 @@ def reimport_all_thread():
     import_all_artists_recommendations()
     import_all_artists_top_tracks()
 
+
 def import_all_user_saved_tracks():
     playlist_infos = database.select_playlist_info_by_type(
-            constants.JOB_ST_ID)
+        constants.JOB_ST_ID)
     if len(playlist_infos) > 0:
         get_user_saved_tracks_run(playlist_infos[0].uuid)
 
+
 def import_all_my_recommendations():
     playlist_infos = database.select_playlist_info_by_type(
-            constants.JOB_MR_ID)
+        constants.JOB_MR_ID)
     if len(playlist_infos) > 0:
         for playlist_info in playlist_infos:
             my_recommendations_run(playlist_info.uuid)
 
+
 def import_all_artists_recommendations():
     playlist_infos = database.select_playlist_info_by_type(
-            constants.JOB_AR_ID)
+        constants.JOB_AR_ID)
     if len(playlist_infos) > 0:
         for playlist_info in playlist_infos:
             show_recommendations_for_artist_run(playlist_info.uuid)
 
+
 def import_all_artists_top_tracks():
     playlist_infos = database.select_playlist_info_by_type(
-            constants.JOB_ATT_ID)
+        constants.JOB_ATT_ID)
     if len(playlist_infos) > 0:
         for playlist_info in playlist_infos:
             artist_top_tracks_run(playlist_info.uuid)
 
+
 def import_all_user_playlists():
     playlist_infos = database.select_playlist_info_by_type(
-            constants.JOB_UP_ID)
+        constants.JOB_UP_ID)
     if len(playlist_infos) > 0:
         for playlist_info in playlist_infos:
             get_user_playlists_run(playlist_info.uuid)

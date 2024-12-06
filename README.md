@@ -100,14 +100,6 @@ Official Spotisub communities
 * Discord: https://discord.gg/jXQauuhy5w
 * Reddit: https://www.reddit.com/r/spotisub/
 
-## Authors
-
-Fabio Valentino - [blastbeng](https://github.com/blastbeng)
-
-## Contributors
-
-Caleb Contreras - [Aerglonus](https://github.com/Aerglonus)
-
 ## Acknowledgments
 
 A big thanks to the developers and maintaners of these libraries\softwares:

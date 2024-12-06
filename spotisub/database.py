@@ -22,8 +22,8 @@ from sqlalchemy import or_
 from sqlalchemy import distinct
 from sqlalchemy import collate
 
-VERSION = "0.3.3"
-VERSIONS = ["0.3.0-alpha-01", "0.3.1", "0.3.3"]
+VERSION = "0.3.4"
+VERSIONS = ["0.3.0-alpha-01", "0.3.1", "0.3.3", "0.3.4"]
 
 SQLITE = 'sqlite'
 USER = 'user'
@@ -118,10 +118,10 @@ class Database:
 
     spotify_song_artist_relation = Table(
         SPOTIFY_SONG_ARTIST_RELATION, metadata, Column(
-                               'uuid',
-                               String(36),
-                               primary_key=True,
-                               nullable=False),Column(
+            'uuid',
+            String(36),
+            primary_key=True,
+            nullable=False), Column(
             'song_relation_uuid', String(36), nullable=False), Column(
             'artist_relation_uuid', String(36), nullable=False))
 
@@ -187,7 +187,8 @@ class Database:
 def create_db_tables():
     """Create tables"""
     dbms.metadata.create_all(dbms.db_engine)
-    upgrade()
+    #temp removed, db upgrade will be reimplemented in a future release
+    #upgrade()
 
 
 def upgrade():
@@ -196,13 +197,12 @@ def upgrade():
     with dbms.db_engine.connect() as conn:
         fconfig = select_config_by_name(conn, 'VERSION')
         if fconfig is None or fconfig.value not in VERSIONS:
-            # FIRST RELEASE 3.0.0 DROPPING ENTIRE DATABASE
-            # backup_table(conn, SPOTIFY_SONG)
-            # backup_table(conn, SPOTIFY_ALBUM)
-            # backup_table(conn, SPOTIFY_ARTIST)
-            # backup_table(conn, SPOTIFY_SONG_ARTIST_RELATION)
-            # backup_table(conn, SUBSONIC_SPOTIFY_RELATION)
-            # backup_table(conn, PLAYLIST_INFO)
+            backup_table(conn, SPOTIFY_SONG)
+            backup_table(conn, SPOTIFY_ALBUM)
+            backup_table(conn, SPOTIFY_ARTIST)
+            backup_table(conn, SPOTIFY_SONG_ARTIST_RELATION)
+            backup_table(conn, SUBSONIC_SPOTIFY_RELATION)
+            backup_table(conn, PLAYLIST_INFO)
             drop_table(conn, SPOTIFY_SONG)
             drop_table(conn, SPOTIFY_ALBUM)
             drop_table(conn, SPOTIFY_ARTIST)
@@ -217,15 +217,15 @@ def upgrade():
         conn.close()
     if upgraded:
         dbms.metadata.create_all(dbms.db_engine)
-        # with dbms.db_engine.connect() as conn:
-        #    clone_table_from_bak(conn, SPOTIFY_SONG)
-        #    clone_table_from_bak(conn, SPOTIFY_ALBUM)
-        #    clone_table_from_bak(conn, SPOTIFY_ARTIST)
-        #    clone_table_from_bak(conn, SPOTIFY_SONG_ARTIST_RELATION)
-        #    clone_table_from_bak(conn, SUBSONIC_SPOTIFY_RELATION)
-        #    clone_table_from_bak(conn, PLAYLIST_INFO)
-        #    conn.commit()
-        #    conn.close()
+        with dbms.db_engine.connect() as conn:
+            clone_table_from_bak(conn, SPOTIFY_SONG)
+            clone_table_from_bak(conn, SPOTIFY_ALBUM)
+            clone_table_from_bak(conn, SPOTIFY_ARTIST)
+            clone_table_from_bak(conn, SPOTIFY_SONG_ARTIST_RELATION)
+            clone_table_from_bak(conn, SUBSONIC_SPOTIFY_RELATION)
+            clone_table_from_bak(conn, PLAYLIST_INFO)
+            conn.commit()
+            conn.close()
 
 
 def drop_table(conn, table_name):
@@ -315,7 +315,7 @@ def insert_song(playlist_info, subsonic_track,
                 else:
                     conn.rollback()
                     return None
-            
+
             else:
                 conn.rollback()
                 return None
@@ -324,6 +324,7 @@ def insert_song(playlist_info, subsonic_track,
             return None
         conn.close()
         return return_dict
+
 
 def create_playlist(playlist_info):
     """Create empty playlist into database"""
@@ -345,7 +346,8 @@ def insert_playlist_type(conn, playlist_info):
     if "uuid" in playlist_info and playlist_info["uuid"] is not None:
         playlist_info_db = select_playlist_info_by_uuid_with_conn(
             conn, playlist_info["uuid"])
-    if playlist_info_db is None and "name" in playlist_info and playlist_info["name"] is not None:
+    if playlist_info_db is None and "name" in playlist_info and playlist_info[
+            "name"] is not None:
         playlist_info_db = select_playlist_info_by_name_with_conn(
             conn, playlist_info["name"])
     elif playlist_info_db is None and "import_arg" in playlist_info and playlist_info["import_arg"] is not None:
@@ -362,7 +364,7 @@ def insert_playlist_type(conn, playlist_info):
             subsonic_playlist_id=subsonic_playlist_id_info,
             subsonic_playlist_name=playlist_info["name"],
             import_arg=playlist_info["import_arg"],
-            prefix=playlist_info["prefix"].replace( "\"", ""))
+            prefix=playlist_info["prefix"].replace("\"", ""))
         stmt.compile()
         conn.execute(stmt)
         logging.info(
@@ -378,7 +380,7 @@ def insert_playlist_type(conn, playlist_info):
             type=playlist_info["type"],
             subsonic_playlist_id=subsonic_playlist_id_info,
             subsonic_playlist_name=playlist_info["name"],
-            prefix=playlist_info["prefix"].replace( "\"", ""))
+            prefix=playlist_info["prefix"].replace("\"", ""))
         stmt.compile()
         conn.execute(stmt)
         return select_playlist_info_by_uuid_with_conn(
@@ -669,7 +671,9 @@ def insert_playlist_relation(
         conn.execute(stmt)
         return select_playlist_relation_by_uuid(old_relation.uuid)
 
-def select_playlist_info_by_subsonic_id_with_conn(conn, subsonic_playlist_uuid):
+
+def select_playlist_info_by_subsonic_id_with_conn(
+        conn, subsonic_playlist_uuid):
     """select spotify artists by uuid"""
     value = None
     stmt = select(
@@ -693,6 +697,7 @@ def select_playlist_info_by_subsonic_id_with_conn(conn, subsonic_playlist_uuid):
     cursor.close()
 
     return value
+
 
 def select_playlist_info_by_subsonic_id(subsonic_playlist_uuid):
     """select spotify artists by uuid"""
@@ -942,7 +947,7 @@ def count_songs(
 
     stmt = stmt.group_by(
         dbms.subsonic_spotify_relation.c.spotify_song_uuid,
-         dbms.playlist_info.c.subsonic_playlist_name)
+        dbms.playlist_info.c.subsonic_playlist_name)
 
     stmt = select(func.count()).select_from(stmt.subquery())
 
@@ -1291,7 +1296,7 @@ def limit_and_order_stmt(stmt, page=None, limit=None, order=None, asc=None):
         stmt = stmt.limit(limit).offset(page * limit)
     order_by = []
     if order is not None:
-        order = "case when "+order+" is null then 1 else 0 end, "+order
+        order = "case when " + order + " is null then 1 else 0 end, " + order
         if asc:
             stmt = stmt.order_by(collate(text(order), 'NOCASE'))
         else:
@@ -1312,7 +1317,8 @@ def select_songs_by_artist_uuid(
         dbms.playlist_info.c.ignored.label('ignored_whole_pl'),
         dbms.spotify_album.c.name.label('album_name'),
         dbms.spotify_album.c.ignored.label('spotify_album_ignored'),
-        dbms.subsonic_spotify_relation.c.uuid.label('subsonic_spotify_relation_uuid'),
+        dbms.subsonic_spotify_relation.c.uuid.label(
+            'subsonic_spotify_relation_uuid'),
         dbms.subsonic_spotify_relation.c.subsonic_song_id,
         dbms.playlist_info.c.subsonic_playlist_name,
         dbms.playlist_info.c.subsonic_playlist_id,
@@ -1375,7 +1381,7 @@ def select_count_songs_by_artist_uuid(conn, artist_uuid):
     stmt = stmt.group_by(
         dbms.subsonic_spotify_relation.c.spotify_song_uuid,
         dbms.playlist_info.c.subsonic_playlist_name)
-        
+
     stmt.compile()
 
     stmt = select(func.count()).select_from(stmt.subquery())
@@ -1460,7 +1466,7 @@ def select_count_songs_by_album_uuid(conn, album_uuid):
     stmt = stmt.group_by(
         dbms.subsonic_spotify_relation.c.spotify_song_uuid,
         dbms.playlist_info.c.subsonic_playlist_name)
-        
+
     stmt.compile()
 
     stmt = select(func.count()).select_from(stmt.subquery())

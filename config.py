@@ -28,3 +28,7 @@ class Config(object):
         "default": {
             "type": "threadpool",
             "max_workers": 10}}
+
+    
+    APPLICATION_ROOT = os.environ.get("APPLICATION_ROOT", "")
+    LOGIN_DISABLED = os.environ.get("LOGIN_DISABLED", "0") == "1"

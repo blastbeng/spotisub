@@ -57,7 +57,7 @@
 </head>
 <body>
     {% block navbar %}
-        {% if current_user.is_authenticated %}
+        {% if current_user.is_authenticated or config['LOGIN_DISABLED'] == True %}
             <div class="wrapper">
                 <!-- Sidebar  -->
                 <nav id="sidebar">         

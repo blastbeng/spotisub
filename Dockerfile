@@ -4,6 +4,7 @@ FROM python:3.10-slim-bullseye
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         gcc \
+        g++ \
         ffmpeg \
         curl && \
         curl -LO https://github.com/tianon/gosu/releases/latest/download/gosu-$(dpkg --print-architecture | awk -F- '{ print $NF }') \
