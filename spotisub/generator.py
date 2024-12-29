@@ -539,19 +539,26 @@ def get_playlist_tracks(item, result, offset_tracks=0):
     response_tracks = sp.playlist_items(
         item['id'],
         offset=offset_tracks,
-        fields='items.track.id,items.track.name,items.track.artists,total',
+        fields='items.track.id,items.track.name,items.track.artists,items.track.type,total',
         limit=50,
         additional_types=['track'])
     for track_item in response_tracks['items']:
         track = track_item['track']
+
+        if track is None:
+            continue
+        if "type" in track and track["type"] == "episode":
+            logging.warning(f'({threading.current_thread().ident}) Skipping track {track["name"]} because it is not a song')
+            continue
+
         logging.info(
             '(%s) Found %s - %s inside playlist %s',
             str(threading.current_thread().ident),
             track['artists'][0]['name'],
             track['name'],
             item['name'])
-        if track is not None:
-            result["tracks"].append(track)
+
+        result["tracks"].append(track)
     time.sleep(2)
     if len(response_tracks['items']) != 0:
         result = get_playlist_tracks(
