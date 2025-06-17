@@ -544,7 +544,7 @@ def select_playlist_info_by_type(type):
 
 
 def select_playlist_info_by_uuid(uuid):
-    """select spotify artists by uuid"""
+    """select spotify playlists by uuid"""
     with dbms.db_engine.connect() as conn:
         value = None
         stmt = select(

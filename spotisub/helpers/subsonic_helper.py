@@ -1,7 +1,6 @@
 """Subsonic helper"""
 import logging
 import os
-import random
 import time
 import pickle
 import threading
@@ -11,15 +10,12 @@ from concurrent.futures import ThreadPoolExecutor
 from expiringdict import ExpiringDict
 from libsonic.errors import DataNotFoundError
 from spotipy.exceptions import SpotifyException
-from spotisub import spotisub
 from spotisub import database
 from spotisub import constants
 from spotisub import utils
 from spotisub.helpers import spotdl_helper
-from spotisub.exceptions import SubsonicOfflineException
-from spotisub.exceptions import SpotifyApiException
-from spotisub.exceptions import SpotifyDataException
-from spotisub.classes import ComparisonHelper
+from spotisub.exceptions import SubsonicDataException, SubsonicOfflineException
+from spotisub.classes import ComparisonHelper, SubsonicCache
 from spotisub.helpers import musicbrainz_helper
 
 cache_executor = ThreadPoolExecutor(max_workers=1)
@@ -58,14 +54,23 @@ pysonic = libsonic.Connection(
             constants.SUBSONIC_API_PORT)))
 
 
-# caches
-playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
-spotify_cache = None
+def load_subsonic_cache_from_file() -> SubsonicCache:
+    cache = SubsonicCache(0, {})
+    path = os.path.join(constants.CACHE_DIR, constants.SUBSONIC_CACHE_FILENAME)
+    if os.path.exists(path):
+        if os.stat(path).st_size == 0:
+            os.remove(path)
+        else:
+            with open(path, 'rb') as f:
+                cache = pickle.load(f)
+    return cache
 
 
 def load_spotify_cache_from_file():
     object = ExpiringDict(max_len=10000, max_age_seconds=43200)
-    path = os.path.abspath(os.curdir) + '/cache/spotify_object_cache.pkl'
+    path = os.path.join(
+        constants.CACHE_DIR,
+        constants.SPOTIFY_OBJECT_CACHE_FILENAME)
     if os.path.exists(path):
         if os.stat(path).st_size == 0:
             os.remove(path)
@@ -77,16 +82,22 @@ def load_spotify_cache_from_file():
     return object
 
 
-def save_spotify_cache_to_file(object):
-    path = os.path.abspath(os.curdir) + '/cache/spotify_object_cache.pkl'
+# caches
+playlist_cache = ExpiringDict(max_len=500, max_age_seconds=300)
+spotify_cache = None
+subsonic_cache = load_subsonic_cache_from_file()
+
+
+def save_cache_object_to_file(obj, filename: str):
+    path = os.path.join(constants.CACHE_DIR, filename)
     with open(path, 'wb') as f:
-        pickle.dump(object, f)
+        pickle.dump(obj, f)
 
 
 def get_spotify_object_from_cache(sp, spotify_uri, force=False):
-    if spotify_uri in spotify_cache:
+    if not force and spotify_uri in spotify_cache:
         return spotify_cache[spotify_uri]
-    elif force is True:
+    elif force:
         load_spotify_object_to_cache(sp, spotify_uri)
         return spotify_cache[spotify_uri]
     else:
@@ -110,10 +121,95 @@ def load_spotify_object_to_cache(sp, spotify_uri):
             spotify_object = sp.playlist(spotify_uri)
         if spotify_object is not None:
             spotify_cache[spotify_uri] = spotify_object
-            save_spotify_cache_to_file(spotify_cache)
+            save_cache_object_to_file(
+                spotify_cache, constants.SPOTIFY_OBJECT_CACHE_FILENAME)
     except SpotifyException:
         utils.write_exception()
         pass
+
+
+def is_subsonic_cache_stale() -> bool:
+    try:
+        # fetch what should be the last song in the subsonic library, according
+        # to the cache
+        subsonic_search = check_pysonic_connection().search2(
+            "",
+            songCount=2,
+            songOffset=subsonic_cache.total_song_count - 1,
+            artistCount=0,
+            albumCount=0)
+        if "searchResult2" not in subsonic_search:
+            raise SubsonicDataException(
+                f'({threading.current_thread().ident}) search2 failed for checking subsonic cache.')
+
+        if "song" not in subsonic_search["searchResult2"]:
+            return True
+
+        # the cache count is out of sync with the subsonic library; needs
+        # rebuilding
+        if len(subsonic_search["searchResult2"]["song"]) != 1:
+            return True
+    except Exception:
+        utils.write_exception()
+        return True
+
+    return False
+
+
+def build_subsonic_cache() -> SubsonicCache:
+    SONG_COUNT = 500
+    song_offset = 0
+    total_song_count = 0
+    subsonic_songs_dict = {}
+    try:
+        while True:
+            logging.debug(
+                f'Fetching {SONG_COUNT} songs from subsonic library...')
+            subsonic_search = check_pysonic_connection().search2(
+                "", songCount=SONG_COUNT, songOffset=song_offset, artistCount=0, albumCount=0)
+            if "searchResult2" not in subsonic_search:  # this should probably be an exception
+                break
+
+            if "song" not in subsonic_search["searchResult2"]:
+                # done searching
+                break
+
+            num_retrieved_songs = len(subsonic_search["searchResult2"]["song"])
+
+            if num_retrieved_songs == 0:
+                # done searching, though this shouldn't get here
+                break
+
+            song_offset += num_retrieved_songs
+
+            if num_retrieved_songs < SONG_COUNT:
+                total_song_count = song_offset
+
+            for song in subsonic_search["searchResult2"]["song"]:
+                if "musicBrainzId" in song:
+                    subsonic_songs_dict[song["musicBrainzId"]] = song
+    except Exception:
+        utils.write_exception()
+        return SubsonicCache(0, {})
+
+    cache = SubsonicCache(total_song_count, subsonic_songs_dict)
+
+    logging.debug(
+        f'Found {cache.total_song_count} songs and {len(subsonic_songs_dict)} MBIDs in subsonic library.')
+
+    save_cache_object_to_file(cache, constants.SUBSONIC_CACHE_FILENAME)
+
+    return cache
+
+
+def check_and_get_subsonic_cache():
+    if not is_subsonic_cache_stale():
+        return subsonic_cache
+
+    logging.info(
+        f'({threading.current_thread().ident}) subsonic cache is stale, rebuilding...')
+
+    return build_subsonic_cache()
 
 
 def check_pysonic_connection():
@@ -125,27 +221,30 @@ def check_pysonic_connection():
 
 def get_artists_array_names():
     """get artists array names"""
-    check_pysonic_connection().getArtists()
-
     artist_names = []
 
-    for index in check_pysonic_connection().getArtists()["artists"]["index"]:
-        for artist in index["artist"]:
-            if "name" in artist:
-                artist_names.append(artist["name"])
+    artists_from_pysonic = check_pysonic_connection().getArtists()
+
+    if ["artists"] in artists_from_pysonic and "index" in artists_from_pysonic["artists"]:
+        for index in artists_from_pysonic["artists"]["index"]:
+            for artist in index["artist"]:
+                if "name" in artist:
+                    artist_names.append(artist["name"])
 
     return artist_names
 
 
 def search_artist(artist_name):
     """search artist"""
+    artists_from_pysonic = check_pysonic_connection().getArtists()
 
-    for index in check_pysonic_connection().getArtists()["artists"]["index"]:
-        for artist in index["artist"]:
-            if "name" in artist:
-                if artist_name.strip().lower(
-                ) == artist["name"].strip().lower():
-                    return artist["name"]
+    if ["artists"] in artists_from_pysonic and "index" in artists_from_pysonic["artists"]:
+        for index in artists_from_pysonic["artists"]["index"]:
+            for artist in index["artist"]:
+                if "name" in artist:
+                    if artist_name.strip().lower(
+                    ) == artist["name"].strip().lower():
+                        return artist["name"]
 
     return None
 
@@ -196,11 +295,11 @@ def add_missing_values_to_track(sp, track):
     """calls spotify if tracks has missing album or isrc or uri"""
     if "id" in track:
         uri = 'spotify:track:' + track['id']
-        if "album" not in track or has_isrc(track) is False:
+        if "album" not in track or not has_isrc(track):
             spotify_track = get_spotify_object_from_cache(sp, uri)
             if spotify_track is not None:
                 track = spotify_track
-            time.sleep(1)
+            time.sleep(0.25)
         if "uri" not in track:
             track["uri"] = uri
         return track
@@ -210,7 +309,10 @@ def add_missing_values_to_track(sp, track):
 def generate_playlist(playlist_info):
     """generate empty playlist if not exists"""
     playlist_info["prefix"] = os.environ.get(
-        constants.PLAYLIST_PREFIX, constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace("\"", "")
+        constants.PLAYLIST_PREFIX,
+        constants.PLAYLIST_PREFIX_DEFAULT_VALUE).replace(
+        "\"",
+        "")
     return database.create_playlist(playlist_info)
 
 
@@ -226,12 +328,14 @@ def write_playlist(sp, playlist_info, results):
         old_song_ids = []
         if playlist_id is None:
             check_pysonic_connection().createPlaylist(
-                name=playlist_info["prefix"].replace("\"", "") + playlist_info["name"], songIds=[])
+                name=playlist_info["prefix"].replace(
+                    "\"", "") + playlist_info["name"], songIds=[])
             logging.info(
                 '(%s) Creating playlist %s', str(
                     threading.current_thread().ident), playlist_info["name"])
             playlist_id = get_playlist_id_by_name(
-                playlist_info["prefix"].replace("\"", "") + playlist_info["name"])
+                playlist_info["prefix"].replace(
+                    "\"", "") + playlist_info["name"])
             database.delete_playlist_relation_by_id(playlist_id)
         else:
             old_song_ids = get_playlist_songs_ids_by_id(playlist_id)
@@ -246,75 +350,78 @@ def write_playlist(sp, playlist_info, results):
             else:
                 playlist_info["subsonic_playlist_id"] = playlist_id
                 track_helper = []
+                subsonic_cache = check_and_get_subsonic_cache()
                 for track in results['tracks']:
                     track = add_missing_values_to_track(sp, track)
-                    found = False
-                    for artist_spotify in track['artists']:
-                        if found is False:
-                            excluded = False
-                            if artist_spotify != '' and "name" in artist_spotify:
-                                logging.info(
-                                    '(%s) Searching %s - %s in your music library',
-                                    str(threading.current_thread().ident),
-                                    artist_spotify["name"],
-                                    track['name'])
-                                if "name" in track:
-                                    comparison_helper = ComparisonHelper(
-                                        track, artist_spotify, found, excluded, song_ids, track_helper)
-                                    comparison_helper = match_with_subsonic_track(
-                                        comparison_helper,
-                                        playlist_info,
-                                        old_song_ids)
 
-                                    track = comparison_helper.track
-                                    artist_spotify = comparison_helper.artist_spotify
-                                    found = comparison_helper.found
-                                    excluded = comparison_helper.excluded
-                                    song_ids = comparison_helper.song_ids
-                                    track_helper = comparison_helper.track_helper
-                            if not excluded:
-                                if (os.environ.get(constants.SPOTDL_ENABLED,
-                                                   constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1"
-                                        and found is False):
-                                    if "external_urls" in track and track["external_urls"] is not None and "spotify" in track[
-                                            "external_urls"] and track["external_urls"]["spotify"] is not None:
-                                        is_monitored = True
-                                        if (os.environ.get(constants.LIDARR_ENABLED,
-                                                           constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1"):
-                                            is_monitored = lidarr_helper.is_artist_monitored(
-                                                artist_spotify["name"])
-                                        if is_monitored:
-                                            logging.warning(
-                                                '(%s) Track %s - %s not found in your music ' +
-                                                'library, using SPOTDL downloader',
-                                                str(threading.current_thread().ident),
-                                                artist_spotify["name"],
-                                                track['name'])
-                                            logging.warning(
-                                                '(%s) This track will be available after ' +
-                                                'navidrome rescans your music dir',
-                                                str(threading.current_thread().ident))
-                                            spotdl_executor.submit(
-                                                spotdl_helper.download_track, track["external_urls"]["spotify"])
-                                        else:
-                                            logging.warning(
-                                                '(%s) Track %s - %s not found in your music library',
-                                                str(threading.current_thread().ident),
-                                                artist_spotify["name"],
-                                                track['name'])
-                                            logging.warning(
-                                                '(%s) This track hasn'
-                                                't been found in your Lidarr database, ' +
-                                                'skipping download process',
-                                                str(threading.current_thread().ident))
-                                elif found is False:
+                    if track is None:
+                        logging.error(
+                            f'({threading.current_thread().ident}) track was set to None when adding missing values, skipping.')
+                        continue
+
+                    found = False
+                    excluded = False
+                    logging.info(
+                        '(%s) Searching %s in your music library',
+                        str(threading.current_thread().ident),
+                        track['name'])
+                    comparison_helper = ComparisonHelper(
+                        track, track["artists"][0], found, excluded, song_ids, track_helper)
+                    comparison_helper = match_with_subsonic_track(
+                        comparison_helper,
+                        playlist_info,
+                        old_song_ids,
+                        subsonic_cache.song_mbid_dict)
+
+                    track = comparison_helper.track
+                    artist_spotify = comparison_helper.artist_spotify
+                    found = comparison_helper.found
+                    excluded = comparison_helper.excluded
+                    song_ids = comparison_helper.song_ids
+                    track_helper = comparison_helper.track_helper
+                    if not excluded:
+                        if (os.environ.get(constants.SPOTDL_ENABLED,
+                                           constants.SPOTDL_ENABLED_DEFAULT_VALUE) == "1"
+                                and found is False):
+                            if "external_urls" in track and track["external_urls"] is not None and "spotify" in track[
+                                    "external_urls"] and track["external_urls"]["spotify"] is not None:
+                                is_monitored = True
+                                if (os.environ.get(constants.LIDARR_ENABLED,
+                                                   constants.LIDARR_ENABLED_DEFAULT_VALUE) == "1"):
+                                    is_monitored = lidarr_helper.is_artist_monitored(
+                                        artist_spotify["name"])
+                                if is_monitored:
+                                    logging.warning(
+                                        '(%s) Track %s - %s not found in your music ' +
+                                        'library, using SPOTDL downloader',
+                                        str(threading.current_thread().ident),
+                                        artist_spotify["name"],
+                                        track['name'])
+                                    logging.warning(
+                                        '(%s) This track will be available after ' +
+                                        'navidrome rescans your music dir',
+                                        str(threading.current_thread().ident))
+                                    spotdl_executor.submit(
+                                        spotdl_helper.download_track, track["external_urls"]["spotify"])
+                                else:
                                     logging.warning(
                                         '(%s) Track %s - %s not found in your music library',
                                         str(threading.current_thread().ident),
                                         artist_spotify["name"],
                                         track['name'])
-                                    insert_result = database.insert_song(
-                                        playlist_info, None, artist_spotify, track)
+                                    logging.warning(
+                                        '(%s) This track hasn'
+                                        't been found in your Lidarr database, ' +
+                                        'skipping download process',
+                                        str(threading.current_thread().ident))
+                        elif found is False:
+                            logging.warning(
+                                '(%s) Track %s - %s not found in your music library',
+                                str(threading.current_thread().ident),
+                                artist_spotify["name"],
+                                track['name'])
+                            insert_result = database.insert_song(
+                                playlist_info, None, artist_spotify, track)
 
                 if len(song_ids) > 0:
                     check_pysonic_connection().createPlaylist(
@@ -336,147 +443,121 @@ def write_playlist(sp, playlist_info, results):
             str(threading.current_thread().ident))
 
 
+def get_subsonic_track_via_mbid(
+        comparison_helper, subsonic_tracks_dict: dict[str, dict]) -> dict | None:
+    isrc = comparison_helper.track["external_ids"]["isrc"]
+    spotify_track_mbids = musicbrainz_helper.get_mbids_from_isrc(isrc)
+    matched_track = None
+    for mbid in spotify_track_mbids:
+        if mbid in subsonic_tracks_dict:
+            matched_track = subsonic_tracks_dict[mbid]
+            break
+
+    if matched_track is None:
+        logging.debug(
+            f'({threading.current_thread().ident}) Spotify track with mbids {spotify_track_mbids} was not found in library.')
+
+    return matched_track
+
+
+def get_subsonic_track_via_string_compare(
+        comparison_helper, subsonic_tracks_dict: dict[str, dict]) -> dict | None:
+    matched_tracks = [s_t for s_t in subsonic_tracks_dict.values(
+    ) if utils.compare_track_metadata(comparison_helper, s_t)]
+
+    if len(matched_tracks) == 0:
+        logging.debug(
+            f'({threading.current_thread().ident}) Spotify track {comparison_helper.track["name"]} - {comparison_helper.artist_spotify["name"]} was not found in library via string compare.')
+        return
+
+    # TODO: add some sort of UI where the user can ensure the proper track is matched if there are multiple possibilities.
+    # for now just pick the first one
+    matched_track = matched_tracks[0]
+
+    if (
+        utils.compare_string_to_exclusion(
+            matched_track["title"],
+            utils.get_excluded_words_array()) or utils.compare_string_to_exclusion(
+            matched_track["album"],
+            utils.get_excluded_words_array())):
+        comparison_helper.excluded = True
+        # NOTE: do we need to handle removing the excluded song if it was
+        # previously in the playlist but is now excluded?
+
+    return matched_track
+
+
 def match_with_subsonic_track(
-        comparison_helper, playlist_info, old_song_ids):
+        comparison_helper: ComparisonHelper,
+        playlist_info,
+        old_song_ids,
+        subsonic_tracks_dict) -> ComparisonHelper:
     """compare spotify track to subsonic one"""
-    text_to_search = comparison_helper.artist_spotify["name"] + \
-        " " + comparison_helper.track['name']
-    subsonic_search_results = get_subsonic_search_results(text_to_search)
-    skipped_songs = []
-    for song_id in subsonic_search_results:
-        song = subsonic_search_results[song_id]
-        song["isrc-list"] = musicbrainz_helper.get_isrc_by_id(song)
-        placeholder = song["artist"] + " " + \
-            song["title"] + " " + song["album"]
-        if song["id"] in old_song_ids:
+    matched_track = None
+    if has_isrc(comparison_helper.track):
+        matched_track = get_subsonic_track_via_mbid(
+            comparison_helper, subsonic_tracks_dict)
+
+    if matched_track is None and os.environ.get(
+            constants.TEXT_COMAPRE_MATCHING_ENABLED,
+            constants.TEXT_COMAPRE_MATCHING_ENABLED_DEFAULT_VALUE) == "1":
+        logging.info(
+            f'({threading.current_thread().ident}) Spotify track {comparison_helper.track["name"]} - {comparison_helper.artist_spotify["name"]} not found via ISRC; searching via string comparison...')
+        matched_track = get_subsonic_track_via_string_compare(
+            comparison_helper, subsonic_tracks_dict)
+
+    if matched_track is None:
+        return comparison_helper
+
+    if comparison_helper.excluded:
+        logging.info(
+            f'({threading.current_thread().ident}) Spotify track {comparison_helper.track["name"]} - {comparison_helper.artist_spotify["name"]} was excluded from search')
+        return comparison_helper
+
+    if matched_track["id"] in old_song_ids:
+        logging.info(
+            '(%s) Track with id "%s" already in playlist "%s"',
+            str(threading.current_thread().ident),
+            matched_track["id"],
+            playlist_info["name"])
+        comparison_helper.song_ids.append(matched_track["id"])
+        comparison_helper.found = True
+        insert_result = database.insert_song(
+            playlist_info,
+            matched_track,
+            comparison_helper.artist_spotify,
+            comparison_helper.track)
+    elif (matched_track["id"] not in comparison_helper.song_ids
+          and matched_track["artist"] != ''
+          and comparison_helper.track['name'] != ''
+          and matched_track["album"] != ''
+          and matched_track["title"] != ''):
+
+        placeholder = matched_track["artist"] + " " + \
+            matched_track["title"] + " " + matched_track["album"]
+
+        comparison_helper.track_helper.append(placeholder)
+        comparison_helper.found = True
+        insert_result = database.insert_song(
+            playlist_info,
+            matched_track,
+            comparison_helper.artist_spotify,
+            comparison_helper.track)
+        is_ignored = check_ignored(
+            insert_result, matched_track, playlist_info)
+        if is_ignored is False:
+            comparison_helper.song_ids.append(matched_track["id"])
             logging.info(
-                '(%s) Track with id "%s" already in playlist "%s"',
+                '(%s) Adding song "%s - %s - %s" to playlist "%s"',
                 str(threading.current_thread().ident),
-                song["id"],
+                matched_track["artist"],
+                matched_track["title"],
+                matched_track["album"],
                 playlist_info["name"])
-            comparison_helper.song_ids.append(song["id"])
-            comparison_helper.found = True
-            insert_result = database.insert_song(
-                playlist_info,
-                song,
-                comparison_helper.artist_spotify,
-                comparison_helper.track)
-        elif (song["id"] not in comparison_helper.song_ids
-              and song["artist"] != ''
-              and comparison_helper.track['name'] != ''
-              and song["album"] != ''
-              and song["title"] != ''):
-            album_name = ""
-            if ("album" in comparison_helper.track
-                and "name" in comparison_helper.track["album"]
-                    and comparison_helper.track["album"]["name"] is not None):
-                album_name = comparison_helper.track["album"]["name"]
-            logging.info(
-                '(%s) Comparing song "%s - %s - %s" with Spotify track "%s - %s - %s"',
-                str(threading.current_thread().ident),
-                song["artist"],
-                song["title"],
-                song["album"],
-                comparison_helper.artist_spotify["name"],
-                comparison_helper.track['name'],
-                album_name)
-            if has_isrc(comparison_helper.track):
-                found_isrc = False
-                for isrc in song["isrc-list"]:
-                    if isrc.strip(
-                    ) == comparison_helper.track["external_ids"]["isrc"].strip():
-                        found_isrc = True
-                        break
-                if found_isrc is True:
-                    comparison_helper.track_helper.append(placeholder)
-                    comparison_helper.found = True
-                    insert_result = database.insert_song(
-                        playlist_info, song, comparison_helper.artist_spotify, comparison_helper.track)
-                    is_ignored = check_ignored(
-                        insert_result, song, playlist_info)
-                    if is_ignored is False:
-                        comparison_helper.song_ids.append(song["id"])
-                        logging.info(
-                            '(%s) Adding song "%s - %s - %s" to playlist "%s", matched by ISRC: "%s"',
-                            str(threading.current_thread().ident),
-                            song["artist"],
-                            song["title"],
-                            song["album"],
-                            playlist_info["name"],
-                            comparison_helper.track["external_ids"]["isrc"])
-                        check_pysonic_connection().createPlaylist(
-                            playlistId=playlist_info["subsonic_playlist_id"],
-                            songIds=comparison_helper.song_ids)
-                    break
-            if (utils.compare_string_to_exclusion(song["title"],
-                utils.get_excluded_words_array())
-                or utils.compare_string_to_exclusion(song["album"],
-                                                     utils.get_excluded_words_array())):
-                comparison_helper.excluded = True
-            elif (utils.compare_strings(comparison_helper.artist_spotify["name"], song["artist"])
-                  and utils.compare_strings(comparison_helper.track['name'], song["title"])
-                  and placeholder not in comparison_helper.track_helper):
-                if (
-                    (
-                        "album" in comparison_helper.track and "name" in comparison_helper.track["album"] and utils.compare_strings(
-                            comparison_helper.track['album']['name'],
-                            song["album"])) or (
-                        "album" not in comparison_helper.track) or (
-                        "album" in comparison_helper.track and "name" not in comparison_helper.track["album"])):
-                    comparison_helper.track_helper.append(placeholder)
-                    comparison_helper.found = True
-                    insert_result = database.insert_song(
-                        playlist_info, song, comparison_helper.artist_spotify, comparison_helper.track)
-                    is_ignored = check_ignored(
-                        insert_result, song, playlist_info)
-                    if is_ignored is False:
-                        comparison_helper.song_ids.append(song["id"])
-                        logging.info(
-                            '(%s) Adding song "%s - %s - %s" to playlist "%s", matched by text comparison',
-                            str(threading.current_thread().ident),
-                            song["artist"],
-                            song["title"],
-                            song["album"],
-                            playlist_info["name"])
-                        check_pysonic_connection().createPlaylist(
-                            playlistId=playlist_info["subsonic_playlist_id"],
-                            songIds=comparison_helper.song_ids)
-                    break
-                skipped_songs.append(song)
-    if comparison_helper.found is False and comparison_helper.excluded is False and len(
-            skipped_songs) > 0:
-        skipped_song = random.choice(skipped_songs)
-        placeholder = skipped_song["artist"] + " " + \
-            skipped_song['title'] + " " + skipped_song["album"]
-        if placeholder not in comparison_helper.track_helper:
+            check_pysonic_connection().createPlaylist(
+                playlistId=playlist_info["subsonic_playlist_id"],
+                songIds=comparison_helper.song_ids)
 
-            comparison_helper.found = True
-            comparison_helper.track_helper.append(placeholder)
-            insert_result = database.insert_song(
-                playlist_info,
-                skipped_song,
-                comparison_helper.artist_spotify,
-                comparison_helper.track)
-
-            is_ignored = check_ignored(
-                insert_result, skipped_song, playlist_info)
-
-            if is_ignored is False:
-                comparison_helper.song_ids.append(skipped_song["id"])
-
-                logging.warning(
-                    '(%s) No matching album found for Subsonic search "%s", using a random one', str(
-                        threading.current_thread().ident), text_to_search)
-                logging.info(
-                    '(%s) Adding song "%s - %s - %s" to playlist "%s", random match',
-                    str(threading.current_thread().ident),
-                    skipped_song["artist"],
-                    song["title"],
-                    skipped_song["album"],
-                    playlist_info["name"])
-                check_pysonic_connection().createPlaylist(
-                    playlistId=playlist_info["subsonic_playlist_id"],
-                    songIds=comparison_helper.song_ids)
     return comparison_helper
 
 

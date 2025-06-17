@@ -69,6 +69,7 @@ def after_request(response):
 
 @spotisub.errorhandler(Exception)
 def all_exception_handler(error):
+    """Exception handler"""
     utils.write_exception()
     return render_template('errors/404.html',
                            title='Error!',
@@ -117,6 +118,7 @@ def overview(
         limit=100,
         order='playlist_info.subsonic_playlist_name',
         asc=1):
+    """Overview Endpoint"""
     title = 'Overview'
     spotipy_helper.get_secrets()
     all_playlists, song_count = subsonic_helper.select_all_playlists(
@@ -199,6 +201,7 @@ def overview_content(
         limit=100,
         order='playlist_info.subsonic_playlist_name',
         asc=1):
+    """Overview content Endpoint"""
     spotipy_helper.get_secrets()
     all_playlists, song_count = subsonic_helper.select_all_playlists(
         spotipy_helper, page=page - 1, limit=limit, order=order, asc=(asc == 1))
@@ -222,6 +225,7 @@ def overview_content(
 @login_required
 def playlist(uuid=None, page=1, limit=25,
              order='spotify_song.title', asc=1):
+    """Playlist Endpoint"""
     title = 'Playlist'
     playlists, song_count = subsonic_helper.select_all_songs(
         page=page - 1, limit=limit, order=order, asc=(asc == 1), playlist_uuid=uuid)
@@ -266,6 +270,7 @@ def playlist(uuid=None, page=1, limit=25,
 @login_required
 def playlists(missing_only=0, page=1, limit=25,
               order='spotify_song.title', asc=1, search=None):
+    """Playlists Endpoint"""
     title = 'Missing' if missing_only == 1 else 'Manage'
     missing_bool = True if missing_only == 1 else False
     playlists, song_count = subsonic_helper.select_all_songs(
@@ -305,6 +310,7 @@ def playlists(missing_only=0, page=1, limit=25,
 @spotisub.route('/song/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
 def song(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
+    """Song Endpoint"""
     title = 'Song'
     spotipy_helper.get_secrets()
     song1, songs, song_count = subsonic_helper.load_song(
@@ -344,6 +350,7 @@ def song(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
 @spotisub.route('/album/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
 def album(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
+    """Album Endpoint"""
     title = 'Album'
     spotipy_helper.get_secrets()
     album1, songs, song_count = subsonic_helper.load_album(
@@ -381,6 +388,7 @@ def album(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
 @spotisub.route('/artist/<string:uuid>/<int:page>/<int:limit>/<string:order>/<int:asc>/')
 @login_required
 def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
+    """Artist Endpoint"""
     title = 'Artist'
     spotipy_helper.get_secrets()
     artist1, songs, song_count = subsonic_helper.load_artist(
@@ -414,6 +422,7 @@ def artist(uuid=None, page=1, limit=25, order='spotify_song.title', asc=1):
 @spotisub.route('/tasks')
 @login_required
 def tasks():
+    """Tasks Endpoint"""
     title = 'Tasks'
     return render_template('tasks.html',
                            title=title,
@@ -423,6 +432,7 @@ def tasks():
 @spotisub.route('/logs')
 @login_required
 def logs():
+    """Logs Endpoint"""
     title = 'Logs'
     array_lines = []
     with open(os.path.abspath(os.curdir) + '/cache/spotisub.log', 'r') as file_init:
@@ -454,6 +464,7 @@ def connect():
 
 
 def poll_overview():
+    """Poll Overview Endpoint"""
     with spotisub.test_request_context('/'):
         while True:
             if utils.check_thread_running_by_name("reimport_all"):
@@ -472,6 +483,7 @@ def poll_overview():
 
 
 def poll_playlist():
+    """Poll Playlist Endpoint"""
     with spotisub.test_request_context('/'):
         while True:
             uuids = generator.poll_playlist()
@@ -493,6 +505,7 @@ def poll_playlist():
 
 
 def poll_tasks():
+    """Poll Tasks Endpoint"""
     with spotisub.test_request_context('/'):
         while True:
             emit(
@@ -548,6 +561,7 @@ def ignore(type=None, uuid=None, value=None):
 
 @spotisub.route('/login', methods=['GET', 'POST'])
 def login():
+    """Login Endpoint"""
     if current_user.is_authenticated:
         return redirect(url_for('overview'))
     if not database.user_exists():
@@ -565,6 +579,7 @@ def login():
 
 @spotisub.route('/register', methods=['GET', 'POST'])
 def register():
+    """Register Endpoint"""
     if current_user.is_authenticated:
         return redirect(url_for('overview'))
     if database.user_exists():
