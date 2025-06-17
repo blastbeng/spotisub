@@ -28,6 +28,7 @@ def prechecks():
 
 
 def scan_artists_top_tracks():
+    """Scan Artists Top Tracks"""
     artist_names = subsonic_helper.get_artists_array_names()
     if len(artist_names) > 0:
         for name in artist_names:
@@ -43,6 +44,7 @@ def scan_artists_top_tracks():
 
 
 def scan_artists_recommendations():
+    """Scan Artists Recommendations"""
     artist_names = subsonic_helper.get_artists_array_names()
     if len(artist_names) > 0:
         for name in artist_names:
@@ -58,6 +60,7 @@ def scan_artists_recommendations():
 
 
 def scan_my_recommendations():
+    """Scan Recommendations"""
     for playlist_num in range(int(os.environ.get(
             constants.NUM_USER_PLAYLISTS, constants.NUM_USER_PLAYLISTS_DEFAULT_VALUE))):
         playlist_name = "My Recommendations " + str(playlist_num + 1)
@@ -70,6 +73,7 @@ def scan_my_recommendations():
 
 
 def scan_user_saved_tracks():
+    """Scan Saved Tracks"""
     playlist_info = {}
     playlist_info["name"] = "Saved Tracks"
     playlist_info["spotify_uri"] = None
@@ -151,6 +155,7 @@ def init_artists_recommendations():
 
 
 def init_my_recommendations():
+    """Init Recommendations"""
     if os.environ.get(constants.RECOMMEND_GEN_SCHED,
                       constants.RECOMMEND_GEN_SCHED_DEFAULT_VALUE) != "0":
         playlist_infos = database.select_playlist_info_by_type(
@@ -201,6 +206,7 @@ def init_user_saved_tracks():
 
 
 def init_user_playlists():
+    """Init Playlists"""
     if os.environ.get(constants.PLAYLIST_GEN_SCHED,
                       constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0":
         playlist_infos = database.select_playlist_info_by_type(
