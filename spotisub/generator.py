@@ -416,7 +416,7 @@ def get_user_saved_tracks(uuid):
         thread.join()
     else:
         logging.info(
-            "Skipping thread execution becase a full reimport process is running")
+            "Skipping thread execution because a full reimport process is running")
 
 
 def get_user_saved_tracks_run(uuid):

@@ -63,6 +63,12 @@ def compare_strings(a, b):
     return compare(generate_compare_array(a), generate_compare_array(b))
 
 
+def compare_track_metadata(comparison_helper, subsonic_track):
+    is_title_match = compare_strings(comparison_helper.track['name'], subsonic_track["title"])
+    is_artist_match = compare_strings(comparison_helper.artist_spotify["name"], subsonic_track["artist"])
+    return is_title_match and is_artist_match
+
+
 def compare_string_to_exclusion(a, stringb):
     """compare string to exclusion"""
     if a is not None and a.strip() != '':

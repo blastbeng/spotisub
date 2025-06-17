@@ -1,4 +1,7 @@
 """Spotisub constants"""
+import os
+
+
 SPLIT_TOKENS = ["(", "-", "feat"]
 
 
@@ -30,6 +33,7 @@ SUBSONIC_API_HOST = "SUBSONIC_API_HOST"
 SUBSONIC_API_USER = "SUBSONIC_API_USER"
 SUBSONIC_API_PASS = "SUBSONIC_API_PASS"
 SUBSONIC_API_PORT = "SUBSONIC_API_PORT"
+TEXT_COMAPRE_MATCHING_ENABLED = "TEXT_COMAPRE_MATCHING_ENABLED"
 
 # Default configuration values constants
 ARTIST_GEN_SCHED_DEFAULT_VALUE = "1"
@@ -52,6 +56,7 @@ SPOTIPY_CLIENT_ID_DEFAULT_VALUE = ""
 SPOTIPY_CLIENT_SECRET_DEFAULT_VALUE = ""
 SPOTIPY_REDIRECT_URI_DEFAULT_VALUE = "http://127.0.0.1:8080/"
 SUBSONIC_API_BASE_URL_DEFAULT_VALUE = ""
+TEXT_COMAPRE_MATCHING_ENABLED_DEFAULT_VALUE = "0"
 
 
 # Scheduler constants
@@ -60,3 +65,9 @@ JOB_ATT_ID = 'artist_top_tracks'
 JOB_MR_ID = 'my_recommendations'
 JOB_UP_ID = 'user_playlists'
 JOB_ST_ID = 'saved_tracks'
+
+
+# Cache constants
+CACHE_DIR = os.path.join(os.path.abspath(os.curdir), 'cache')
+SPOTIFY_OBJECT_CACHE_FILENAME = 'spotify_object_cache.pkl'
+SUBSONIC_CACHE_FILENAME = 'subsonic_cache.pkl'

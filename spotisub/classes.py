@@ -1,5 +1,6 @@
 """Spotisub classes"""
 
+from typing import NamedTuple
 from spotisub import configuration_db, login
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -39,3 +40,8 @@ class User(configuration_db.Model, UserMixin):
     def check_password(self, password):
         """Confirms a user's password"""
         return check_password_hash(self.password_hash, password)
+
+
+class SubsonicCache(NamedTuple):
+    total_song_count: int
+    song_mbid_dict: dict[str, object]

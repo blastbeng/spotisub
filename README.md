@@ -49,32 +49,30 @@ So for example if you want to automate the download process, using this system y
 
 ## Track Matching
 
-The track matching is made in two different ways, by ISRC comparison and simple text comparison.
+The track matching is made in two different ways, by MBID comparison and simple text comparison.
 
-For perfect track match by ISRC it is important that the songs in your library have the **musicBrainzId tag**.
+For perfect track match by MBID it is important that the songs in your library have the **musicBrainzId** tag.
 
-### ISRC
-The ISRC is univoque for song, read more about it on [ISRC - MusicBrainz](https://musicbrainz.org/doc/ISRC)
+### MBID
+A common way to uniquely identify tracks is via an MBID. Read more about it on [MBID - Musicbrainz](https://musicbrainz.org/doc/MusicBrainz_Identifier). Spotify track data does not contain an MBID. However, it does typically contain an [ISRC](https://musicbrainz.org/doc/ISRC), a different type of unique identifier. Musicbrainz supports looking up tracks by ISRC, which is then used to get a corresponding MBID. However, the ISRC database on Musicbrainz is incomplete, so not all tracks will have an ISRC value. There are tools and guides for submitting missing ISRC values, which will benefit everyone who wants to use the Musicbrainz API.
 
-In case the song found in your library has a musicBrainzId tag, it will be used to retrieve the ISRC from Musicbrainz Database.
+The MBID is stored in your Subsonic library tracks via the musicBrainzId tag.
 
-This ISRC will then be compared with the Spotify song ISRC (if present).
+If the MBID comparison succeeds, the song will be added to the playlist and the text comparison will be skipped.
 
-If these two ISRC matches, the song will be added to the playlist and the text comparison will be skipped.
+### Simple Text Comparison (OFF by default)
+When the two MBIDs doesn't match, a text comparison will **optionally** be executed between the Spotify song and your Subsonic library.
 
-### Simple Text Comparison
-When the two ISRCs doesn't match, the text comparison will be executed between the Subsonic found song and Spotify song.
-
-In case of successfull compare, the song will be added to the playlist.
+In case of successful compare, the song will be added to the playlist.
 
 ## Word Exclusions
 Spotisub supports word exclusions, via the environment variable EXCLUDED_WORDS as documented in [Environment Variables](https://github.com/blastbeng/spotisub/wiki/Environment-Variables)
 
 But the exclusions are only made in case of text comparison.
 
-If there is an ISRC match, Spotisub will just use this song without doing excluded words checks.
+If there is an MBID match, Spotisub will just use this song without doing excluded words checks.
 
-This is because, for example, if we want to exclude the word "live" from Subsonic searches, but in our Spotify playlist we have a song with "live" in it that matches by ISRC a song in our Subsonic library.
+This is because, for example, if we want to exclude the word "live" from Subsonic searches, but in our Spotify playlist we have a song with "live" in it that matches by MBID a song in our Subsonic library.
 
 In this case, that song should not be skipped and the correct way of making it not being added to the Subsonic playlist is to manually remove it from the Spotify playlist.
 
@@ -88,11 +86,12 @@ Dashboard
 * Ability to delete, skip or download matching tracks using spotdl
 * Configure Spotisub trough the dashboard instead of docker env variables
 * Ability to interact with spotdl and lidarr integrations from the dashboard
+* Ability to manually match and easily submit missing ISRC values to Musicbrainz via a text comparison suggestion page
 
 ## Help
 
 NOTE. Depending on your library size and your playlists number and size on Spotify, the execution may take a very long time.
-To avoid Spotify rate limiting a lot of time.sleep() have ben added to the code.
+To avoid Spotify rate limiting a lot of `time.sleep()` have been added to the code.
 
 
 Official Spotisub communities
