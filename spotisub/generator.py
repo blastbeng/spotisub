@@ -82,10 +82,12 @@ def scan_user_playlists(offset=0):
     """get list of user playlists"""
     REQUEST_LIMIT = 50
     sp = spotipy_helper.get_spotipy_client()
-    playlist_result = sp.current_user_playlists(limit=REQUEST_LIMIT, offset=offset)
+    playlist_result = sp.current_user_playlists(
+        limit=REQUEST_LIMIT, offset=offset)
 
     for item in playlist_result['items']:
-        if item is not None and item['name'] is not None and item['name'].strip() != '':
+        if item is not None and item['name'] is not None and item['name'].strip(
+        ) != '':
             playlist_info = {}
             playlist_info["name"] = item['name'].strip()
             playlist_info["spotify_uri"] = item["uri"]
@@ -235,8 +237,8 @@ def artist_top_tracks(uuid):
             playlist_info["import_arg"] = playlist_info_db.import_arg
             playlist_info["spotify_uri"] = artist["uri"]
             playlist_info["type"] = constants.JOB_ATT_ID
-            logging.info('(%s) Searching top tracks for: %s',
-                         str(threading.current_thread().ident), playlist_info_db.import_arg)
+            logging.info('(%s) Searching top tracks for: %s', str(
+                threading.current_thread().ident), playlist_info_db.import_arg)
             sp = spotipy_helper.get_spotipy_client()
             artist_top = sp.artist_top_tracks(artist["uri"])
             subsonic_helper.write_playlist(sp, playlist_info, artist_top)
@@ -258,7 +260,8 @@ def artist_top_tracks(uuid):
                 constants.JOB_ATT_ID)
             if len(playlist_infos) > 0:
                 playlist_info_rnd = random.choice(playlist_infos)
-                if playlist_info_rnd is not None and playlist_info_rnd.uuid is not None and scheduler.get_job(id=constants.JOB_ATT_ID) is not None:
+                if playlist_info_rnd is not None and playlist_info_rnd.uuid is not None and scheduler.get_job(
+                        id=constants.JOB_ATT_ID) is not None:
                     scheduler.modify_job(
                         args=[playlist_info_rnd.uuid],
                         id=constants.JOB_ATT_ID
@@ -322,7 +325,8 @@ def show_recommendations_for_artist_run(uuid):
                 constants.JOB_ATT_ID)
             if len(playlist_infos) > 0:
                 playlist_info_rnd = random.choice(playlist_infos)
-                if playlist_info_rnd is not None and playlist_info_rnd.uuid is not None and scheduler.get_job(id=constants.JOB_AR_ID) is not None:
+                if playlist_info_rnd is not None and playlist_info_rnd.uuid is not None and scheduler.get_job(
+                        id=constants.JOB_AR_ID) is not None:
                     scheduler.modify_job(
                         args=[playlist_info_rnd.uuid],
                         id=constants.JOB_AR_ID
@@ -403,7 +407,8 @@ def my_recommendations_run(uuid):
                 constants.JOB_MR_ID)
             if len(playlist_infos) > 0:
                 playlist_info_rnd = random.choice(playlist_infos)
-                if playlist_info_rnd is not None and playlist_info_rnd.uuid is not None and scheduler.get_job(id=constants.JOB_MR_ID) is not None:
+                if playlist_info_rnd is not None and playlist_info_rnd.uuid is not None and scheduler.get_job(
+                        id=constants.JOB_MR_ID) is not None:
                     scheduler.modify_job(
                         args=[playlist_info_rnd.uuid],
                         id=constants.JOB_MR_ID
@@ -498,7 +503,8 @@ def get_user_playlists_run(uuid, offset=0):
             constants.JOB_UP_ID)
         if len(playlist_infos) > 0 and os.environ.get(
                 constants.PLAYLIST_GEN_SCHED,
-                constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0" and scheduler.get_job(id=constants.JOB_UP_ID) is not None:
+                constants.PLAYLIST_GEN_SCHED_DEFAULT_VALUE) != "0" and scheduler.get_job(
+                id=constants.JOB_UP_ID) is not None:
             playlist_info = random.choice(playlist_infos)
             scheduler.modify_job(
                 args=[playlist_info.uuid],
@@ -558,7 +564,8 @@ def get_playlist_tracks(item, result, offset_tracks=0):
         if track is None:
             continue
         if "type" in track and track["type"] == "episode":
-            logging.warning(f'({threading.current_thread().ident}) Skipping track {track["name"]} because it is not a song')
+            logging.warning(
+                f'({threading.current_thread().ident}) Skipping track {track["name"]} because it is not a song')
             continue
 
         logging.info(
@@ -641,7 +648,7 @@ def reimport(uuid):
             #     constants.ARTIST_GEN_SCHED,
             #     constants.ARTIST_GEN_SCHED_DEFAULT_VALUE)
             pass
-        elif (playlist_info.type == constants.JOB_ATT_ID and 
+        elif (playlist_info.type == constants.JOB_ATT_ID and
               os.environ.get(constants.ARTIST_PLAYLIST_ENABLED, constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1"):
             run_job_now(
                 timedelta_sec,
@@ -763,7 +770,8 @@ def init_jobs():
     # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
     # init_my_recommendations()
     # init_artists_recommendations()
-    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED, constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
+    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
+                      constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
         init_artists_top_tracks()
     init_user_playlists()
 
@@ -775,7 +783,8 @@ def scan_library():
     # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
     # scan_my_recommendations()
     # scan_artists_recommendations()
-    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED, constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
+    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
+                      constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
         scan_artists_top_tracks()
     scan_user_playlists()
 
@@ -797,7 +806,8 @@ def reimport_all_thread():
     # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
     # import_all_my_recommendations()
     # import_all_artists_recommendations()
-    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED, constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
+    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
+                      constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
         import_all_artists_top_tracks()
     import_all_user_playlists()
 
