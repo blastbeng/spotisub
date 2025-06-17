@@ -13,7 +13,7 @@ load_dotenv(dotenv_path)
 client_id = os.environ.get("SPOTIPY_CLIENT_ID")
 client_secret = os.environ.get("SPOTIPY_CLIENT_SECRET")
 redirect_uri = os.environ.get("SPOTIPY_REDIRECT_URI")
-SCOPE = "user-top-read,user-library-read,user-read-recently-played"
+SCOPE = "user-top-read,user-library-read,user-read-recently-played,playlist-read-private"
 
 creds = SpotifyOAuth(
     scope=SCOPE,
