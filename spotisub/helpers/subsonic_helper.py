@@ -206,27 +206,30 @@ def check_pysonic_connection():
 
 def get_artists_array_names():
     """get artists array names"""
-    check_pysonic_connection().getArtists()
-
     artist_names = []
 
-    for index in check_pysonic_connection().getArtists()["artists"]["index"]:
-        for artist in index["artist"]:
-            if "name" in artist:
-                artist_names.append(artist["name"])
+    artists_from_pysonic = check_pysonic_connection().getArtists()
+
+    if ["artists"] in artists_from_pysonic and "index" in artists_from_pysonic["artists"]:
+        for index in artists_from_pysonic["artists"]["index"]:
+            for artist in index["artist"]:
+                if "name" in artist:
+                    artist_names.append(artist["name"])
 
     return artist_names
 
 
 def search_artist(artist_name):
     """search artist"""
+    artists_from_pysonic = check_pysonic_connection().getArtists()
 
-    for index in check_pysonic_connection().getArtists()["artists"]["index"]:
-        for artist in index["artist"]:
-            if "name" in artist:
-                if artist_name.strip().lower(
-                ) == artist["name"].strip().lower():
-                    return artist["name"]
+    if ["artists"] in artists_from_pysonic and "index" in artists_from_pysonic["artists"]:
+        for index in artists_from_pysonic["artists"]["index"]:
+            for artist in index["artist"]:
+                if "name" in artist:
+                    if artist_name.strip().lower(
+                    ) == artist["name"].strip().lower():
+                        return artist["name"]
 
     return None
 
