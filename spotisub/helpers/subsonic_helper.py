@@ -51,7 +51,10 @@ pysonic = libsonic.Connection(
     "/rest",
     port=int(
         os.environ.get(
-            constants.SUBSONIC_API_PORT)))
+            constants.SUBSONIC_API_PORT)),
+    insecure=os.environ.get(
+        constants.SUBSONIC_API_VERIFY_SSL,
+        constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "0")
 
 
 def load_subsonic_cache_from_file() -> SubsonicCache:
