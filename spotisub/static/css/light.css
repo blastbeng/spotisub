@@ -825,17 +825,24 @@ progress[value]::-webkit-progress-value {
 
     .output-log-div{
         width: 100%;
-        overflow-y: auto;
+        max-width: 100%;
+        overflow: hidden;
         display: block;
+        padding: 0;
+        background-color: transparent;
+        border-radius: 0;
+        box-shadow: none;
     }
     .output-log-pre{
         padding: 0px;
         display: block;
-        white-space: nowrap;
-        overflow-x: auto;
+        white-space: normal;
+        overflow: visible;
         font-size: 14px;
         list-style: none;
         margin: 0;
+        word-wrap: break-word;
+        word-break: break-word;
     }
     
     .output-log-pre li {
