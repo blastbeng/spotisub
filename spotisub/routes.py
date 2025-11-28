@@ -58,13 +58,15 @@ def after_request(response):
     """Excluding healthcheck endpoint from logging"""
     if not request.path.startswith('/api/v1/utils/healthcheck'):
         timestamp = strftime('[%Y-%b-%d %H:%M]')
-        logging.info('%s %s %s %s %s %s',
-                     timestamp,
-                     request.remote_addr,
-                     request.method,
-                     request.scheme,
-                     request.full_path,
-                     response.status)
+        logging.debug(
+            '%s %s %s %s %s %s',
+            timestamp,
+            request.remote_addr,
+            request.method,
+            request.scheme,
+            request.full_path,
+            response.status
+        )
     return response
 
 
@@ -436,8 +438,8 @@ def logs():
     """Logs Endpoint"""
     title = 'Logs'
     array_lines = []
-    with open(os.path.abspath(os.curdir) + '/cache/spotisub.log', 'r') as file_init:
-        for line in file_init:
+    with open(os.path.abspath(os.curdir) + '/cache/spotisub.log', 'rt', buffering=1) as file:
+        for line in file:
             array_lines.append(line.strip())
     return render_template('logs.html',
                            title=title,
