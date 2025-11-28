@@ -21,6 +21,7 @@ from flask import render_template
 from flask import url_for
 from flask import redirect
 from flask import flash
+from flask import session
 from flask_restx import Api
 from flask_restx import Resource
 from flask_login import current_user
@@ -709,6 +710,131 @@ class SavedTracksClass(Resource):
             .run_job(constants.JOB_ST_ID)).start()
         return get_response_json(get_json_message(
             "Importing your saved tracks", True), 200)
+
+
+@spotisub.route('/authenticate-spotify', methods=['POST'])
+@login_required
+def authenticate_spotify():
+    """Generate Spotify authorization URL for user to visit"""
+    try:
+        import os
+        from spotipy import SpotifyOAuth
+        
+        # Get Spotify credentials from environment
+        client_id = os.environ.get("SPOTIPY_CLIENT_ID")
+        client_secret = os.environ.get("SPOTIPY_CLIENT_SECRET")
+        redirect_uri = os.environ.get("SPOTIPY_REDIRECT_URI")
+        
+        if not all([client_id, client_secret, redirect_uri]):
+            raise ValueError("Missing required Spotify credentials in environment")
+        
+        # Create OAuth manager for authentication
+        scope = "user-top-read,user-library-read,user-read-recently-played,playlist-read-private"
+        cache_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "cache/spotipy_cache"
+        )
+        
+        creds = SpotifyOAuth(
+            scope=scope,
+            client_id=client_id,
+            client_secret=client_secret,
+            redirect_uri=redirect_uri,
+            open_browser=False,
+            cache_path=cache_path
+        )
+        
+        # Generate authorization URL
+        auth_url = creds.get_authorize_url()
+        
+        # Store OAuth object in session for use in callback
+        session['spotify_oauth'] = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri,
+            'cache_path': cache_path,
+            'scope': scope
+        }
+        
+        logging.info("Spotify auth URL generated: %s", auth_url)
+        flash(f'Opening Spotify authorization in a new tab...', 'info')
+        
+        # Return JSON with auth URL for JavaScript to open in new tab
+        return get_response_json(
+            json.dumps({'auth_url': auth_url, 'status': 'ok'}),
+            200
+        )
+        
+    except ValueError as e:
+        logging.error("Spotify auth config error: %s", str(e))
+        return get_response_json(
+            json.dumps({'status': 'error', 'message': 'Spotify credentials not configured. Please check .env file.'}),
+            400
+        )
+    except Exception as e:
+        logging.error("Spotify auth error: %s", str(e))
+        return get_response_json(
+            json.dumps({'status': 'error', 'message': 'Error generating auth URL. Check logs for details.'}),
+            400
+        )
+
+
+@spotisub.route('/callback')
+def spotify_callback():
+    """Handle Spotify OAuth callback with authorization code"""
+    try:
+        import os
+        from spotipy import SpotifyOAuth
+        
+        # Get the authorization code from the query string
+        code = request.args.get('code')
+        if not code:
+            flash('No authorization code received from Spotify', 'danger')
+            return redirect(url_for('overview'))
+        
+        # Retrieve OAuth credentials from session
+        if 'spotify_oauth' not in session:
+            flash('Session expired. Please try authentication again.', 'danger')
+            return redirect(url_for('overview'))
+        
+        oauth_data = session['spotify_oauth']
+        
+        # Create OAuth manager with stored credentials
+        creds = SpotifyOAuth(
+            scope=oauth_data['scope'],
+            client_id=oauth_data['client_id'],
+            client_secret=oauth_data['client_secret'],
+            redirect_uri=oauth_data['redirect_uri'],
+            open_browser=False,
+            cache_path=oauth_data['cache_path']
+        )
+        
+        # Exchange authorization code for access token
+        # The get_access_token() method will handle the code exchange and caching
+        token = creds.get_access_token(code)
+        
+        if token:
+            logging.info("Spotify token successfully exchanged and cached")
+            # Reload the spotipy client with the new credentials
+            spotipy_helper.SP = spotipy_helper.create_sp_client()
+            flash('Spotify authentication successful!', 'success')
+        else:
+            logging.error("Failed to exchange Spotify auth code for token")
+            flash('Failed to exchange authorization code. Please try again.', 'danger')
+        
+        # Clear session data
+        if 'spotify_oauth' in session:
+            del session['spotify_oauth']
+        
+        return redirect(url_for('overview'))
+        
+    except Exception as e:
+        logging.error("Spotify callback error: %s", str(e))
+        flash('Error during Spotify authentication callback. Check logs for details.', 'danger')
+        # Clear session data on error
+        if 'spotify_oauth' in session:
+            del session['spotify_oauth']
+        return redirect(url_for('overview'))
 
 
 nsutils = api.namespace('utils', 'Utils APIs')
