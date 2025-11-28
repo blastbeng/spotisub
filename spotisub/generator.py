@@ -781,13 +781,12 @@ def init_jobs():
                           constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
             init_artists_top_tracks()
         init_user_playlists()
-    except EOFError as e:
+    except EOFError:
         logging.error(
-            "Spotify authentication failed during job initialization. "
-            "This typically happens in non-interactive environments when the cached token is invalid or expired. "
-            "Please restart Spotisub in an interactive environment to re-authenticate with Spotify.")
+            "Spotify auth failed during job init (non-interactive env). "
+            "Run Spotisub interactively to re-authenticate.")
     except Exception as e:
-        logging.error("Unexpected error during job initialization: %s", str(e))
+        logging.error("Error during job initialization: %s", str(e))
         raise
 
 
@@ -803,13 +802,12 @@ def scan_library():
                           constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
             scan_artists_top_tracks()
         scan_user_playlists()
-    except EOFError as e:
+    except EOFError:
         logging.error(
-            "Spotify authentication failed during library scan. "
-            "This typically happens in non-interactive environments when the cached token is invalid or expired. "
-            "Please restart Spotisub in an interactive environment to re-authenticate with Spotify.")
+            "Spotify auth failed during library scan (non-interactive env). "
+            "Run Spotisub interactively to re-authenticate.")
     except Exception as e:
-        logging.error("Unexpected error during library scan: %s", str(e))
+        logging.error("Error during library scan: %s", str(e))
         raise
 
 
@@ -835,13 +833,12 @@ def reimport_all_thread():
                           constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
             import_all_artists_top_tracks()
         import_all_user_playlists()
-    except EOFError as e:
+    except EOFError:
         logging.error(
-            "Spotify authentication failed during reimport. "
-            "This typically happens in non-interactive environments when the cached token is invalid or expired. "
-            "Please restart Spotisub in an interactive environment to re-authenticate with Spotify.")
+            "Spotify auth failed during reimport (non-interactive env). "
+            "Run Spotisub interactively to re-authenticate.")
     except Exception as e:
-        logging.error("Unexpected error during reimport: %s", str(e))
+        logging.error("Error during reimport: %s", str(e))
         raise
 
 
