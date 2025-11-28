@@ -165,3 +165,28 @@ function authenticateSpotify() {
         btn.innerHTML = originalText;
     });
 }
+
+function checkSubsonicStatus() {
+    // Make request to check Subsonic status
+    fetch('/check-subsonic-status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            showCustomAlert(
+                'Subsonic Server Online',
+                'Successfully connected to Subsonic server!\n\n' + data.message
+            );
+        } else {
+            showCustomAlert('Subsonic Server Offline', data.message || 'Failed to connect to Subsonic server');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showCustomAlert('Error', 'An error occurred while checking Subsonic status');
+    });
+}

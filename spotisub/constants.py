@@ -75,3 +75,19 @@ JOB_ST_ID = 'saved_tracks'
 CACHE_DIR = os.path.join(os.path.abspath(os.curdir), 'cache')
 SPOTIFY_OBJECT_CACHE_FILENAME = 'spotify_object_cache.pkl'
 SUBSONIC_CACHE_FILENAME = 'subsonic_cache.pkl'
+
+
+def get_subsonic_rest_url():
+    """Get the full Subsonic REST API URL"""
+    host = os.environ.get(SUBSONIC_API_HOST, "")
+    port = os.environ.get(SUBSONIC_API_PORT, "4040")
+    base_url = os.environ.get(SUBSONIC_API_BASE_URL, SUBSONIC_API_BASE_URL_DEFAULT_VALUE)
+    
+    # Build the REST API path
+    rest_path = "/rest"
+    if base_url:
+        rest_path = f"{base_url}/rest"
+    
+    # Construct the full URL
+    full_url = f"{host}:{port}{rest_path}"
+    return full_url
