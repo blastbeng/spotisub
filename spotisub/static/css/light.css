@@ -834,6 +834,43 @@ progress[value]::-webkit-progress-value {
         white-space: nowrap;
         overflow-x: auto;
         font-size: 14px;
+        list-style: none;
+        margin: 0;
+    }
+    
+    .output-log-pre li {
+        padding: 5px 10px;
+        border-left: 3px solid #ccc;
+    }
+    
+    .log-error {
+        background-color: #ffebee;
+        border-left-color: #f44336;
+        color: #c62828;
+    }
+    
+    .log-warning {
+        background-color: #fff3e0;
+        border-left-color: #ff9800;
+        color: #e65100;
+    }
+    
+    .log-info {
+        background-color: #e3f2fd;
+        border-left-color: #2196f3;
+        color: #1565c0;
+    }
+    
+    .log-debug {
+        background-color: #f3e5f5;
+        border-left-color: #9c27b0;
+        color: #6a1b9a;
+    }
+    
+    .log-default {
+        background-color: transparent;
+        border-left-color: #ccc;
+        color: inherit;
     }
 
     .custom-alert {
