@@ -1,5 +1,4 @@
 """Spotisub init module"""
-from spotisub import routes, classes, errors
 import logging
 import os
 from logging.handlers import RotatingFileHandler
@@ -42,3 +41,5 @@ bootstrap = Bootstrap(spotisub)
 configuration_db = SQLAlchemy(spotisub)
 login = LoginManager(spotisub)
 login.login_view = 'login'
+
+from . import routes, classes, errors
