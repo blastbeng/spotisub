@@ -771,28 +771,46 @@ def run_job_now(
 
 def init_jobs():
     """Used to initialize Spotisub Jobs"""
-    init_user_saved_tracks()
-    # (Dec 2024) recommendations API is deprecated
-    # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
-    # init_my_recommendations()
-    # init_artists_recommendations()
-    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
-                      constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
-        init_artists_top_tracks()
-    init_user_playlists()
+    try:
+        init_user_saved_tracks()
+        # (Dec 2024) recommendations API is deprecated
+        # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
+        # init_my_recommendations()
+        # init_artists_recommendations()
+        if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
+                          constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
+            init_artists_top_tracks()
+        init_user_playlists()
+    except EOFError as e:
+        logging.error(
+            "Spotify authentication failed during job initialization. "
+            "This typically happens in non-interactive environments when the cached token is invalid or expired. "
+            "Please restart Spotisub in an interactive environment to re-authenticate with Spotify.")
+    except Exception as e:
+        logging.error("Unexpected error during job initialization: %s", str(e))
+        raise
 
 
 def scan_library():
     """Used to initialize Spotisub Jobs"""
-    scan_user_saved_tracks()
-    # (Dec 2024) recommendations API is deprecated
-    # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
-    # scan_my_recommendations()
-    # scan_artists_recommendations()
-    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
-                      constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
-        scan_artists_top_tracks()
-    scan_user_playlists()
+    try:
+        scan_user_saved_tracks()
+        # (Dec 2024) recommendations API is deprecated
+        # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
+        # scan_my_recommendations()
+        # scan_artists_recommendations()
+        if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
+                          constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
+            scan_artists_top_tracks()
+        scan_user_playlists()
+    except EOFError as e:
+        logging.error(
+            "Spotify authentication failed during library scan. "
+            "This typically happens in non-interactive environments when the cached token is invalid or expired. "
+            "Please restart Spotisub in an interactive environment to re-authenticate with Spotify.")
+    except Exception as e:
+        logging.error("Unexpected error during library scan: %s", str(e))
+        raise
 
 
 def reimport_all():
@@ -807,15 +825,24 @@ def reimport_all():
 
 def reimport_all_thread():
     """Used to reimport everything"""
-    import_all_user_saved_tracks()
-    # (Dec 2024) recommendations API is deprecated
-    # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
-    # import_all_my_recommendations()
-    # import_all_artists_recommendations()
-    if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
-                      constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
-        import_all_artists_top_tracks()
-    import_all_user_playlists()
+    try:
+        import_all_user_saved_tracks()
+        # (Dec 2024) recommendations API is deprecated
+        # https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api
+        # import_all_my_recommendations()
+        # import_all_artists_recommendations()
+        if os.environ.get(constants.ARTIST_PLAYLIST_ENABLED,
+                          constants.ARTIST_PLAYLIST_ENABLED_DEFAULT_VALUE) == "1":
+            import_all_artists_top_tracks()
+        import_all_user_playlists()
+    except EOFError as e:
+        logging.error(
+            "Spotify authentication failed during reimport. "
+            "This typically happens in non-interactive environments when the cached token is invalid or expired. "
+            "Please restart Spotisub in an interactive environment to re-authenticate with Spotify.")
+    except Exception as e:
+        logging.error("Unexpected error during reimport: %s", str(e))
+        raise
 
 
 def import_all_user_saved_tracks():
