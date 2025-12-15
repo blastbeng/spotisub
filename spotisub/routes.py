@@ -21,6 +21,7 @@ from flask import render_template
 from flask import url_for
 from flask import redirect
 from flask import flash
+from flask import session
 from flask_restx import Api
 from flask_restx import Resource
 from flask_login import current_user
@@ -57,13 +58,15 @@ def after_request(response):
     """Excluding healthcheck endpoint from logging"""
     if not request.path.startswith('/api/v1/utils/healthcheck'):
         timestamp = strftime('[%Y-%b-%d %H:%M]')
-        logging.info('%s %s %s %s %s %s',
-                     timestamp,
-                     request.remote_addr,
-                     request.method,
-                     request.scheme,
-                     request.full_path,
-                     response.status)
+        logging.debug(
+            '%s %s %s %s %s %s',
+            timestamp,
+            request.remote_addr,
+            request.method,
+            request.scheme,
+            request.full_path,
+            response.status
+        )
     return response
 
 
@@ -435,8 +438,8 @@ def logs():
     """Logs Endpoint"""
     title = 'Logs'
     array_lines = []
-    with open(os.path.abspath(os.curdir) + '/cache/spotisub.log', 'r') as file_init:
-        for line in file_init:
+    with open(os.path.abspath(os.curdir) + '/cache/spotisub.log', 'rt', buffering=1) as file:
+        for line in file:
             array_lines.append(line.strip())
     return render_template('logs.html',
                            title=title,
@@ -709,6 +712,233 @@ class SavedTracksClass(Resource):
             .run_job(constants.JOB_ST_ID)).start()
         return get_response_json(get_json_message(
             "Importing your saved tracks", True), 200)
+
+
+@spotisub.route('/authenticate-spotify', methods=['POST'])
+@login_required
+def authenticate_spotify():
+    """Generate Spotify authorization URL for user to visit"""
+    try:
+        import os
+        from spotipy import SpotifyOAuth
+        
+        # Get Spotify credentials from environment
+        client_id = os.environ.get("SPOTIPY_CLIENT_ID")
+        client_secret = os.environ.get("SPOTIPY_CLIENT_SECRET")
+        redirect_uri = os.environ.get("SPOTIPY_REDIRECT_URI")
+        
+        if not all([client_id, client_secret, redirect_uri]):
+            raise ValueError("Missing required Spotify credentials in environment")
+        
+        # Create OAuth manager for authentication
+        scope = "user-top-read,user-library-read,user-read-recently-played,playlist-read-private"
+        cache_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "cache/spotipy_cache"
+        )
+        
+        creds = SpotifyOAuth(
+            scope=scope,
+            client_id=client_id,
+            client_secret=client_secret,
+            redirect_uri=redirect_uri,
+            open_browser=False,
+            cache_path=cache_path
+        )
+        
+        # Generate authorization URL
+        auth_url = creds.get_authorize_url()
+        
+        # Store OAuth object in session for use in callback
+        session['spotify_oauth'] = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'redirect_uri': redirect_uri,
+            'cache_path': cache_path,
+            'scope': scope
+        }
+        
+        logging.info("Spotify auth URL generated: %s", auth_url)
+        flash(f'Opening Spotify authorization in a new tab...', 'info')
+        
+        # Return JSON with auth URL for JavaScript to open in new tab
+        return get_response_json(
+            json.dumps({'auth_url': auth_url, 'status': 'ok'}),
+            200
+        )
+        
+    except ValueError as e:
+        logging.error("Spotify auth config error: %s", str(e))
+        return get_response_json(
+            json.dumps({'status': 'error', 'message': 'Spotify credentials not configured. Please check .env file.'}),
+            400
+        )
+    except Exception as e:
+        logging.error("Spotify auth error: %s", str(e))
+        return get_response_json(
+            json.dumps({'status': 'error', 'message': 'Error generating auth URL. Check logs for details.'}),
+            400
+        )
+
+
+@spotisub.route('/callback')
+def spotify_callback():
+    """Handle Spotify OAuth callback with authorization code"""
+    try:
+        import os
+        from spotipy import SpotifyOAuth
+        
+        # Get the authorization code from the query string
+        code = request.args.get('code')
+        if not code:
+            flash('No authorization code received from Spotify', 'danger')
+            return redirect(url_for('overview'))
+        
+        # Retrieve OAuth credentials from session
+        if 'spotify_oauth' not in session:
+            flash('Session expired. Please try authentication again.', 'danger')
+            return redirect(url_for('overview'))
+        
+        oauth_data = session['spotify_oauth']
+        
+        # Create OAuth manager with stored credentials
+        creds = SpotifyOAuth(
+            scope=oauth_data['scope'],
+            client_id=oauth_data['client_id'],
+            client_secret=oauth_data['client_secret'],
+            redirect_uri=oauth_data['redirect_uri'],
+            open_browser=False,
+            cache_path=oauth_data['cache_path']
+        )
+        
+        # Exchange authorization code for access token
+        # The get_access_token() method will handle the code exchange and caching
+        token = creds.get_access_token(code)
+        
+        if token:
+            logging.info("Spotify token successfully exchanged and cached")
+            # Reload the spotipy client with the new credentials
+            spotipy_helper.SP = spotipy_helper.create_sp_client()
+            flash('Spotify authentication successful!', 'success')
+        else:
+            logging.error("Failed to exchange Spotify auth code for token")
+            flash('Failed to exchange authorization code. Please try again.', 'danger')
+        
+        # Clear session data
+        if 'spotify_oauth' in session:
+            del session['spotify_oauth']
+        
+        return redirect(url_for('overview'))
+        
+    except Exception as e:
+        logging.error("Spotify callback error: %s", str(e))
+        flash('Error during Spotify authentication callback. Check logs for details.', 'danger')
+        # Clear session data on error
+        if 'spotify_oauth' in session:
+            del session['spotify_oauth']
+        return redirect(url_for('overview'))
+
+
+@spotisub.route('/check-subsonic-status', methods=['POST'])
+@login_required
+def check_subsonic_status():
+    """Check if Subsonic server is online"""
+    try:
+        import os
+        
+        # Get Subsonic connection details from environment
+        host = os.environ.get(constants.SUBSONIC_API_HOST)
+        user = os.environ.get(constants.SUBSONIC_API_USER)
+        port = os.environ.get(constants.SUBSONIC_API_PORT, '4040')
+        base_url = os.environ.get(
+            constants.SUBSONIC_API_BASE_URL,
+            constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE)
+        verify_ssl = os.environ.get(
+            constants.SUBSONIC_API_VERIFY_SSL,
+            constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "1"
+        
+        # Get the full REST URL
+        full_url = constants.get_subsonic_rest_url()
+        
+        # Log connection attempt with all details
+        logging.info(
+            "Attempting to connect to Subsonic: host=%s, user=%s, port=%s, "
+            "base_url=%s, verify_ssl=%s, full_url=%s",
+            host, user, port, base_url, verify_ssl, full_url
+        )
+        
+        # Try to ping the Subsonic server
+        try:
+            # First, attempt a ping to verify connectivity
+            ping_result = subsonic_helper.pysonic.ping()
+            
+            if ping_result:
+                # Get artist list to verify server is responsive
+                artists_response = subsonic_helper.pysonic.getArtists()
+                
+                logging.info(
+                    "Subsonic server online: Successfully pinged and retrieved artists"
+                )
+                
+                return get_response_json(
+                    json.dumps({
+                        'status': 'ok',
+                        'message': (
+                            f"Connected to {host}:{port}\n"
+                            f"User: {user}\n"
+                            f"Server Status: Online\n"
+                            f"SSL Verification: {'Enabled' if verify_ssl else 'Disabled'}"
+                        )
+                    }),
+                    200
+                )
+            else:
+                logging.error(
+                    "Subsonic ping failed - server did not return True. "
+                    "URL: %s/ping.view?u=%s&p=REDACTED&c=spotisub&v=1.12.0&f=json",
+                    full_url, user
+                )
+                return get_response_json(
+                    json.dumps({
+                        'status': 'error',
+                        'message': (
+                            f"Failed to ping Subsonic server at {host}:{port}\n"
+                            f"The server did not respond to the ping request.\n\n"
+                            f"Try this curl command to debug:\n"
+                            f"curl -k '{full_url}/ping.view?u={user}&p=PASSWORD&c=spotisub&v=1.12.0&f=json'\n\n"
+                            f"Note: Navidrome must have Subsonic API compatibility enabled."
+                        )
+                    }),
+                    200
+                )
+        except Exception as ping_error:
+            logging.error(
+                "Failed to connect to Subsonic at %s:%s - %s\n"
+                "Try curl: curl -k '%s/ping.view?u=%s&p=PASSWORD&c=spotisub&v=1.12.0&f=json'",
+                host, port, str(ping_error), full_url, user
+            )
+            return get_response_json(
+                json.dumps({
+                    'status': 'error',
+                    'message': (
+                        f"Failed to connect to Subsonic at {host}:{port}\n"
+                        f"Error: {str(ping_error)}\n\n"
+                        f"Try this curl command to debug:\n"
+                        f"curl -k '{full_url}/ping.view?u={user}&p=PASSWORD&c=spotisub&v=1.12.0&f=json'"
+                    )
+                }),
+                200
+            )
+        
+    except Exception as e:
+        logging.error("Subsonic status check error: %s", str(e))
+        return get_response_json(
+            json.dumps({
+                'status': 'error',
+                'message': f"Error checking Subsonic status: {str(e)}"
+            }),
+            200
+        )
 
 
 nsutils = api.namespace('utils', 'Utils APIs')

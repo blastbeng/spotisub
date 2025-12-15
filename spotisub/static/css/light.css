@@ -825,15 +825,59 @@ progress[value]::-webkit-progress-value {
 
     .output-log-div{
         width: 100%;
-        overflow-y: auto;
+        max-width: 100%;
+        overflow: hidden;
         display: block;
+        padding: 0;
+        background-color: transparent;
+        border-radius: 0;
+        box-shadow: none;
     }
     .output-log-pre{
         padding: 0px;
         display: block;
-        white-space: nowrap;
-        overflow-x: auto;
+        white-space: normal;
+        overflow: visible;
         font-size: 14px;
+        list-style: none;
+        margin: 0;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+    
+    .output-log-pre li {
+        padding: 5px 10px;
+        border-left: 3px solid #ccc;
+    }
+    
+    .log-error {
+        background-color: #ffebee;
+        border-left-color: #f44336;
+        color: #c62828;
+    }
+    
+    .log-warning {
+        background-color: #fff3e0;
+        border-left-color: #ff9800;
+        color: #e65100;
+    }
+    
+    .log-info {
+        background-color: #e3f2fd;
+        border-left-color: #2196f3;
+        color: #1565c0;
+    }
+    
+    .log-debug {
+        background-color: #f3e5f5;
+        border-left-color: #9c27b0;
+        color: #6a1b9a;
+    }
+    
+    .log-default {
+        background-color: transparent;
+        border-left-color: #ccc;
+        color: inherit;
     }
 
     .custom-alert {
@@ -870,4 +914,45 @@ progress[value]::-webkit-progress-value {
         border: none;
         border-radius: 5px;
         cursor: pointer;
+    }
+
+    /* Spotify Authentication Button */
+    .sidebar-auth-button {
+        width: 100%;
+        padding: 15px 10px;
+        margin-top: 20px;
+        background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95em;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .sidebar-auth-button:hover {
+        background: linear-gradient(135deg, #1aa34a 0%, #1ed760 100%);
+        box-shadow: 0 4px 15px rgba(29, 185, 84, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .sidebar-auth-button i {
+        font-size: 1.1em;
+    }
+
+    #sidebar.active .sidebar-auth-button {
+        padding: 10px;
+        font-size: 0;
+        width: 50px;
+        height: 50px;
+    }
+
+    #sidebar.active .sidebar-auth-button i {
+        font-size: 1.5em;
+        margin: 0;
     }

@@ -6,11 +6,13 @@ RUN apt-get update && \
         gcc \
         g++ \
         ffmpeg \
-        curl && \
-        curl -LO https://github.com/tianon/gosu/releases/latest/download/gosu-$(dpkg --print-architecture | awk -F- '{ print $NF }') \
+        curl 
+        
+RUN curl -LO https://github.com/tianon/gosu/releases/latest/download/gosu-$(dpkg --print-architecture | awk -F- '{ print $NF }') \
         && chmod 0755 gosu-$(dpkg --print-architecture | awk -F- '{ print $NF }') \
-        && mv gosu-$(dpkg --print-architecture | awk -F- '{ print $NF }') /usr/local/bin/gosu && \
-        rm -rf /var/lib/apt/lists/*
+        && mv gosu-$(dpkg --print-architecture | awk -F- '{ print $NF }') /usr/local/bin/gosu
+
+RUN rm -rf /var/lib/apt/lists/*
 
 RUN useradd -ms /bin/bash user
 

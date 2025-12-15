@@ -1,5 +1,6 @@
 """Spotipy helper"""
 import os
+import logging
 import spotipy
 from spotipy import SpotifyOAuth
 from spotisub import spotisub
@@ -38,15 +39,27 @@ def create_sp_client():
     secrets = get_secrets()
     scope = "user-top-read,user-library-read,user-read-recently-played,playlist-read-private"
     cache_path = os.path.abspath(os.curdir) + '/cache/spotipy_cache'
-    creds = SpotifyOAuth(
-        scope=scope,
-        client_id=secrets["client_id"],
-        client_secret=secrets["client_secret"],
-        redirect_uri=secrets["redirect_uri"],
-        open_browser=False,
-        cache_path=cache_path)
+    
+    try:
+        creds = SpotifyOAuth(
+            scope=scope,
+            client_id=secrets["client_id"],
+            client_secret=secrets["client_secret"],
+            redirect_uri=secrets["redirect_uri"],
+            open_browser=False,
+            cache_path=cache_path)
 
-    return spotipy.Spotify(auth_manager=creds)
+        return spotipy.Spotify(auth_manager=creds)
+    except EOFError as e:
+        logging.error(
+            "Failed to authenticate with Spotify in non-interactive environment. "
+            "Please ensure a valid cached token exists at: %s", cache_path)
+        logging.error(
+            "To fix this, run Spotisub interactively once to obtain a valid token, "
+            "or ensure the SPOTIPY_CACHE file is properly set up.")
+        raise SpotifyApiException(
+            "Spotify authentication failed in non-interactive mode. "
+            "Please run Spotisub interactively first to cache a valid token.") from e
 
 
 def get_spotipy_client():
