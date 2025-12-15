@@ -2,14 +2,7 @@ name: spotisub
 services:
   spotisub:
     container_name: spotisub
-    environment:
-      - SPOTIPY_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXX
-      - SPOTIPY_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXX
-      - SPOTIPY_REDIRECT_URI=http://127.0.0.1:8080/
-      - SUBSONIC_API_HOST=http://127.0.0.1
-      - SUBSONIC_API_PORT=4533
-      - SUBSONIC_API_USER=user
-      - SUBSONIC_API_PASS=pass
+    env_file: .env
     image: "blastbeng/spotisub:latest"
     restart: always
     volumes:

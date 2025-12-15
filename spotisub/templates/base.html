@@ -177,7 +177,19 @@
                                 {% endif %}  
                                     <a href="{{ url_for('logs') }}">Logs</a>
                                 </li>
+                                <li>
+                                    <a href="javascript:void(0);" onclick="checkSubsonicStatus()">
+                                        <i class="fas fa-server"></i>
+                                        Check Subsonic
+                                    </a>
+                                </li>
                             </ul>
+                        </li>
+                        <li>
+                            <button id="authenticate-spotify-btn" class="sidebar-auth-button" onclick="authenticateSpotify()">
+                                <i class="fab fa-spotify"></i>
+                                Authenticate Spotify
+                            </button>
                         </li>
                     </ul>
                 </nav>

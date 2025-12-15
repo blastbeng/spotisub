@@ -51,7 +51,10 @@ pysonic = libsonic.Connection(
     "/rest",
     port=int(
         os.environ.get(
-            constants.SUBSONIC_API_PORT)))
+            constants.SUBSONIC_API_PORT)),
+    insecure=os.environ.get(
+        constants.SUBSONIC_API_VERIFY_SSL,
+        constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "0")
 
 
 def load_subsonic_cache_from_file() -> SubsonicCache:
@@ -214,8 +217,20 @@ def check_and_get_subsonic_cache():
 
 def check_pysonic_connection():
     """Return SubsonicOfflineException if pysonic is offline"""
-    if pysonic.ping():
-        return pysonic
+    try:
+        if pysonic.ping():
+            return pysonic
+    except Exception as e:
+        logging.debug(
+            "Subsonic connection error during ping: %s. Attempting retry...", str(e))
+        # Try one more time in case it's a transient error
+        try:
+            if pysonic.ping():
+                return pysonic
+        except Exception as retry_error:
+            logging.error(
+                "Subsonic connection failed after retry: %s", str(retry_error))
+
     raise SubsonicOfflineException()
 
 
@@ -327,12 +342,17 @@ def write_playlist(sp, playlist_info, results):
         song_ids = []
         old_song_ids = []
         if playlist_id is None:
-            check_pysonic_connection().createPlaylist(
-                name=playlist_info["prefix"].replace(
-                    "\"", "") + playlist_info["name"], songIds=[])
-            logging.info(
-                '(%s) Creating playlist %s', str(
-                    threading.current_thread().ident), playlist_info["name"])
+            try:
+                check_pysonic_connection().createPlaylist(
+                    name=playlist_info["prefix"].replace(
+                        "\"", "") + playlist_info["name"], songIds=[])
+                logging.info(
+                    '(%s) Creating playlist %s', str(
+                        threading.current_thread().ident), playlist_info["name"])
+            except Exception as e:
+                logging.debug(
+                    '(%s) Playlist creation failed',
+                    str(threading.current_thread().ident), str(e))
             playlist_id = get_playlist_id_by_name(
                 playlist_info["prefix"].replace(
                     "\"", "") + playlist_info["name"])
@@ -346,6 +366,7 @@ def write_playlist(sp, playlist_info, results):
             if pl_info_db is not None and pl_info_db.ignored is not None and pl_info_db.ignored == 1:
                 logging.warning(
                     '(%s) Skipping playlist %s because it was marked as ignored',
+                    str(threading.current_thread().ident),
                     playlist_info["name"])
             else:
                 playlist_info["subsonic_playlist_id"] = playlist_id
@@ -424,16 +445,29 @@ def write_playlist(sp, playlist_info, results):
                                 playlist_info, None, artist_spotify, track)
 
                 if len(song_ids) > 0:
-                    check_pysonic_connection().createPlaylist(
-                        playlistId=playlist_info["subsonic_playlist_id"], songIds=song_ids)
-                    logging.info('(%s) Success! Created playlist %s', str(
-                        threading.current_thread().ident), playlist_info["name"])
+                    try:
+                        check_pysonic_connection().createPlaylist(
+                            playlistId=playlist_info["subsonic_playlist_id"], songIds=song_ids)
+                        logging.info('(%s) Success! Created playlist %s', str(
+                            threading.current_thread().ident), playlist_info["name"])
+                    except Exception as e:
+                        logging.debug(
+                            '(%s) Adding songs to playlist failed',
+                            str(threading.current_thread().ident), str(e))
                 elif len(song_ids) == 0:
                     try:
-                        check_pysonic_connection().deletePlaylist(
-                            playlist_info["subsonic_playlist_id"])
-                        logging.info('(%s) Fail! No songs found for playlist %s', str(
-                            threading.current_thread().ident), playlist_info["name"])
+                        try:
+                            check_pysonic_connection().deletePlaylist(
+                                playlist_info["subsonic_playlist_id"])
+                            logging.info('(%s) Fail! No songs found for playlist %s', str(
+                                threading.current_thread().ident), playlist_info["name"])
+                        except DataNotFoundError:
+                            raise  # Don't retry on DataNotFoundError
+                        except Exception as e:
+                            logging.debug(
+                                '(%s) Deleting playlist failed',
+                                str(threading.current_thread().ident), str(e))
+                            time.sleep(1)
                     except DataNotFoundError:
                         pass
 

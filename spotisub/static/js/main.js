@@ -125,3 +125,68 @@ function hideCustomAlert() {
     let customAlert = document.getElementById('customAlert');
     customAlert.style.display = 'none';
 }
+
+function authenticateSpotify() {
+    // Show loading state
+    const btn = document.getElementById('authenticate-spotify-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    
+    // Make POST request to get auth URL
+    fetch('/authenticate-spotify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok' && data.auth_url) {
+            // Open auth URL in new tab
+            window.open(data.auth_url, '_blank');
+            
+            // Show message to user
+            showCustomAlert(
+                'Spotify Authorization',
+                'A new tab has been opened with Spotify authorization. Please complete the authorization process and you will be redirected back to Spotisub.'
+            );
+        } else {
+            showCustomAlert('Error', data.message || 'Failed to generate authentication URL');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showCustomAlert('Error', 'An error occurred while generating the authentication URL');
+    })
+    .finally(() => {
+        // Restore button state
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+function checkSubsonicStatus() {
+    // Make request to check Subsonic status
+    fetch('/check-subsonic-status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            showCustomAlert(
+                'Subsonic Server Online',
+                'Successfully connected to Subsonic server!\n\n' + data.message
+            );
+        } else {
+            showCustomAlert('Subsonic Server Offline', data.message || 'Failed to connect to Subsonic server');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showCustomAlert('Error', 'An error occurred while checking Subsonic status');
+    });
+}

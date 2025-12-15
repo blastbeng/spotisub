@@ -13,9 +13,20 @@ from spotisub import utils
 
 utils.print_logo(database.VERSION)
 
+
+class FlushingHandler(RotatingFileHandler):
+    """Custom handler that flushes after every log message"""
+    def emit(self, record):
+        try:
+            super().emit(record)
+            self.flush()
+        except Exception:
+            self.handleError(record)
+
+
 logging.basicConfig(
     handlers=[
-        RotatingFileHandler(
+        FlushingHandler(
             os.path.abspath(
                 os.curdir) +
             "/cache/spotisub.log",
@@ -42,4 +53,4 @@ configuration_db = SQLAlchemy(spotisub)
 login = LoginManager(spotisub)
 login.login_view = 'login'
 
-from spotisub import routes, classes, errors
+from . import routes, classes, errors
