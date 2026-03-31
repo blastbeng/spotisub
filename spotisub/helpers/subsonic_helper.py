@@ -49,9 +49,7 @@ pysonic = libsonic.Connection(
         constants.SUBSONIC_API_BASE_URL,
         constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) +
     "/rest",
-    port=int(
-        os.environ.get(
-            constants.SUBSONIC_API_PORT)),
+    port=constants.get_subsonic_port(),
     insecure=os.environ.get(
         constants.SUBSONIC_API_VERIFY_SSL,
         constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "0")
