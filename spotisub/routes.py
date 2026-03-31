@@ -53,6 +53,25 @@ tasks_poll_thread = None
 thread_lock = Lock()
 
 
+@spotisub.before_request
+def check_session_cookie():
+    """Detect stale/invalid session cookies and clear them before they cause a redirect loop.
+
+    When the SECRET_KEY changes (e.g. after a stack restart with the old random key),
+    Flask cannot decode the existing session cookie and silently returns an empty session.
+    The cookie still exists in the browser, so without this check the app loops between
+    a @login_required route and the login page (which sees current_user.is_authenticated
+    as True from a previous valid session that it can no longer read).
+    """
+    skip_endpoints = {'login', 'register', 'logout', 'static', 'spotify_callback'}
+    if request.endpoint in skip_endpoints or (request.path or '').startswith('/api/'):
+        return
+    if request.cookies.get('session') and '_user_id' not in session:
+        session.clear()
+        logging.warning('Stale session cookie detected, clearing and redirecting to login')
+        return redirect(url_for('login'))
+
+
 @spotisub.after_request
 def after_request(response):
     """Excluding healthcheck endpoint from logging"""
