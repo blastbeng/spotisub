@@ -214,21 +214,25 @@ def check_and_get_subsonic_cache():
 
 
 def check_pysonic_connection():
-    """Return SubsonicOfflineException if pysonic is offline"""
+    """Return pysonic or raise SubsonicOfflineException if server is unreachable.
+
+    Uses getMusicFolders() instead of ping() because ping() silently swallows
+    all exceptions and returns False, making it impossible to distinguish between
+    a connection error and a server responding with an error status.
+    getMusicFolders() raises real exceptions that can be logged and handled.
+    """
     try:
-        if pysonic.ping():
-            return pysonic
+        pysonic.getMusicFolders()
+        return pysonic
     except Exception as e:
         logging.debug(
-            "Subsonic connection error during ping: %s. Attempting retry...", str(e))
-        # Try one more time in case it's a transient error
+            "Subsonic connection error: %s. Attempting retry...", str(e))
         try:
-            if pysonic.ping():
-                return pysonic
+            pysonic.getMusicFolders()
+            return pysonic
         except Exception as retry_error:
             logging.error(
                 "Subsonic connection failed after retry: %s", str(retry_error))
-
     raise SubsonicOfflineException()
 
 
