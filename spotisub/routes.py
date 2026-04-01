@@ -53,6 +53,25 @@ tasks_poll_thread = None
 thread_lock = Lock()
 
 
+@spotisub.before_request
+def check_session_cookie():
+    """Detect stale/invalid session cookies and clear them before they cause a redirect loop.
+
+    When the SECRET_KEY changes (e.g. after a stack restart with the old random key),
+    Flask cannot decode the existing session cookie and silently returns an empty session.
+    The cookie still exists in the browser, so without this check the app loops between
+    a @login_required route and the login page (which sees current_user.is_authenticated
+    as True from a previous valid session that it can no longer read).
+    """
+    skip_endpoints = {'login', 'register', 'logout', 'static', 'spotify_callback'}
+    if request.endpoint in skip_endpoints or (request.path or '').startswith('/api/'):
+        return
+    if request.cookies.get('session') and '_user_id' not in session:
+        session.clear()
+        logging.warning('Stale session cookie detected, clearing and redirecting to login')
+        return redirect(url_for('login'))
+
+
 @spotisub.after_request
 def after_request(response):
     """Excluding healthcheck endpoint from logging"""
@@ -843,102 +862,30 @@ def spotify_callback():
 @login_required
 def check_subsonic_status():
     """Check if Subsonic server is online"""
+    host = os.environ.get(constants.SUBSONIC_API_HOST, '')
+    user = os.environ.get(constants.SUBSONIC_API_USER, '')
+    verify_ssl = os.environ.get(
+        constants.SUBSONIC_API_VERIFY_SSL,
+        constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "1"
+    port = constants.get_subsonic_port()
     try:
-        import os
-        
-        # Get Subsonic connection details from environment
-        host = os.environ.get(constants.SUBSONIC_API_HOST)
-        user = os.environ.get(constants.SUBSONIC_API_USER)
-        port = os.environ.get(constants.SUBSONIC_API_PORT, '4040')
-        base_url = os.environ.get(
-            constants.SUBSONIC_API_BASE_URL,
-            constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE)
-        verify_ssl = os.environ.get(
-            constants.SUBSONIC_API_VERIFY_SSL,
-            constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "1"
-        
-        # Get the full REST URL
-        full_url = constants.get_subsonic_rest_url()
-        
-        # Log connection attempt with all details
-        logging.info(
-            "Attempting to connect to Subsonic: host=%s, user=%s, port=%s, "
-            "base_url=%s, verify_ssl=%s, full_url=%s",
-            host, user, port, base_url, verify_ssl, full_url
-        )
-        
-        # Try to ping the Subsonic server
-        try:
-            # First, attempt a ping to verify connectivity
-            ping_result = subsonic_helper.pysonic.ping()
-            
-            if ping_result:
-                # Get artist list to verify server is responsive
-                artists_response = subsonic_helper.pysonic.getArtists()
-                
-                logging.info(
-                    "Subsonic server online: Successfully pinged and retrieved artists"
-                )
-                
-                return get_response_json(
-                    json.dumps({
-                        'status': 'ok',
-                        'message': (
-                            f"Connected to {host}:{port}\n"
-                            f"User: {user}\n"
-                            f"Server Status: Online\n"
-                            f"SSL Verification: {'Enabled' if verify_ssl else 'Disabled'}"
-                        )
-                    }),
-                    200
-                )
-            else:
-                logging.error(
-                    "Subsonic ping failed - server did not return True. "
-                    "URL: %s/ping.view?u=%s&p=REDACTED&c=spotisub&v=1.12.0&f=json",
-                    full_url, user
-                )
-                return get_response_json(
-                    json.dumps({
-                        'status': 'error',
-                        'message': (
-                            f"Failed to ping Subsonic server at {host}:{port}\n"
-                            f"The server did not respond to the ping request.\n\n"
-                            f"Try this curl command to debug:\n"
-                            f"curl -k '{full_url}/ping.view?u={user}&p=PASSWORD&c=spotisub&v=1.12.0&f=json'\n\n"
-                            f"Note: Navidrome must have Subsonic API compatibility enabled."
-                        )
-                    }),
-                    200
-                )
-        except Exception as ping_error:
-            logging.error(
-                "Failed to connect to Subsonic at %s:%s - %s\n"
-                "Try curl: curl -k '%s/ping.view?u=%s&p=PASSWORD&c=spotisub&v=1.12.0&f=json'",
-                host, port, str(ping_error), full_url, user
-            )
-            return get_response_json(
-                json.dumps({
-                    'status': 'error',
-                    'message': (
-                        f"Failed to connect to Subsonic at {host}:{port}\n"
-                        f"Error: {str(ping_error)}\n\n"
-                        f"Try this curl command to debug:\n"
-                        f"curl -k '{full_url}/ping.view?u={user}&p=PASSWORD&c=spotisub&v=1.12.0&f=json'"
-                    )
-                }),
-                200
-            )
-        
-    except Exception as e:
-        logging.error("Subsonic status check error: %s", str(e))
+        subsonic_helper.check_pysonic_connection()
+        logging.info("Subsonic connectivity check successful")
         return get_response_json(
             json.dumps({
-                'status': 'error',
-                'message': f"Error checking Subsonic status: {str(e)}"
+                'status': 'ok',
+                'message': (
+                    f"Connected to {host}:{port}\n"
+                    f"User: {user}\n"
+                    f"Server Status: Online\n"
+                    f"SSL Verification: {'Enabled' if verify_ssl else 'Disabled'}"
+                )
             }),
-            200
-        )
+            200)
+    except Exception as e:
+        logging.error("Subsonic connectivity check failed: %s", str(e))
+        return get_response_json(
+            json.dumps({'status': 'error', 'message': str(e)}), 200)
 
 
 nsutils = api.namespace('utils', 'Utils APIs')
