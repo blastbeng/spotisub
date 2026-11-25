@@ -11,6 +11,8 @@ Note that this is a work in progress, some things may be subject to changes. Lik
 
 The current release has all the base features, but it is still a work in progress, so expect bugs.
 
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Description
 
 Simple playlist generator based on spotify user and artists recommendations with Subsonic API support
@@ -98,6 +100,26 @@ Official Spotisub communities
 
 * Discord: https://discord.gg/jXQauuhy5w
 * Reddit: https://www.reddit.com/r/spotisub/
+
+## Releases
+
+Container images are built and published only by GitHub Actions; there is no local
+release path.
+
+* `blastbeng/spotisub:dev` follows the `dev` branch.
+* `blastbeng/spotisub:latest` and `blastbeng/spotisub:X.Y.Z` (also `vX.Y.Z`,
+  `X.Y`, `X`) are published by the `release` workflow, multi-arch
+  (`linux/amd64`, `linux/arm64`, `linux/arm/v7`).
+* The version the application reports lives in `spotisub/database.py` (`VERSION`);
+  the history lives in [CHANGELOG.md](CHANGELOG.md). Both are updated by the
+  release workflow, never by hand.
+
+Maintainers release by dispatching the `release` workflow (Actions → release → Run
+workflow) with `dry_run` first, reading the changelog section it prints, and then
+running it for real. Requires the `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` secrets,
+and `RELEASE_TOKEN` (a token with `contents: write`) only if branch protection
+prevents the built-in `GITHUB_TOKEN` from pushing to `dev`/`latest`. Tag protection
+for `v*` is recommended so a tag can only be created by the workflow.
 
 ## Acknowledgments
 

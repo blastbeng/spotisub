@@ -1,46 +1,203 @@
 name: ci
 
+# The only workflow that builds container images. It runs for the floating
+# `dev` / `latest` images on push, and is called by release.yml (workflow_call)
+# for versioned releases. Nothing else may publish an image.
+
 on:
-  workflow_dispatch:
   push:
     branches:
       - 'dev'
       - 'latest'
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (X.Y.Z). Empty derives it from the ref.'
+        type: string
+        required: false
+        default: ''
+      prerelease:
+        description: 'Prerelease: never emits the latest tag'
+        type: boolean
+        default: false
+      push:
+        description: 'Push the built image'
+        type: boolean
+        default: true
+      ref:
+        description: 'Commit sha to build (default: the triggering commit)'
+        type: string
+        required: false
+        default: ''
+  workflow_call:
+    inputs:
+      version:
+        description: 'Release version (X.Y.Z or X.Y.Z-rc.N)'
+        type: string
+        required: true
+      prerelease:
+        description: 'Prerelease: never emits the latest tag'
+        type: boolean
+        default: false
+      push:
+        description: 'Push the built image'
+        type: boolean
+        default: true
+      ref:
+        description: 'Commit sha to build'
+        type: string
+        required: false
+        default: ''
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
-      -
-        name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
         with:
-          images: blastbeng/spotisub
-      -
-        name: Set up QEMU
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Resolve version, tags and platforms
+        id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          IN_VERSION: ${{ inputs.version }}
+          IN_PRERELEASE: ${{ inputs.prerelease }}
+          IN_PUSH: ${{ inputs.push }}
+        run: |
+          set -euo pipefail
+          version="${IN_VERSION}"
+          prerelease="${IN_PRERELEASE}"
+          if [ "${EVENT_NAME}" = "push" ]; then
+            push="true"
+            prerelease="false"
+          else
+            push="${IN_PUSH:-true}"
+            prerelease="${prerelease:-false}"
+          fi
+          if [ -z "${version}" ] && [ "${REF_TYPE}" = "tag" ]; then
+            version="${REF_NAME#v}"
+          fi
+
+          if [ -n "${version}" ]; then
+            case "${version}" in
+              *-*) pre=1 ;;
+              *)   pre=0 ;;
+            esac
+            major="${version%%.*}"
+            rest="${version#*.}"
+            minor="${rest%%.*}"
+            minor="${minor%%-*}"
+            tags=""
+            add_tag() { tags="${tags}type=raw,value=$1"$'\n'; }
+            add_tag "v${version}"
+            add_tag "${version}"
+            if [ "${pre}" = "0" ]; then
+              add_tag "${major}.${minor}"
+              add_tag "${major}"
+              if [ "${prerelease}" != "true" ]; then add_tag "latest"; fi
+            fi
+          else
+            case "${REF_NAME}" in
+              dev|latest) tags="type=raw,value=${REF_NAME}"$'\n' ;;
+              *)
+                echo "::error::cannot derive an image tag from ref ${REF_NAME}"
+                exit 1
+                ;;
+            esac
+          fi
+
+          if [ "${push}" != "true" ]; then
+            platforms="linux/amd64"
+          else
+            platforms="linux/amd64,linux/arm64,linux/arm/v7"
+          fi
+
+          {
+            echo "version=${version}"
+            echo "push=${push}"
+            echo "prerelease=${prerelease}"
+            echo "platforms=${platforms}"
+            echo "tags<<EOF"
+            printf '%s' "${tags}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Guard tag against VERSION
+        if: steps.resolve.outputs.push == 'true' && steps.resolve.outputs.version != ''
+        env:
+          VERSION: ${{ steps.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+          repo_version=$(grep -m1 -oP '^VERSION\s*=\s*"\K[^"]+' spotisub/database.py)
+          if [ "${VERSION}" != "${repo_version}" ]; then
+            echo "::error::building ${VERSION} but spotisub/database.py reports"
+            echo "::error::VERSION=${repo_version}. Refusing to publish."
+            exit 1
+          fi
+          echo "building ${VERSION} matches spotisub/database.py"
+
+      - name: Set up QEMU
+        if: steps.resolve.outputs.platforms != 'linux/amd64'
         uses: docker/setup-qemu-action@v3
-      -
-        name: Set up Docker Buildx
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      -
-        name: Login to DockerHub
-        if: github.event_name != 'pull_request'
+
+      - name: Login to DockerHub
+        if: steps.resolve.outputs.push == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Build and push
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: blastbeng/spotisub
+          tags: ${{ steps.resolve.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=Spotisub
+            org.opencontainers.image.description=Spotify to Subsonic playlist generator and importer
+            org.opencontainers.image.version=${{ steps.resolve.outputs.version }}
+
+      - name: Build and push
+        id: build
         uses: docker/build-push-action@v6
         with:
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: ${{ steps.resolve.outputs.platforms }}
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ steps.resolve.outputs.push == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summarise
+        run: |
+          {
+            echo "## Image build"
+            echo ""
+            echo "- version: \`${{ steps.resolve.outputs.version }}\`"
+            echo "- platforms: \`${{ steps.resolve.outputs.platforms }}\`"
+            echo "- pushed: \`${{ steps.resolve.outputs.push }}\`"
+            echo "- digest: \`${{ steps.build.outputs.digest }}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
