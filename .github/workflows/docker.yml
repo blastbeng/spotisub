@@ -60,8 +60,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: image-${{ github.ref }}
-  cancel-in-progress: false
+  # A release build carries its version, so it never shares a group with the
+  # floating branch build it was triggered alongside. Only superseded branch
+  # builds are cancelled; a release build is never interrupted.
+  group: image-${{ github.ref }}-${{ inputs.version }}
+  cancel-in-progress: ${{ github.event_name == 'push' && github.ref_type == 'branch' }}
 
 jobs:
   docker:
