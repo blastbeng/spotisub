@@ -41,6 +41,7 @@ from spotisub.classes import User
 from spotisub import utils
 from spotisub import constants
 from spotisub import generator
+from spotisub.generator import scheduler
 from spotisub.generator import subsonic_helper
 from spotisub.generator import spotipy_helper
 from spotisub.exceptions import SubsonicOfflineException
