@@ -8,6 +8,34 @@ Sections up to `0.3.6` were backfilled from the existing git tags and GitHub
 Releases when automated releases were introduced; they are not itemised
 commit-by-commit.
 
+## [0.3.10] - 2026-11-25
+
+### Fixed
+
+- **Spotify login works with the stock configuration again.** The compiled-in
+  `SPOTIPY_REDIRECT_URI` default was `http://127.0.0.1:8080/`, a port the container never
+  publishes, so an install that did not set the variable sent the browser to a page that
+  does not exist (#101). The default is now `http://127.0.0.1:5183/callback`, and the
+  dashboard names the exact URL to whitelist when the credentials are incomplete.
+- Spotisub now warns at startup when `SPOTIPY_REDIRECT_URI` does not end in `/callback` —
+  the one misconfiguration that looks like "the Spotify login does nothing".
+
+### Changed
+
+- The README is rewritten as a usable quickstart: the documentation site first, then
+  requirements, a copy-pasteable compose file, how matching works, the settings that
+  change behaviour, the cache files worth backing up, and where to get help.
+- The documentation states Spotify's February 2026 developer policy: the account that
+  owns the app needs **Premium**, because Spotify blocks free accounts from the Web API
+  with `403` (#105). The requirements table, the FAQ, the Spotify walkthrough, a new
+  troubleshooting section and `README.md` all say so.
+
+### Upgrade notes
+
+- If your `.env` still carries `SPOTIPY_REDIRECT_URI=http://127.0.0.1:8080/` from an old
+  setup, change it to `http://127.0.0.1:5183/callback` and add that exact URL to the
+  Spotify app. Leaving the variable out now also works.
+
 ## [0.3.9] - 2026-11-25
 
 ### Fixed
@@ -169,6 +197,7 @@ commit-by-commit.
 ### Changed
 - REST endpoints drive the scheduler jobs instead of running work inline.
 
+[0.3.10]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.10
 [0.3.9]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.9
 [0.3.8]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.8
 [0.3.6]: https://github.com/blastbeng/spotisub/compare/v0.3.5...v0.3.6

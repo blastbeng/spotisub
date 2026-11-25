@@ -67,4 +67,20 @@ def get_spotipy_client():
     return SP
 
 
+def check_redirect_uri():
+    """Warn when the configured redirect URI cannot reach the /callback route"""
+    redirect_uri = os.environ.get(
+        constants.SPOTIPY_REDIRECT_URI,
+        constants.SPOTIPY_REDIRECT_URI_DEFAULT_VALUE)
+    if redirect_uri.rstrip('/').endswith('/callback'):
+        return
+    expected = redirect_uri.rstrip('/') + '/callback'
+    logging.warning(
+        "SPOTIPY_REDIRECT_URI is %s but Spotisub answers the Spotify callback on "
+        "/callback only: Spotify will send the browser to a page that does not "
+        "exist. Set SPOTIPY_REDIRECT_URI=%s and whitelist that exact URL in the "
+        "Spotify dashboard.", redirect_uri, expected)
+
+
+check_redirect_uri()
 SP = create_sp_client()

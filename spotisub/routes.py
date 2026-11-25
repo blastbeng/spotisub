@@ -745,10 +745,14 @@ def authenticate_spotify():
         # Get Spotify credentials from environment
         client_id = os.environ.get("SPOTIPY_CLIENT_ID")
         client_secret = os.environ.get("SPOTIPY_CLIENT_SECRET")
-        redirect_uri = os.environ.get("SPOTIPY_REDIRECT_URI")
+        redirect_uri = os.environ.get(
+            constants.SPOTIPY_REDIRECT_URI,
+            constants.SPOTIPY_REDIRECT_URI_DEFAULT_VALUE)
         
-        if not all([client_id, client_secret, redirect_uri]):
-            raise ValueError("Missing required Spotify credentials in environment")
+        if not all([client_id, client_secret]):
+            raise ValueError(
+                "Missing SPOTIPY_CLIENT_ID / SPOTIPY_CLIENT_SECRET; "
+                f"whitelist {redirect_uri} in the Spotify dashboard")
         
         # Create OAuth manager for authentication
         scope = "user-top-read,user-library-read,user-read-recently-played,playlist-read-private"
@@ -790,7 +794,7 @@ def authenticate_spotify():
     except ValueError as e:
         logging.error("Spotify auth config error: %s", str(e))
         return get_response_json(
-            json.dumps({'status': 'error', 'message': 'Spotify credentials not configured. Please check .env file.'}),
+            json.dumps({'status': 'error', 'message': f'Spotify is not configured: {e}'}),
             400
         )
     except Exception as e:

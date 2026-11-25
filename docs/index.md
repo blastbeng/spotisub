@@ -111,12 +111,16 @@ folder next to the container.
 | You need | Why |
 |---|---|
 | A Subsonic-compatible server with your music in it | That is where the playlists are written |
-| A (free) Spotify account | The playlists come from there |
+| A **Spotify Premium** account | The playlists come from there, and Spotify requires Premium for Web API access since February 2026 |
 | A Spotify *app* (Client ID + Secret) | Spotify requires it for any third-party client |
 | Docker, or Python 3.10+ if you run from source | The way Spotisub is packaged |
 
-Spotify Premium is **not** required to read playlists. It *is* required if you enable
-[spotdl](integrations/spotdl.md), because downloads use Spotify's streaming endpoints.
+!!! warning "Spotify Premium is required"
+
+    Since Spotify's February 2026 developer policy, Development Mode requires the
+    account that owns the app to have Premium — a free account gets the Web API
+    blocked with `403`. [spotdl](integrations/spotdl.md) needs Premium for its own
+    reason: it uses Spotify's streaming endpoints.
 
 ---
 

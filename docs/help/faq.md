@@ -2,9 +2,13 @@
 
 ## Does Spotisub need Spotify Premium?
 
-Not for importing: reading playlists and liked songs works with a free account. Premium
-**is** required for [spotdl](../integrations/spotdl.md) downloads, because that path uses
-Spotify's streaming endpoints.
+Yes. Spotify's [February 2026 developer
+policy](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security)
+requires the account that owns the app to have Premium: a free account gets the
+application blocked from the Web API with `403`, whatever scopes it asks for. The scopes
+Spotisub uses are read-only, so this is Spotify's rule for every third-party client, not
+a Spotisub limitation. [spotdl](../integrations/spotdl.md) needs Premium on top of that,
+because it uses Spotify's streaming endpoints.
 
 ## Does it modify my Spotify account?
 

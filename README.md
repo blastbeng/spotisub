@@ -1,142 +1,262 @@
-## Spotisub
-![image](https://github.com/user-attachments/assets/ad0740d9-e70c-4940-b98f-8d8b03deb200)
+# Spotisub
 
-Spotify to subsonic Playlist Generator and Importer
+**Import your Spotify playlists into Navidrome — or any other Subsonic-API music
+server — and keep them in sync automatically.**
 
-Since I haven't found an app to import my Spotify playlists, I started this project for myself, but then decided that this could be helpful for the community. 
+[![Documentation](https://img.shields.io/badge/documentation-blastbeng.github.io%2Fspotisub-2ea44f)](https://blastbeng.github.io/spotisub/)
+[![GitHub release](https://img.shields.io/github/v/release/blastbeng/spotisub?display_name=tag&sort=semver)](https://github.com/blastbeng/spotisub/releases)
+[![Docker pulls](https://img.shields.io/docker/pulls/blastbeng/spotisub)](https://hub.docker.com/r/blastbeng/spotisub)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.md)
+[![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/)
 
-!!! WORK IN PROGRESS !!!
+> ## 📖 Documentation: <https://blastbeng.github.io/spotisub/>
+>
+> The project now has a full documentation site, and it is the place to start:
+> a four-step quickstart, screenshots of every screen, the complete configuration
+> reference, the REST API and a troubleshooting guide built from the recurring
+> issue reports. Everything below is a summary — the site walks you through each
+> step from an empty machine to a working playlist.
 
-Note that this is a work in progress, some things may be subject to changes. Like endpoints paths.
+---
 
-The current release has all the base features, but it is still a work in progress, so expect bugs.
+## What Spotisub does
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
+Spotisub connects three things you already have — Spotify, a Subsonic-API media
+server, and a folder full of music — and keeps them in step:
 
-## Description
+1. **Reads your Spotify account** with the Spotify Web API: the playlists you
+   created or follow, your *Liked Songs*, and optionally a top-tracks playlist for
+   every artist in your library.
+2. **Matches every track against your library** — first by ISRC → MusicBrainz
+   recording MBID, then (optionally) by a fuzzy title/artist comparison.
+3. **Writes the result as a real playlist** on your server through the Subsonic
+   API, named `Spotisub - <playlist name>`, and refreshes it on a schedule.
+4. **Shows you what it could not match** on the *Missing* page, where a track,
+   album, artist or whole playlist can be ignored so it is never searched again.
 
-Simple playlist generator based on spotify user and artists recommendations with Subsonic API support
+Nothing on Spotify is ever modified: the requested scopes are read-only
+(`playlist-read-private`, `user-library-read`, `user-top-read`,
+`user-read-recently-played`).
 
-This software will try to match all your Spotify playlists to your music library using Subsonic APIs
+![A generated playlist in Navidrome](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
 
-This generator works with Navidrome and every Subsonic API enabled media center 
+## Requirements
 
-This is an example about what it generates using Navidrome:
+| You need | Why |
+|---|---|
+| A **Spotify Premium** account | Spotify has required Premium for Web API access since its February 2026 developer policy change — a free account gets the app blocked (`403`). See [Troubleshooting](https://blastbeng.github.io/spotisub/help/troubleshooting/). |
+| A Spotify **app** (Client ID + Secret) | Every third-party client needs one. Creating it takes a minute and costs nothing: [Create a Spotify app](https://blastbeng.github.io/spotisub/getting-started/spotify-app/). |
+| A Subsonic-API server with your music in it | Navidrome, Airsonic, Gonic, … — that is where the playlists are written. |
+| `musicBrainzId` tags on your files *(optional)* | Enables exact MBID matching. Without them, only the text comparison can match. |
+| Docker *(recommended)*, or Python 3.10 from source | How Spotisub is packaged. |
+| Outbound HTTPS to Spotify and MusicBrainz | `accounts.spotify.com`, `api.spotify.com`, `musicbrainz.org`. |
 
-![image](https://github.com/user-attachments/assets/99f46930-2e8d-4330-aa73-10b094d0b70a)
+## Quick start (Docker)
 
-## Getting Started
+**1. Create the Spotify app.** Open the
+[Spotify developer dashboard](https://developer.spotify.com/dashboard), create an
+app, and add this exact Redirect URI:
 
-Full documentation, tutorials and the configuration reference live at
-**[https://blastbeng.github.io/spotisub/](https://blastbeng.github.io/spotisub/)**.
+```
+http://127.0.0.1:5183/callback
+```
 
-New to Spotisub? Start with the four-step guide:
-[Create a Spotify app](https://blastbeng.github.io/spotisub/getting-started/spotify-app/) →
-[Install with Docker](https://blastbeng.github.io/spotisub/getting-started/docker/) →
-[Log in to Spotify](https://blastbeng.github.io/spotisub/getting-started/first-run/) →
-[Import your first playlist](https://blastbeng.github.io/spotisub/getting-started/first-import/).
+Copy the Client ID and Client Secret. More detail, with screenshots:
+[Create a Spotify app](https://blastbeng.github.io/spotisub/getting-started/spotify-app/).
 
-The site is generated from [`docs/`](docs) by [`.github/workflows/pages.yml`](.github/workflows/pages.yml);
-it replaced the GitHub wiki in 0.3.8.
+**2. Create a folder** with a `docker-compose.yml`:
 
+```yaml
+name: spotisub
 
-## Features
+services:
+  spotisub:
+    container_name: spotisub
+    env_file: .env
+    image: "blastbeng/spotisub:latest"
+    restart: always
+    volumes:
+      - "./cache:/home/user/spotisub/cache"
+    ports:
+      - 5183:5183
+    healthcheck:
+      test: curl -s http://127.0.0.1:5183/api/v1/utils/healthcheck | grep -q 'Ok!' || exit 1
+      interval: 30s
+      retries: 20
+      start_period: 30s
+```
 
-* Import every playlist you created or follow on Spotify, and keep it in sync
-* Generate one playlist with all your Spotify *Liked Songs*
-* Optionally generate an artist top tracks playlist for every artist in your library
-* Optional Spotdl integration, to automate the dowload process of missing tracks from the subsonic database
-* Optional Lidarr integration, used altogether with spotdl to make decision about download a matching song or not
+**3. Make the `.env` file** next to it — the
+[sample](https://github.com/blastbeng/spotisub/blob/dev/.env.sample) documents every
+variable. The five that have to be right:
 
-Take a look at Spotdl here: [https://github.com/spotDL/spotify-downloader](https://github.com/spotDL/spotify-downloader) 
+```ini
+SPOTIPY_CLIENT_ID=your-client-id
+SPOTIPY_CLIENT_SECRET=your-client-secret
+SPOTIPY_REDIRECT_URI=http://127.0.0.1:5183/callback
 
-Take a look at Lidarr here: [https://github.com/Lidarr/Lidarr](https://github.com/Lidarr/Lidarr)
+SUBSONIC_API_HOST=http://192.168.1.10      # your server, as seen from the container
+SUBSONIC_API_PORT=4533
+SUBSONIC_API_USER=your-subsonic-user
+SUBSONIC_API_PASS=your-subsonic-password
+```
 
-When both Spotdl and Lidarr integrations are enabled, if spotisub doesn't find a song in subsonic database, it tries to search the artist returned from the spotify APIs inside the Lidarr database (via Lidarr APIs).
-If this artist isn't found inside the Lidarr database, the download process is skipped.
+**4. Start it and open <http://127.0.0.1:5183/>**:
 
-So for example if you want to automate the download process, using this system you can skip the artists you don't like.
+```bash
+docker compose up -d
+docker compose logs -f --tail=50     # `docker compose ps` shows the healthcheck
+```
 
-## Track Matching
+Create the dashboard login, click **Authenticate Spotify** (or run
+`docker exec -it spotisub ./first_run.sh` to do the OAuth dance inside the
+container), then import a playlist from **Playlists → Manage**.
 
-The track matching is made in two different ways, by MBID comparison and simple text comparison.
+Prefer not to touch compose files? There is an
+[interactive installer](https://blastbeng.github.io/spotisub/getting-started/install-script/)
+that writes them for you, and a
+[manual, step-by-step Docker guide](https://blastbeng.github.io/spotisub/getting-started/docker/)
+if you want to understand every line.
 
-For perfect track match by MBID it is important that the songs in your library have the **musicBrainzId** tag.
+## How tracks are matched
 
-### MBID
-A common way to uniquely identify tracks is via an MBID. Read more about it on [MBID - Musicbrainz](https://musicbrainz.org/doc/MusicBrainz_Identifier). Spotify track data does not contain an MBID. However, it does typically contain an [ISRC](https://musicbrainz.org/doc/ISRC), a different type of unique identifier. Musicbrainz supports looking up tracks by ISRC, which is then used to get a corresponding MBID. However, the ISRC database on Musicbrainz is incomplete, so not all tracks will have an ISRC value. There are tools and guides for submitting missing ISRC values, which will benefit everyone who wants to use the Musicbrainz API.
+| Step | What happens |
+|---|---|
+| **1. ISRC → MBID** | Each Spotify track carries an ISRC. That is resolved to MusicBrainz recording MBIDs, which are looked up in your library's `musicBrainzId` tags. A hit is added straight away. |
+| **2. Text comparison** *(off by default)* | Only when step 1 finds nothing **and** `TEXT_COMAPRE_MATCHING_ENABLED=1`: titles and artists are normalised and compared against the server's search results. |
+| **3. Exclusion words** | `EXCLUDED_WORDS` (`acoustic,instrumental,demo` by default) drops candidates **from the text comparison only**. An MBID match is always accepted, because it is an exact identity match. |
+| **4. Missing** | Anything still unmatched is stored as a *missing* row and listed on the *Missing* page, where you can ignore it, or ignore its album/artist/playlist. |
 
-The MBID is stored in your Subsonic library tracks via the musicBrainzId tag.
+The full explanation, including how to fix missing `musicBrainzId` tags, is in
+[How matching works](https://blastbeng.github.io/spotisub/guide/matching/).
 
-If the MBID comparison succeeds, the song will be added to the playlist and the text comparison will be skipped.
+## Configuration
 
-### Simple Text Comparison (OFF by default)
-When the two MBIDs doesn't match, a text comparison will **optionally** be executed between the Spotify song and your Subsonic library.
+Everything is an environment variable; the
+[reference](https://blastbeng.github.io/spotisub/configuration/environment-variables/)
+lists all of them with defaults. The ones that change behaviour:
 
-In case of successful compare, the song will be added to the playlist.
+| Variable | Default | Meaning |
+|---|---|---|
+| `PLAYLIST_PREFIX` | `Spotisub - ` | Prefix of every playlist written on the server. |
+| `ITEMS_PER_PLAYLIST` | `1000` | Maximum tracks per generated playlist. |
+| `NUM_USER_PLAYLISTS` | `5` | How many Spotify playlists to import. |
+| `TEXT_COMAPRE_MATCHING_ENABLED` | `0` | Enable the fuzzy comparison (**the name is misspelled in the code — copy it as-is**). |
+| `EXCLUDED_WORDS` | `acoustic,instrumental,demo` | Comma-separated words that reject a text-comparison candidate. |
+| `ARTIST_PLAYLIST_ENABLED` | `0` | Generate a top-tracks playlist for every artist in your library. |
+| `PLAYLIST_GEN_SCHED` | `3` | Hours between two Spotify-playlist imports (`0` disables the job). |
+| `SAVED_GEN_SCHED` | `2` | Hours between *Liked Songs* refreshes. |
+| `ARTIST_TOP_GEN_SCHED` | `1` | Hours between artist top-tracks refreshes. |
+| `SCHEDULER_ENABLED` | `1` | `0` stops all scheduled work; manual rescans still work. |
+| `LOG_LEVEL` | `20` | Python log level (`10` debug … `50` critical). |
+| `SECRET_KEY` | *(auto)* | Signing key for the dashboard session. If unset, one is generated once and stored in `cache/secret_key`. |
+| `APPLICATION_ROOT` | *(empty)* | Path prefix when Spotisub lives under a sub-path; see [Reverse proxy](https://blastbeng.github.io/spotisub/configuration/reverse-proxy/). |
+| `PUID` / `PGID` | `1000` | Owner of the cache files (and of downloaded music). |
 
-## Word Exclusions
-Spotisub supports word exclusions, via the environment variable EXCLUDED_WORDS as documented in
-[Environment variables](https://blastbeng.github.io/spotisub/configuration/environment-variables/)
+Spotisub runs with a **single** gunicorn worker on purpose: the scheduler lives
+inside the process, so raising `workers` would run every job several times.
+Scheduler details: [Scheduler](https://blastbeng.github.io/spotisub/configuration/scheduler/).
 
-But the exclusions are only made in case of text comparison.
+## Data, cache and backups
 
-If there is an MBID match, Spotisub will just use this song without doing excluded words checks.
+The only stateful directory is the one mounted at `/home/user/spotisub/cache`:
 
-This is because, for example, if we want to exclude the word "live" from Subsonic searches, but in our Spotify playlist we have a song with "live" in it that matches by MBID a song in our Subsonic library.
+| File | Contents |
+|---|---|
+| `spotisub.db` | Dashboard users and the match cache (playlists, tracks, matched/missing relations, ignore flags). |
+| `secret_key` | Auto-generated session key, if `SECRET_KEY` is not set. |
+| `spotipy_cache` | The Spotify OAuth token. Delete it to force a re-authentication. |
+| `subsonic_cache.pkl` | MBID → song map of your library, rebuilt automatically when the library size changes. |
+| `spotisub.log` | Rotating log (1 MB × 5), also streamed to `docker compose logs`. |
 
-In this case, that song should not be skipped and the correct way of making it not being added to the Subsonic playlist is to manually remove it from the Spotify playlist.
+Back up that folder and you have backed up Spotisub. Deleting
+`subsonic_cache.pkl` is always safe — it is rebuilt on the next run.
 
-In case of playlist generated by recommendation, well, Spotify doesn't add things like "live" or "instrumental" or "demo" to their recommendation playlists.
+## Optional integrations
 
-Same thing for artists top tracks playlists.
+- **[spotdl](https://blastbeng.github.io/spotisub/integrations/spotdl/)** — download
+  the tracks Spotisub could not find in your library, so the next scan completes the
+  playlist. Writes into your music folder, so it must be mounted into the container.
+- **[Lidarr](https://blastbeng.github.io/spotisub/integrations/lidarr/)** — only
+  download an artist that Lidarr already monitors, which is a cheap way to say
+  "never download artists I do not care about".
 
-## Planned Features
+Spotdl is built on [spotDL](https://github.com/spotDL/spotify-downloader); Lidarr
+access uses [pyarr](https://github.com/totaldebug/pyarr).
 
-Dashboard
-* Ability to delete, skip or download matching tracks using spotdl
-* Configure Spotisub trough the dashboard instead of docker env variables
-* Ability to interact with spotdl and lidarr integrations from the dashboard
-* Ability to manually match and easily submit missing ISRC values to Musicbrainz via a text comparison suggestion page
+## REST API
 
-## Help
+Every action the dashboard can perform is also an endpoint under `/api/v1/`, with
+interactive Swagger docs at **<http://127.0.0.1:5183/api/v1/docs/>** (namespaces
+`generate`, `import`, `utils`; responses are `{"status": "ok"|"ko", "message": …}`).
+The healthcheck used by Docker is
+`GET /api/v1/utils/healthcheck` → `Ok!`. See
+[REST API](https://blastbeng.github.io/spotisub/api/endpoints/).
 
-NOTE. Depending on your library size and your playlists number and size on Spotify, the execution may take a very long time.
-To avoid Spotify rate limiting a lot of `time.sleep()` have been added to the code.
+## Something is broken?
 
+Start with [Troubleshooting](https://blastbeng.github.io/spotisub/help/troubleshooting/),
+which covers the failures that come up again and again — a redirect loop between
+`/overview/` and `/login`, "no tracks matched" on Navidrome, `401` from the Subsonic
+API, Spotify answers `403`, a library scan that seems frozen — and the
+[FAQ](https://blastbeng.github.io/spotisub/help/faq/) for the behavioural questions
+(Premium, multiple users, what it does to your files).
 
-Official Spotisub communities
+Then check **System → Logs** in the dashboard: every job logs with the thread id
+that ran it, and the whole log is `cache/spotisub.log`.
 
-* Discord: https://discord.gg/jXQauuhy5w
-* Reddit: https://www.reddit.com/r/spotisub/
+Nothing helps? [Open an issue](https://github.com/blastbeng/spotisub/issues/new/choose)
+with the log excerpt around the failure, your container image tag, and whether your
+server is Navidrome or something else. Community: [Discord](https://discord.gg/jXQauuhy5w)
+and [Reddit](https://www.reddit.com/r/spotisub/).
 
-## Releases
+> Big libraries and long playlists mean long runs: a full scan of thousands of
+> tracks can take hours. This is deliberate — the Spotify and MusicBrainz APIs are
+> rate limited and Spotisub paces itself instead of getting throttled.
 
-Container images are built and published only by GitHub Actions; there is no local
-release path.
+## Roadmap
 
-* `blastbeng/spotisub:dev` follows the `dev` branch.
-* `blastbeng/spotisub:latest` and `blastbeng/spotisub:X.Y.Z` (also `vX.Y.Z`,
-  `X.Y`, `X`) are published by the `release` workflow, multi-arch
-  (`linux/amd64`, `linux/arm64`, `linux/arm/v7`).
-* The version the application reports lives in `spotisub/database.py` (`VERSION`);
-  the history lives in [CHANGELOG.md](CHANGELOG.md). Both are updated by the
-  release workflow, never by hand.
+The short list of things users keep asking for — each one is an issue, so comment
+there rather than opening a duplicate:
 
-Maintainers release by dispatching the `release` workflow (Actions → release → Run
-workflow) with `dry_run` first, reading the changelog section it prints, and then
-running it for real. Requires the `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` secrets,
-and `RELEASE_TOKEN` (a token with `contents: write`) only if branch protection
-prevents the built-in `GITHUB_TOKEN` from pushing to `dev`/`latest`. Tag protection
-for `v*` is recommended so a tag can only be created by the workflow.
+- Configure Spotisub from the dashboard instead of environment variables.
+- Delete, skip or download a matching track straight from the dashboard.
+- An artist allow-list instead of ignoring hundreds of artists one by one.
+- Multi-user support with per-user Spotify and Subsonic accounts.
+- ListenBrainz / Last.fm as additional playlist sources.
+
+## Contributing
+
+- **Documentation** lives in [`docs/`](docs) and is published at
+  <https://blastbeng.github.io/spotisub/> by `.github/workflows/pages.yml`
+  (MkDocs Material). Fix a wrong instruction there, not in the wiki — there is no
+  wiki any more.
+- **Code** follows the existing patterns: Flask blueprints, SQLAlchemy Core,
+  `flask_restx` under `/api/v1`, no build step for the frontend.
+- **Tests** run with `pytest` and never touch Spotify or your library
+  (`tests/_stubs/` stands in for the heavy import-time dependencies).
+- **Releases** are built and published only by GitHub Actions: the `release`
+  workflow bumps `VERSION`, writes the changelog, merges `dev` into `latest`, tags,
+  builds all three architectures and publishes the image. No local tags, no local
+  pushes. See [Contributing](https://blastbeng.github.io/spotisub/contributing/).
+
+Container images: `blastbeng/spotisub:latest` (stable), `blastbeng/spotisub:X.Y.Z`
+(and `vX.Y.Z`) for a pinned version, `blastbeng/spotisub:dev` for the development
+branch. Platforms: `linux/amd64`, `linux/arm64`, `linux/arm/v7`.
 
 ## Acknowledgments
 
-A big thanks to the developers and maintaners of these libraries\softwares:
-* [Spotipy](https://github.com/spotipy-dev/spotipy)
-* [py-sonic](https://github.com/crustymonkey/py-sonic)
-* [Navidrome](https://github.com/navidrome/navidrome)
-* [spotdl](https://github.com/spotDL/spotify-downloader) 
-* [Lidarr](https://github.com/Lidarr/Lidarr) 
-* [pyarr](https://github.com/totaldebug/pyarr) 
+Spotisub stands on the shoulders of these projects:
 
+- [Spotipy](https://github.com/spotipy-dev/spotipy) — Spotify Web API client
+- [py-sonic](https://github.com/crustymonkey/py-sonic) — Subsonic API client
+- [MusicBrainz](https://musicbrainz.org/) — ISRC → MBID resolution
+- [Navidrome](https://github.com/navidrome/navidrome) — the server it was built against
+- [spotdl](https://github.com/spotDL/spotify-downloader), [Lidarr](https://github.com/Lidarr/Lidarr),
+  [pyarr](https://github.com/totaldebug/pyarr) — the optional integrations
+
+## License
+
+[MIT](LICENSE.md).
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
