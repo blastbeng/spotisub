@@ -8,6 +8,25 @@ Sections up to `0.3.6` were backfilled from the existing git tags and GitHub
 Releases when automated releases were introduced; they are not itemised
 commit-by-commit.
 
+## [0.3.9] - 2026-11-25
+
+### Fixed
+
+- The documentation site is now republished as part of every release, so
+  [Release history](https://blastbeng.github.io/spotisub/release-history/) contains
+  the version that was just published. Until now the release commit was pushed with
+  the default `GITHUB_TOKEN`, which cannot start other workflows, and the newest
+  section stayed missing until the site was rebuilt by hand.
+- The release workflow can be dispatched again after a release has been made. Its
+  preflight asserted that `latest` is an ancestor of `dev`, which the release itself
+  turns false when it creates `latest` with a `--no-ff` merge; the second release
+  would have been refused.
+
+### Upgrade notes
+
+- Nothing changes at runtime; this release only affects how the documentation site
+  and the release pipeline behave.
+
 ## [0.3.8] - 2026-11-25
 
 ### Added
@@ -150,6 +169,7 @@ commit-by-commit.
 ### Changed
 - REST endpoints drive the scheduler jobs instead of running work inline.
 
+[0.3.9]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.9
 [0.3.8]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.8
 [0.3.6]: https://github.com/blastbeng/spotisub/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/blastbeng/spotisub/compare/v0.3.4...v0.3.5

@@ -68,8 +68,18 @@ jobs:
           if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/dev)" ]; then
             echo "::error::HEAD is not origin/dev - re-dispatch after the branch settles"; exit 1
           fi
+          # Before a release latest is an ancestor of dev. After one it is not:
+          # latest is the --no-ff merge of dev, which dev does not contain. That
+          # state is fine as long as latest adds no content of its own - a commit
+          # made straight on latest shows up here and has to be merged back first.
           if ! git merge-base --is-ancestor origin/latest origin/dev; then
-            echo "::error::origin/latest is not an ancestor of origin/dev"; exit 1
+            latest_base=$(git merge-base origin/latest origin/dev)
+            latest_own=$(git diff --name-only "${latest_base}" origin/latest)
+            if [ -n "${latest_own}" ]; then
+              echo "::error::origin/latest has content that origin/dev does not"
+              printf '%s\n' "${latest_own}"
+              exit 1
+            fi
           fi
 
       - name: Resolve and validate the version
@@ -521,3 +531,22 @@ jobs:
           args=(--verify-tag --title "v${VERSION}" --notes-file /tmp/release-notes.md)
           if [ "${PRERELEASE}" = "true" ]; then args+=(--prerelease); fi
           gh release create "v${VERSION}" "${args[@]}" --repo "${GITHUB_REPOSITORY}"
+
+  # The release commit adds a CHANGELOG section and the site renders that file,
+  # so the documentation has to be rebuilt from the release commit. The push the
+  # bump job makes uses GITHUB_TOKEN, which never triggers other workflows, so
+  # the site is republished here explicitly instead of waiting for a `push`.
+  docs:
+    name: Publish the documentation site
+    needs:
+      - preflight
+      - bump
+      - verify
+    if: needs.preflight.outputs.dry_run != 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
+    with:
+      ref: ${{ needs.bump.outputs.sha }}

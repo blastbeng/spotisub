@@ -3,6 +3,11 @@ name: pages
 # Builds the documentation site (docs/ + mkdocs.yml) and publishes it to
 # GitHub Pages. The site is the project home: guides, configuration
 # reference, troubleshooting. Nothing here touches the application image.
+#
+# Also callable (workflow_call) by release.yml, so that a release republishes
+# the site with the changelog section it just wrote. Pushes made with the
+# default GITHUB_TOKEN never trigger workflows, so a plain `push` trigger is
+# not enough there.
 
 on:
   push:
@@ -21,6 +26,13 @@ on:
       - 'requirements-docs.txt'
       - 'CHANGELOG.md'
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Commit to build and publish (defaults to the calling ref)'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -36,6 +48,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -65,7 +79,7 @@ jobs:
   deploy:
     name: Deploy site
     needs: build
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/dev' || github.event_name == 'workflow_call')
     runs-on: ubuntu-latest
     permissions:
       pages: write
