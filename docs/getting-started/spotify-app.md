@@ -1,8 +1,10 @@
 # 1. Create a Spotify app
 
 Spotify only lets a third-party program read your playlists if it authenticates as an
-application that **you** own. That application is free and takes a couple of minutes to
-create. You will end up with two values:
+application that **you** own. Creating the application costs nothing and takes a couple
+of minutes — but since Spotify's February 2026 developer policy the account that owns it
+must have **Spotify Premium**, otherwise the app is blocked from the Web API with `403`.
+You will end up with two values:
 
 - a **Client ID**
 - a **Client Secret**

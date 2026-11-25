@@ -41,6 +41,22 @@ container.
 Note that `http://` is only accepted for `127.0.0.1`/`localhost`; anything else must be
 `https://` and publicly reachable from your browser.
 
+## Spotify answers `403` / "Premium required"
+
+**Authenticate Spotify** fails, or every import stops with `403 Forbidden` and
+`Your application is blocked from accessing the Web API since you do not have a Spotify
+Premium subscription`.
+
+Spotify's [February 2026 developer
+policy](https://developer.spotify.com/blog/2026-02-06-update-on-developer-access-and-platform-security)
+makes Premium mandatory for Development Mode: the account that owns the Client ID must
+have an active subscription. Spotisub asks for read-only scopes and cannot work around
+it — swap in credentials from a Premium account, or upgrade that one.
+
+A `403` on a **single** playlist is something else: Spotify refuses that playlist to your
+app (for example an editorial or region-locked one). Spotisub logs it and skips that
+playlist, the rest of the import continues.
+
 ## Empty dashboard
 
 The initial playlist scan is wrapped in a broad `try/except` on purpose, so a failure
