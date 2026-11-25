@@ -521,3 +521,22 @@ jobs:
           args=(--verify-tag --title "v${VERSION}" --notes-file /tmp/release-notes.md)
           if [ "${PRERELEASE}" = "true" ]; then args+=(--prerelease); fi
           gh release create "v${VERSION}" "${args[@]}" --repo "${GITHUB_REPOSITORY}"
+
+  # The release commit adds a CHANGELOG section and the site renders that file,
+  # so the documentation has to be rebuilt from the release commit. The push the
+  # bump job makes uses GITHUB_TOKEN, which never triggers other workflows, so
+  # the site is republished here explicitly instead of waiting for a `push`.
+  docs:
+    name: Publish the documentation site
+    needs:
+      - preflight
+      - bump
+      - verify
+    if: needs.preflight.outputs.dry_run != 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
+    with:
+      ref: ${{ needs.bump.outputs.sha }}

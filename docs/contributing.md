@@ -101,4 +101,5 @@ section, then runs it for real. Nothing is built or pushed from a workstation, a
 What a release does: bumps `VERSION` in `spotisub/database.py`, appends the `VERSIONS`
 history, prepends the `CHANGELOG.md` section, commits `chore(release): vX.Y.Z`, merges
 `dev` into `latest`, tags, builds all three architectures, verifies the image digests and
-the version inside the image, and creates the GitHub Release.
+the version inside the image, creates the GitHub Release, and finally republishes this
+documentation site from the release commit so that the new changelog section is live.
