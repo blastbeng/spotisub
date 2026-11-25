@@ -163,6 +163,14 @@ jobs:
           echo "releasing ${next} (previous release v${prev_release}, database.py VERSION ${prev})" \
             >> "${GITHUB_STEP_SUMMARY}"
 
+      # The app targets Python 3.10 (see the Dockerfile) and pins libraries that
+      # do not import on a newer interpreter, so the gates run on 3.10 too.
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+
       - name: Install lint and test tooling
         run: |
           set -euo pipefail
