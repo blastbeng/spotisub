@@ -1,12 +1,12 @@
 # Playlists overview
 
-The dashboard has two modes, both reachable from the sidebar:
+There are three list pages. All of them are in the sidebar under **Playlists**:
 
-| Page | URL | Shows |
+| Sidebar entry | URL | Shows |
 |---|---|---|
-| Dashboard | `/overview/` | One row per playlist, with counts |
-| Tracks | `/playlists/0/` | One row per **track**, across all playlists |
-| Missing | `/playlists/1/` | The same list, filtered to **unmatched** tracks |
+| **Playlists → Overview** | `/overview/` | One row per playlist, with counts |
+| **Playlists → Manage** | `/playlists/0/` | One row per **track**, across all playlists |
+| **Playlists → Missing** | `/playlists/1/` | The same list, filtered to **unmatched** tracks |
 
 The track views are where you work when something is missing: they show the Spotify
 title, artist and album next to the match status, and let you search across everything.
