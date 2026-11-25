@@ -1,10 +1,12 @@
 FROM python:3.10-slim-bookworm
 
 # Install dependencies and gosu
+# libffi-dev: cffi has no arm/v7 wheel and compiles against ffi.h there.
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         gcc \
         g++ \
+        libffi-dev \
         ffmpeg \
         curl 
         
