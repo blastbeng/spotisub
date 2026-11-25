@@ -3,7 +3,7 @@
 Base path: `/api/v1`. Interactive documentation with request/response schemas:
 `http://<host>:5183/api/v1/docs/`.
 
-![Swagger UI](https://github.com/user-attachments/assets/e0059fca-305d-41cd-8fa5-58818c6476f7)
+![Swagger UI](../assets/img/swagger.png)
 
 ## Import
 

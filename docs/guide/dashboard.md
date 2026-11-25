@@ -2,7 +2,7 @@
 
 The dashboard is the page you land on: `/overview/` (also served at `/`).
 
-![The playlists dashboard](https://github.com/user-attachments/assets/b864087f-1ca7-4506-8e2f-42aa3aaeb6c9)
+![The playlists dashboard](../assets/img/dashboard.png)
 
 Each row is a playlist Spotisub manages on your server.
 

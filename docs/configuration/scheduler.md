@@ -21,8 +21,10 @@ and no external scheduler: a single APScheduler instance lives in the gunicorn p
 | `artist_top_tracks` | `ARTIST_TOP_GEN_SCHED`, 1 h | Imports **one random** artist's top tracks (only with `ARTIST_PLAYLIST_ENABLED=1`) |
 | `reimport_all` | manual | Rescan every playlist at once |
 
-`init_jobs` and `scan_library` also run once at startup, and every job runs immediately
-after a container restart.
+`init_jobs` and `scan_library` also run **once at every container start**, which is why
+a restart refreshes the playlist list. The import jobs do not: an interval job first
+fires one full interval after it is registered. If you want a playlist imported right
+now, press **Rescan** — do not restart the container and wait.
 
 ## "One random playlist per interval" — read this
 
