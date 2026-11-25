@@ -9,6 +9,7 @@ import math
 import threading
 from datetime import datetime
 from datetime import timedelta
+import spotipy
 from flask_apscheduler import APScheduler
 from spotisub import spotisub
 from spotisub import constants
@@ -493,9 +494,14 @@ def get_user_playlists_run(uuid, offset=0):
                 logging.info(
                     '(%s) Importing playlist: %s', str(
                         threading.current_thread().ident), item['name'])
-                result = dict({'tracks': []})
-                result = get_playlist_tracks(item, result)
-                subsonic_helper.write_playlist(sp, playlist_info, result)
+                try:
+                    result = dict({'tracks': []})
+                    result = get_playlist_tracks(item, result)
+                    subsonic_helper.write_playlist(sp, playlist_info, result)
+                except spotipy.SpotifyException as e:
+                    logging.warning(
+                        '(%s) Skipping playlist %s: %s', str(
+                            threading.current_thread().ident), item['name'], e)
 
         if len(playlist_result['items']) != 0:
             get_user_playlists_run(uuid, offset=offset + 50)
@@ -561,11 +567,12 @@ def get_playlist_tracks(item, result, offset_tracks=0):
     response_tracks = sp.playlist_items(
         item['id'],
         offset=offset_tracks,
-        fields='items.track.id,items.track.name,items.track.artists,items.track.type,total',
+        fields='items.item.id,items.item.name,items.item.artists,items.item.type,total',
         limit=50,
         additional_types=['track'])
     for track_item in response_tracks['items']:
-        track = track_item['track']
+        # Feb 2026 API: the track moved to the "item" key ("track" is deprecated)
+        track = track_item.get('item')
 
         if track is None:
             continue

@@ -1,0 +1,79 @@
+name: pages
+
+# Builds the documentation site (docs/ + mkdocs.yml) and publishes it to
+# GitHub Pages. The site is the project home: guides, configuration
+# reference, troubleshooting. Nothing here touches the application image.
+
+on:
+  push:
+    branches: [ 'dev' ]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'requirements-docs.txt'
+      - 'CHANGELOG.md'
+      - '.github/workflows/pages.yml'
+  pull_request:
+    branches: [ 'dev' ]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'requirements-docs.txt'
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements-docs.txt
+
+      - name: Install documentation dependencies
+        run: pip install -r requirements-docs.txt
+
+      - name: Build site with warnings as errors
+        env:
+          NO_MKDOCS_2_WARNING: '1'
+        run: mkdocs build --strict
+
+      - name: Configure Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy site
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

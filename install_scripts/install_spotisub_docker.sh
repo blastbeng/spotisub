@@ -70,7 +70,7 @@ echo "    container_name: spotisub" >> "${WORKDIR}/docker-compose.yml"
 echo "    environment:" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SPOTIPY_CLIENT_ID=${SPOTIFY_CLIENT_ID}" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SPOTIPY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}" >> "${WORKDIR}/docker-compose.yml"
-echo "      - SPOTIPY_REDIRECT_URI=http://127.0.0.1:8080" >> "${WORKDIR}/docker-compose.yml"
+echo "      - SPOTIPY_REDIRECT_URI=http://127.0.0.1:5183/callback" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SUBSONIC_API_HOST=${SUBSONIC_API_HOST}" >> "${WORKDIR}/docker-compose.yml"
 echo "      - SUBSONIC_API_PORT=${SUBSONIC_API_PORT}" >> "${WORKDIR}/docker-compose.yml"
 
@@ -87,7 +87,7 @@ echo "      - "./cache:/home/user/spotisub/cache"" >> "${WORKDIR}/docker-compose
 echo "    ports:" >> "${WORKDIR}/docker-compose.yml"
 echo "      - \"5183:5183\"" >> "${WORKDIR}/docker-compose.yml"
 echo "    healthcheck:" >> "${WORKDIR}/docker-compose.yml"
-echo "      test: curl -s http://127.0.0.1:5183/utils/healthcheck | grep -q 'Ok!' || exit 1" >> "${WORKDIR}/docker-compose.yml"
+echo "      test: curl -s http://127.0.0.1:5183/api/v1/utils/healthcheck | grep -q 'Ok!' || exit 1" >> "${WORKDIR}/docker-compose.yml"
 echo "      interval: 30s" >> "${WORKDIR}/docker-compose.yml"
 echo "      retries: 20" >> "${WORKDIR}/docker-compose.yml"
 echo "      start_period: 30s" >> "${WORKDIR}/docker-compose.yml"
@@ -96,6 +96,9 @@ cd "$WORKDIR"
 
 docker compose up -d
 docker exec -it spotisub ./first_run.sh
-docker compose down
 
-echo "Spotisub has been initialized, you can now start the container by going to ${WORKDIR} and executing 'docker compose up'"
+echo ""
+echo "Spotisub has been initialized and is running:"
+echo "  http://127.0.0.1:5183/"
+echo ""
+echo "The compose file lives in ${WORKDIR}. Stop it with: cd ${WORKDIR} && docker compose down"

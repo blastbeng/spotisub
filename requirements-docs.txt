@@ -1,0 +1,3 @@
+# Documentation site build dependencies (GitHub Pages).
+# Kept out of requirements.txt so the application image is unaffected.
+mkdocs-material==9.8.2

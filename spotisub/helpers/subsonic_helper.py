@@ -13,10 +13,22 @@ from spotipy.exceptions import SpotifyException
 from spotisub import database
 from spotisub import constants
 from spotisub import utils
-from spotisub.helpers import spotdl_helper
 from spotisub.exceptions import SubsonicDataException, SubsonicOfflineException
 from spotisub.classes import ComparisonHelper, SubsonicCache
 from spotisub.helpers import musicbrainz_helper
+
+# spotdl_helper is imported lazily: building its Spotdl client runs yt-dlp setup,
+# which can fail (deprecated interpreter, missing providers) and must not keep the
+# application from starting when no download is requested.
+spotdl_helper = None
+
+
+def _init_spotdl_helper():
+    """Import spotdl_helper on first use."""
+    global spotdl_helper  # pylint: disable=global-statement
+    if spotdl_helper is None:
+        from spotisub.helpers import spotdl_helper as module  # pylint: disable=import-outside-toplevel
+        spotdl_helper = module
 
 cache_executor = ThreadPoolExecutor(max_workers=1)
 spotdl_executor = ThreadPoolExecutor(max_workers=1)
@@ -49,12 +61,16 @@ pysonic = libsonic.Connection(
         constants.SUBSONIC_API_BASE_URL,
         constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) +
     "/rest",
-    port=int(
-        os.environ.get(
-            constants.SUBSONIC_API_PORT)),
+    port=constants.get_subsonic_port(),
     insecure=os.environ.get(
         constants.SUBSONIC_API_VERIFY_SSL,
         constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "0")
+
+
+def download_track(url):
+    """Download a track using spotdl, initializing the helper on first use."""
+    _init_spotdl_helper()
+    spotdl_helper.download_track(url)
 
 
 def load_subsonic_cache_from_file() -> SubsonicCache:
@@ -216,21 +232,25 @@ def check_and_get_subsonic_cache():
 
 
 def check_pysonic_connection():
-    """Return SubsonicOfflineException if pysonic is offline"""
+    """Return pysonic or raise SubsonicOfflineException if server is unreachable.
+
+    Uses getMusicFolders() instead of ping() because ping() silently swallows
+    all exceptions and returns False, making it impossible to distinguish between
+    a connection error and a server responding with an error status.
+    getMusicFolders() raises real exceptions that can be logged and handled.
+    """
     try:
-        if pysonic.ping():
-            return pysonic
+        pysonic.getMusicFolders()
+        return pysonic
     except Exception as e:
         logging.debug(
-            "Subsonic connection error during ping: %s. Attempting retry...", str(e))
-        # Try one more time in case it's a transient error
+            "Subsonic connection error: %s. Attempting retry...", str(e))
         try:
-            if pysonic.ping():
-                return pysonic
+            pysonic.getMusicFolders()
+            return pysonic
         except Exception as retry_error:
             logging.error(
                 "Subsonic connection failed after retry: %s", str(retry_error))
-
     raise SubsonicOfflineException()
 
 
@@ -423,7 +443,7 @@ def write_playlist(sp, playlist_info, results):
                                         'navidrome rescans your music dir',
                                         str(threading.current_thread().ident))
                                     spotdl_executor.submit(
-                                        spotdl_helper.download_track, track["external_urls"]["spotify"])
+                                        download_track, track["external_urls"]["spotify"])
                                 else:
                                     logging.warning(
                                         '(%s) Track %s - %s not found in your music library',
@@ -986,7 +1006,7 @@ def download_song(spotipy_helper, uri):
     if "external_urls" in track and track["external_urls"] is not None and "spotify" in track[
             "external_urls"] and track["external_urls"]["spotify"] is not None:
         spotdl_executor.submit(
-            spotdl_helper.download_track,
+            download_track,
             track["external_urls"]["spotify"])
         return True
     else:

@@ -11,6 +11,8 @@ Note that this is a work in progress, some things may be subject to changes. Lik
 
 The current release has all the base features, but it is still a work in progress, so expect bugs.
 
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Description
 
 Simple playlist generator based on spotify user and artists recommendations with Subsonic API support
@@ -25,16 +27,24 @@ This is an example about what it generates using Navidrome:
 
 ## Getting Started
 
-For install instructions take a look at the WIKI: [https://github.com/blastbeng/spotisub/wiki](https://github.com/blastbeng/spotisub/wiki)
+Full documentation, tutorials and the configuration reference live at
+**[https://blastbeng.github.io/spotisub/](https://blastbeng.github.io/spotisub/)**.
+
+New to Spotisub? Start with the four-step guide:
+[Create a Spotify app](https://blastbeng.github.io/spotisub/getting-started/spotify-app/) →
+[Install with Docker](https://blastbeng.github.io/spotisub/getting-started/docker/) →
+[Log in to Spotify](https://blastbeng.github.io/spotisub/getting-started/first-run/) →
+[Import your first playlist](https://blastbeng.github.io/spotisub/getting-started/first-import/).
+
+The site is generated from [`docs/`](docs) by [`.github/workflows/pages.yml`](.github/workflows/pages.yml);
+it replaced the GitHub wiki in 0.3.8.
 
 
 ## Features
 
-* Generate 5 playlist based on your history, top tracks and saved tracks
-* Generate artist reccommendation playlists for every artist in your library
-* Generate artist top tracks playlists for every artist in your library
-* Generate playlists based on your created and followed playlists on Spotify
-* Generate playlist with all your saved tracks on Spotify
+* Import every playlist you created or follow on Spotify, and keep it in sync
+* Generate one playlist with all your Spotify *Liked Songs*
+* Optionally generate an artist top tracks playlist for every artist in your library
 * Optional Spotdl integration, to automate the dowload process of missing tracks from the subsonic database
 * Optional Lidarr integration, used altogether with spotdl to make decision about download a matching song or not
 
@@ -66,7 +76,8 @@ When the two MBIDs doesn't match, a text comparison will **optionally** be execu
 In case of successful compare, the song will be added to the playlist.
 
 ## Word Exclusions
-Spotisub supports word exclusions, via the environment variable EXCLUDED_WORDS as documented in [Environment Variables](https://github.com/blastbeng/spotisub/wiki/Environment-Variables)
+Spotisub supports word exclusions, via the environment variable EXCLUDED_WORDS as documented in
+[Environment variables](https://blastbeng.github.io/spotisub/configuration/environment-variables/)
 
 But the exclusions are only made in case of text comparison.
 
@@ -98,6 +109,26 @@ Official Spotisub communities
 
 * Discord: https://discord.gg/jXQauuhy5w
 * Reddit: https://www.reddit.com/r/spotisub/
+
+## Releases
+
+Container images are built and published only by GitHub Actions; there is no local
+release path.
+
+* `blastbeng/spotisub:dev` follows the `dev` branch.
+* `blastbeng/spotisub:latest` and `blastbeng/spotisub:X.Y.Z` (also `vX.Y.Z`,
+  `X.Y`, `X`) are published by the `release` workflow, multi-arch
+  (`linux/amd64`, `linux/arm64`, `linux/arm/v7`).
+* The version the application reports lives in `spotisub/database.py` (`VERSION`);
+  the history lives in [CHANGELOG.md](CHANGELOG.md). Both are updated by the
+  release workflow, never by hand.
+
+Maintainers release by dispatching the `release` workflow (Actions → release → Run
+workflow) with `dry_run` first, reading the changelog section it prints, and then
+running it for real. Requires the `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN` secrets,
+and `RELEASE_TOKEN` (a token with `contents: write`) only if branch protection
+prevents the built-in `GITHUB_TOKEN` from pushing to `dev`/`latest`. Tag protection
+for `v*` is recommended so a tag can only be created by the workflow.
 
 ## Acknowledgments
 

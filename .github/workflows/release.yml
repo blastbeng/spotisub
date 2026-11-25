@@ -1,0 +1,523 @@
+name: release
+
+# The only entry point for a release. It bumps VERSION/VERSIONS, writes the
+# CHANGELOG section, commits, merges dev into latest, tags, builds the
+# multi-arch image through docker.yml, verifies the published image and creates
+# the GitHub Release. Nothing is built or tagged from a workstation.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Semver bump (ignored when version is set)'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      version:
+        description: 'Explicit version (X.Y.Z or X.Y.Z-rc.N). Overrides bump.'
+        type: string
+        required: false
+        default: ''
+      notes:
+        description: 'Curated changelog body for this release (markdown, without the version header)'
+        type: string
+        required: false
+        default: ''
+      dry_run:
+        description: 'Preflight, print the changelog section, build without pushing. No commit, tag or release.'
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Prerelease: never moves the latest tag'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prev_version: ${{ steps.version.outputs.prev_version }}
+      dry_run: ${{ steps.version.outputs.dry_run }}
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Assert the branch state
+        run: |
+          set -euo pipefail
+          git fetch origin --tags --force
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::working tree is not clean"; exit 1
+          fi
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/dev)" ]; then
+            echo "::error::HEAD is not origin/dev - re-dispatch after the branch settles"; exit 1
+          fi
+          if ! git merge-base --is-ancestor origin/latest origin/dev; then
+            echo "::error::origin/latest is not an ancestor of origin/dev"; exit 1
+          fi
+
+      - name: Resolve and validate the version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+          REQUESTED: ${{ inputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PRERELEASE: ${{ inputs.prerelease }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          prev=$(grep -m1 -oP '^VERSION\s*=\s*"\K[^"]+' spotisub/database.py)
+          next=$(python3 - "$prev" "${BUMP}" "${REQUESTED}" <<'PY'
+          import re, sys
+          prev, bump, requested = sys.argv[1], sys.argv[2], sys.argv[3]
+          semver = re.compile(r'^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$')
+
+          def key(version):
+              major, minor, patch, pre = semver.match(version).groups()
+              return (int(major), int(minor), int(patch), 0 if pre else 1, pre or '')
+
+          if not semver.match(prev):
+              sys.exit(f'VERSION {prev!r} is not valid semver')
+          if requested:
+              new = requested
+          else:
+              major, minor, patch = (int(part) for part in prev.split('-')[0].split('.'))
+              if bump == 'major':
+                  major, minor, patch = major + 1, 0, 0
+              elif bump == 'minor':
+                  minor, patch = minor + 1, 0
+              else:
+                  patch += 1
+              new = f'{major}.{minor}.{patch}'
+          if not semver.match(new):
+              sys.exit(f'version {new!r} is not valid semver')
+          if key(new) <= key(prev):
+              sys.exit(f'version {new} must be greater than the current VERSION {prev}')
+          print(new)
+          PY
+          )
+          if [ "${PRERELEASE}" = "true" ] && [[ "${next}" != *-* ]]; then
+            echo "::error::a prerelease needs an explicit version with a suffix, e.g. ${next}-rc.1"
+            exit 1
+          fi
+
+          tag="v${next}"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "::error::tag ${tag} already exists locally"; exit 1
+          fi
+          if [ -n "$(git ls-remote --tags origin "refs/tags/${tag}")" ]; then
+            echo "::error::tag ${tag} already exists on the remote"; exit 1
+          fi
+          if grep -qF "## [${next}]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md already has a section for ${next}"; exit 1
+          fi
+
+          release_status=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${tag}")
+          if [ "${release_status}" != "404" ]; then
+            echo "::error::a GitHub Release already exists for ${tag} (HTTP ${release_status})"; exit 1
+          fi
+          for docker_tag in "${next}" "${tag}"; do
+            hub_status=$(curl -s -o /dev/null -w '%{http_code}' \
+              "https://hub.docker.com/v2/repositories/blastbeng/spotisub/tags/${docker_tag}")
+            if [ "${hub_status}" != "404" ]; then
+              echo "::error::Docker Hub already has blastbeng/spotisub:${docker_tag} (HTTP ${hub_status})"
+              exit 1
+            fi
+          done
+
+          # The changelog section covers what changed since the last *release*,
+          # which is the newest reachable vX.Y.Z tag -- not necessarily the value
+          # in database.py (it can lag behind the tags, as it did for 0.3.5/0.3.6).
+          last_tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+          prev_release="${prev}"
+          if [ -n "${last_tag}" ] && git rev-parse -q --verify "refs/tags/${last_tag}" >/dev/null; then
+            prev_release="${last_tag#v}"
+          fi
+          if [ "${prev_release}" = "${next}" ]; then
+            echo "::error::${next} is already the last release tag (${last_tag})"; exit 1
+          fi
+
+          {
+            echo "version=${next}"
+            echo "prev_version=${prev_release}"
+            echo "dry_run=${DRY_RUN:-false}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "releasing ${next} (previous release v${prev_release}, database.py VERSION ${prev})" \
+            >> "${GITHUB_STEP_SUMMARY}"
+
+      # The app targets Python 3.10 (see the Dockerfile) and pins libraries that
+      # do not import on a newer interpreter, so the gates run on 3.10 too.
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+
+      - name: Install lint and test tooling
+        run: |
+          set -euo pipefail
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt pylint pytest
+
+      - name: Compile check
+        run: |
+          set -euo pipefail
+          python3 -m py_compile main.py config.py init.py \
+            spotisub/*.py spotisub/helpers/*.py spotisub/threading/*.py
+
+      - name: Pylint
+        run: git ls-files -z '*.py' | xargs -0 python3 -m pylint --fail-under=6
+
+      - name: Pytest
+        run: |
+          set -euo pipefail
+          if [ -f pytest.ini ]; then
+            python3 -m pytest -q
+          else
+            echo "no test suite configured" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Version guard
+        env:
+          PREV_COMMIT: ${{ github.sha }}
+        run: python3 .github/scripts/version_guard.py
+
+  bump:
+    needs: preflight
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.publish.outputs.sha || steps.dryrun.outputs.sha }}
+      tag_sha: ${{ steps.publish.outputs.tag_sha }}
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Render the changelog section
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+          PREV_VERSION: ${{ needs.preflight.outputs.prev_version }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          set -euo pipefail
+          prev_tag="v${PREV_VERSION}"
+          if ! git rev-parse -q --verify "refs/tags/${prev_tag}" >/dev/null; then
+            echo "::error::previous release tag ${prev_tag} not found"; exit 1
+          fi
+          if [ -n "${NOTES}" ]; then
+            printf '%s\n' "${NOTES}" > /tmp/notes.md
+            notes_arg=(--notes /tmp/notes.md)
+          else
+            notes_arg=()
+          fi
+          python3 .github/scripts/changelog_section.py \
+            --prev "${prev_tag}" \
+            --version "${VERSION}" \
+            --date "$(date -u +%F)" \
+            "${notes_arg[@]}" > /tmp/section.md
+          cat /tmp/section.md
+
+      - name: Dry run
+        id: dryrun
+        if: needs.preflight.outputs.dry_run == 'true'
+        run: |
+          set -euo pipefail
+          echo "dry run: no commit, no tag, no push, no release" >> "${GITHUB_STEP_SUMMARY}"
+          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+      - name: Bump VERSION and VERSIONS
+        if: needs.preflight.outputs.dry_run != 'true'
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 - "${VERSION}" <<'PY'
+          import re, pathlib, sys
+          version = sys.argv[1]
+          path = pathlib.Path('spotisub/database.py')
+          source = path.read_text()
+          source, count = re.subn(r'^VERSION\s*=\s*"[^"]+"',
+                                  f'VERSION = "{version}"', source, count=1, flags=re.M)
+          if count != 1:
+              sys.exit('VERSION assignment not found')
+          match = re.search(r'^VERSIONS\s*=\s*\[(.*?)\]', source, re.M | re.S)
+          if not match:
+              sys.exit('VERSIONS assignment not found')
+          existing = re.findall(r'"([^"]+)"', match.group(1))
+          if version not in existing:
+              existing.append(version)
+          rendered = ',\n            '.join(f'"{entry}"' for entry in existing)
+          source = (source[:match.start()]
+                    + f'VERSIONS = [{rendered}]'
+                    + source[match.end():])
+          path.write_text(source)
+          print(f'VERSION = {version}')
+          PY
+          git diff -- spotisub/database.py
+
+      - name: Insert the changelog section
+        if: needs.preflight.outputs.dry_run != 'true'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib, re
+          section = pathlib.Path('/tmp/section.md').read_text().strip('\n')
+          changelog = pathlib.Path('CHANGELOG.md')
+          content = changelog.read_text()
+          anchor = re.search(r'^## \[', content, re.MULTILINE)
+          if not anchor:
+              raise SystemExit('CHANGELOG.md has no version section to insert above')
+          new_version = re.search(r'^## \[([^\]]+)\]', section, re.MULTILINE).group(1)
+          previous = re.search(r'^## \[([^\]]+)\]', content[anchor.start():],
+                               re.MULTILINE).group(1)
+          content = (content[:anchor.start()] + section + '\n\n'
+                     + content[anchor.start():])
+          changelog.write_text(content)
+          print(f'inserted [{new_version}] above [{previous}]')
+          PY
+          git diff -- CHANGELOG.md
+
+      - name: Add the compare link
+        if: needs.preflight.outputs.dry_run != 'true'
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+          PREV_VERSION: ${{ needs.preflight.outputs.prev_version }}
+        run: |
+          set -euo pipefail
+          python3 - "${VERSION}" "${PREV_VERSION}" "${GITHUB_REPOSITORY}" <<'PY'
+          import pathlib, re, sys
+          version, prev, repo = sys.argv[1:4]
+          path = pathlib.Path('CHANGELOG.md')
+          content = path.read_text()
+          if re.search(rf'^\[{re.escape(version)}\]:', content, re.MULTILINE):
+              print(f'compare link for {version} already present')
+              raise SystemExit(0)
+          link = f'[{version}]: https://github.com/{repo}/compare/v{prev}...v{version}'
+          anchor = re.search(r'^\[[^\]]+\]:', content, re.MULTILINE)
+          if anchor:
+              content = content[:anchor.start()] + link + '\n' + content[anchor.start():]
+          else:  # pragma: no cover - defensive
+              content = content.rstrip('\n') + '\n' + link + '\n'
+          path.write_text(content)
+          print(f'linked {version} against v{prev}')
+          PY
+          git diff -- CHANGELOG.md
+
+      - name: Commit, merge and tag
+        id: publish
+        if: needs.preflight.outputs.dry_run != 'true'
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add spotisub/database.py CHANGELOG.md
+          git commit -m "chore(release): v${VERSION}"
+          sha=$(git rev-parse HEAD)
+          git push origin HEAD:dev
+          git checkout -B latest origin/latest
+          git merge --no-ff dev -m "Merge dev into latest for v${VERSION}"
+          git push origin latest
+          git tag -a "v${VERSION}" -m "v${VERSION}"
+          git push origin "v${VERSION}"
+          {
+            echo "sha=${sha}"
+            echo "tag_sha=$(git rev-parse "v${VERSION}")"
+          } >> "${GITHUB_OUTPUT}"
+          echo "tagged v${VERSION} at $(git rev-parse --short HEAD)" >> "${GITHUB_STEP_SUMMARY}"
+
+  build:
+    needs:
+      - preflight
+      - bump
+    uses: ./.github/workflows/docker.yml
+    with:
+      version: ${{ needs.preflight.outputs.version }}
+      prerelease: ${{ inputs.prerelease }}
+      push: ${{ needs.preflight.outputs.dry_run != 'true' }}
+      ref: ${{ needs.bump.outputs.sha }}
+    secrets: inherit
+
+  verify:
+    needs:
+      - preflight
+      - bump
+      - build
+    if: needs.preflight.outputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect the published tags
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+          expected="linux/amd64 linux/arm/v7 linux/arm64"
+          refs=("v${VERSION}" "${VERSION}")
+          if [ "${PRERELEASE}" != "true" ]; then refs+=("latest"); fi
+          index_digest=""
+          {
+            echo "## Published image verification"
+            echo ""
+            echo "| tag | index digest | platforms | attestations |"
+            echo "| --- | --- | --- | --- |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          for ref in "${refs[@]}"; do
+            manifest=$(docker buildx imagetools inspect "blastbeng/spotisub:${ref}" \
+              --format '{{json .Manifest}}')
+            info=$(printf '%s' "${manifest}" | python3 -c "
+          import json, sys
+          manifest = json.load(sys.stdin)
+          real, unknown = set(), 0
+          for entry in manifest.get('manifests', []):
+              platform = entry.get('platform', {})
+              if platform.get('os') == 'unknown' or platform.get('architecture') == 'unknown':
+                  unknown += 1
+                  continue
+              name = platform['os'] + '/' + platform['architecture']
+              if platform.get('variant'):
+                  name += '/' + platform['variant']
+              real.add(name)
+          print(manifest.get('digest', ''))
+          print(' '.join(sorted(real)))
+          print(unknown)
+          ")
+            digest=$(printf '%s\n' "${info}" | sed -n '1p')
+            platforms=$(printf '%s\n' "${info}" | sed -n '2p')
+            unknown=$(printf '%s\n' "${info}" | sed -n '3p')
+            if [ "${unknown}" = "0" ]; then
+              attestations="none"
+            else
+              attestations="${unknown} attestation manifest(s)"
+            fi
+            echo "| \`${ref}\` | \`${digest}\` | \`${platforms}\` | ${attestations} |" >> "${GITHUB_STEP_SUMMARY}"
+            missing=""
+            for platform in ${expected}; do
+              case " ${platforms} " in
+                *" ${platform} "*) ;;
+                *) missing="${missing} ${platform}" ;;
+              esac
+            done
+            if [ -n "${missing}" ]; then
+              echo "::error::${ref} is missing platforms:${missing} (has ${platforms})"; exit 1
+            fi
+            if [ -z "${index_digest}" ]; then
+              index_digest="${digest}"
+            elif [ "${digest}" != "${index_digest}" ]; then
+              echo "::error::${ref} index digest ${digest} differs from ${index_digest}"; exit 1
+            fi
+          done
+          {
+            echo ""
+            echo "All published tags point at index \`${index_digest}\` with"
+            echo "\`linux/amd64\`, \`linux/arm64\` and \`linux/arm/v7\`."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Check the version inside the image
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+        run: |
+          set -euo pipefail
+          # importing the app requires placeholder Spotify/Subsonic settings;
+          # nothing below talks to those services.
+          # SPOTDL/LIDARR clients are built lazily, so these only warm them up.
+          actual=$(docker run --rm --platform linux/amd64 \
+            -e SPOTIPY_CLIENT_ID=release-check \
+            -e SPOTIPY_CLIENT_SECRET=release-check \
+            -e SPOTIPY_REDIRECT_URI=http://127.0.0.1:5183/callback \
+            -e SUBSONIC_API_HOST=http://subsonic.invalid \
+            -e SUBSONIC_API_USER=release-check \
+            -e SUBSONIC_API_PASS=release-check \
+            -e SUBSONIC_API_PORT=4040 \
+            -e SPOTDL_ENABLED=1 \
+            -e LIDARR_ENABLED=1 \
+            -e SCHEDULER_ENABLED=0 \
+            --entrypoint sh "blastbeng/spotisub:${VERSION}" \
+            -c "mkdir -p cache && python -c 'from spotisub.database import VERSION; print(\"VERSION_CHECK=\" + VERSION)'" \
+            | grep -oP 'VERSION_CHECK=\K.*')
+          echo "- in-image VERSION: \`${actual}\`" >> "${GITHUB_STEP_SUMMARY}"
+          if [ "${actual}" != "${VERSION}" ]; then
+            echo "::error::image reports '${actual}', expected ${VERSION}"; exit 1
+          fi
+
+  publish:
+    needs:
+      - preflight
+      - bump
+      - verify
+    if: needs.preflight.outputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the release commit
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 1
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Build the release notes
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+          TAG_SHA: ${{ needs.bump.outputs.tag_sha }}
+        run: |
+          set -euo pipefail
+          python3 - "${VERSION}" "${TAG_SHA}" <<'PY' > /tmp/release-notes.md
+          import re, pathlib, sys
+          version, tag_sha = sys.argv[1], sys.argv[2]
+          text = pathlib.Path('CHANGELOG.md').read_text()
+          match = re.search(rf'^## \[{re.escape(version)}\].*?(?=^## \[|\Z)',
+                            text, re.MULTILINE | re.DOTALL)
+          if not match:
+              sys.exit(f'no changelog section for {version}')
+          body = re.sub(r'^## \[[^\]]+\][^\n]*\n+', '', match.group(0)).strip()
+          footer = [
+              '---',
+              '',
+              '### Container images',
+              '',
+              f'- `blastbeng/spotisub:{version}`',
+              f'- `blastbeng/spotisub:v{version}`',
+              '- `blastbeng/spotisub:latest` (stable releases only)',
+              '- platforms: `linux/amd64`, `linux/arm64`, `linux/arm/v7`',
+              f'- tag object: `{tag_sha}`',
+              '',
+              'See [CHANGELOG.md](CHANGELOG.md) for the full history.',
+          ]
+          print(body)
+          print()
+          print('\n'.join(footer))
+          PY
+          cat /tmp/release-notes.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.preflight.outputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+          args=(--verify-tag --title "v${VERSION}" --notes-file /tmp/release-notes.md)
+          if [ "${PRERELEASE}" = "true" ]; then args+=(--prerelease); fi
+          gh release create "v${VERSION}" "${args[@]}" --repo "${GITHUB_REPOSITORY}"

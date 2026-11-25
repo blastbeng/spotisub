@@ -1,0 +1,36 @@
+name: version guard
+
+# Keeps VERSION, VERSIONS, CHANGELOG.md and the release tags from drifting:
+# a version may only move together with its chore(release) commit and its
+# changelog section.
+
+on:
+  push:
+    branches:
+      - 'dev'
+      - 'latest'
+  pull_request:
+    branches:
+      - 'dev'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: version-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check VERSION, VERSIONS, CHANGELOG and tags agree
+        env:
+          PREV_COMMIT: ${{ github.event_name == 'push' && github.event.before || '' }}
+          BASE_REF: ${{ github.base_ref }}
+        run: python3 .github/scripts/version_guard.py
