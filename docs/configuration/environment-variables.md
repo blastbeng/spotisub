@@ -9,13 +9,16 @@ Defaults shown are the ones compiled into the application
 |---|---|---|---|
 | `SPOTIPY_CLIENT_ID` | *(empty)* | **yes** | From <https://developer.spotify.com/dashboard> |
 | `SPOTIPY_CLIENT_SECRET` | *(empty)* | **yes** | From the same page. Keep it private. |
-| `SPOTIPY_REDIRECT_URI` | `http://127.0.0.1:8080/` *(code default)* | **yes** | Use `http://127.0.0.1:5183/callback` for the Docker default; must match the Spotify app exactly |
+| `SPOTIPY_REDIRECT_URI` | `http://127.0.0.1:5183/callback` | no | Must match the Redirect URI of the Spotify app **character for character**. Change it only if you publish Spotisub on another host, port or path. |
 
-!!! warning "The code default is not the right value for the container"
+!!! warning "The URI must end in /callback"
 
-    The built-in fallback predates the `/callback` route. Always set
-    `SPOTIPY_REDIRECT_URI` explicitly — `.env.sample` ships
-    `http://127.0.0.1:5183/callback`, which is correct for a default install.
+    Spotisub only answers the Spotify callback on `/callback`. If
+    `SPOTIPY_REDIRECT_URI` points anywhere else, Spotify sends the browser to a page
+    that does not exist and the login silently fails; Spotisub logs a warning with the
+    URL to whitelist when it starts. The scheme, host and port in the variable must be
+    exactly what the browser types to reach Spotisub — never the container-internal
+    name.
 
 ## Subsonic server
 
