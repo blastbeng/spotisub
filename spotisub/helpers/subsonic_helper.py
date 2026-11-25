@@ -13,10 +13,22 @@ from spotipy.exceptions import SpotifyException
 from spotisub import database
 from spotisub import constants
 from spotisub import utils
-from spotisub.helpers import spotdl_helper
 from spotisub.exceptions import SubsonicDataException, SubsonicOfflineException
 from spotisub.classes import ComparisonHelper, SubsonicCache
 from spotisub.helpers import musicbrainz_helper
+
+# spotdl_helper is imported lazily: building its Spotdl client runs yt-dlp setup,
+# which can fail (deprecated interpreter, missing providers) and must not keep the
+# application from starting when no download is requested.
+spotdl_helper = None
+
+
+def _init_spotdl_helper():
+    """Import spotdl_helper on first use."""
+    global spotdl_helper  # pylint: disable=global-statement
+    if spotdl_helper is None:
+        from spotisub.helpers import spotdl_helper as module  # pylint: disable=import-outside-toplevel
+        spotdl_helper = module
 
 cache_executor = ThreadPoolExecutor(max_workers=1)
 spotdl_executor = ThreadPoolExecutor(max_workers=1)
@@ -53,6 +65,12 @@ pysonic = libsonic.Connection(
     insecure=os.environ.get(
         constants.SUBSONIC_API_VERIFY_SSL,
         constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "0")
+
+
+def download_track(url):
+    """Download a track using spotdl, initializing the helper on first use."""
+    _init_spotdl_helper()
+    spotdl_helper.download_track(url)
 
 
 def load_subsonic_cache_from_file() -> SubsonicCache:
@@ -425,7 +443,7 @@ def write_playlist(sp, playlist_info, results):
                                         'navidrome rescans your music dir',
                                         str(threading.current_thread().ident))
                                     spotdl_executor.submit(
-                                        spotdl_helper.download_track, track["external_urls"]["spotify"])
+                                        download_track, track["external_urls"]["spotify"])
                                 else:
                                     logging.warning(
                                         '(%s) Track %s - %s not found in your music library',
@@ -988,7 +1006,7 @@ def download_song(spotipy_helper, uri):
     if "external_urls" in track and track["external_urls"] is not None and "spotify" in track[
             "external_urls"] and track["external_urls"]["spotify"] is not None:
         spotdl_executor.submit(
-            spotdl_helper.download_track,
+            download_track,
             track["external_urls"]["spotify"])
         return True
     else:

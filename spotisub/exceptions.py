@@ -15,3 +15,7 @@ class SubsonicOfflineException(Exception):
 
 class SubsonicDataException(Exception):
     "Error retrieving data from Subsonic"
+
+
+class SpotdlException(Exception):
+    "Error downloading a track with spotdl"
