@@ -19,7 +19,7 @@ HEADER_RE = re.compile(r'^## \[([^\]]+)\]\s+-\s+(\d{4}-\d{2}-\d{2})$', re.MULTIL
 LINK_RE = re.compile(r'^\[([^\]]+)\]:\s+(\S+)$', re.MULTILINE)
 SEMVER_RE = re.compile(
     r'^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)'
-    r'(?:-(?P<pre>[0-9A-Za-z.-]+))?$'))
+    r'(?:-(?P<pre>[0-9A-Za-z.-]+))?$')
 
 errors = []
 
