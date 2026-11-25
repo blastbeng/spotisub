@@ -297,10 +297,23 @@ jobs:
           PREV_VERSION: ${{ needs.preflight.outputs.prev_version }}
         run: |
           set -euo pipefail
-          link="[${VERSION}]: https://github.com/${GITHUB_REPOSITORY}/compare/v${PREV_VERSION}...v${VERSION}"
-          if ! grep -qF "[${VERSION}]:" CHANGELOG.md; then
-            printf '%s\n' "${link}" >> CHANGELOG.md
-          fi
+          python3 - "${VERSION}" "${PREV_VERSION}" "${GITHUB_REPOSITORY}" <<'PY'
+          import pathlib, re, sys
+          version, prev, repo = sys.argv[1:4]
+          path = pathlib.Path('CHANGELOG.md')
+          content = path.read_text()
+          if re.search(rf'^\[{re.escape(version)}\]:', content, re.MULTILINE):
+              print(f'compare link for {version} already present')
+              raise SystemExit(0)
+          link = f'[{version}]: https://github.com/{repo}/compare/v{prev}...v{version}'
+          anchor = re.search(r'^\[[^\]]+\]:', content, re.MULTILINE)
+          if anchor:
+              content = content[:anchor.start()] + link + '\n' + content[anchor.start():]
+          else:  # pragma: no cover - defensive
+              content = content.rstrip('\n') + '\n' + link + '\n'
+          path.write_text(content)
+          print(f'linked {version} against v{prev}')
+          PY
           git diff -- CHANGELOG.md
 
       - name: Commit, merge and tag
