@@ -23,7 +23,7 @@ from sqlalchemy import distinct
 from sqlalchemy import collate
 
 VERSION = "0.3.4"
-VERSIONS = ["0.3.0-alpha-01", "0.3.1", "0.3.3", "0.3.4"]
+VERSIONS = ["0.3.0-alpha-01", "0.3.1", "0.3.3", "0.3.4", "0.3.5", "0.3.6"]
 
 SQLITE = 'sqlite'
 USER = 'user'
