@@ -7,7 +7,7 @@ body:
       value: |
         **NOTE:** Before you start, the following should be completed.
 
-        - Read [documentation](https://github.com/blastbeng/spotisub/wiki) to ensure the correct setup.
+        - Read the [documentation](https://blastbeng.github.io/spotisub/) to ensure the correct setup.
         - Make sure no [similar issues(including closed ones)](https://github.com/blastbeng/spotisub/issues?q=is%3Aissue+is%3Aopen+label%3Abug) exists.
         - Make sure the request is based on the latest code in the `main` branch.
 

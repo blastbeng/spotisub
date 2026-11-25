@@ -1,0 +1,146 @@
+# Documentation site for Spotisub.
+# Built by .github/workflows/pages.yml and published to GitHub Pages.
+site_name: Spotisub
+site_url: https://blastbeng.github.io/spotisub/
+site_description: >-
+  Spotisub imports your Spotify playlists into any Subsonic-compatible music
+  server (Navidrome, Airsonic, Gonic, ...) and keeps them in sync.
+site_author: The Spotisub contributors
+copyright: Spotisub is free software released under the MIT license.
+
+repo_url: https://github.com/blastbeng/spotisub
+repo_name: blastbeng/spotisub
+edit_uri: edit/dev/docs/
+
+theme:
+  name: material
+  language: en
+  logo: assets/img/logo.svg
+  favicon: assets/img/favicon.png
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: green
+      accent: light green
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: green
+      accent: light green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.tracking
+    - navigation.top
+    - navigation.indexes
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Start here:
+      - getting-started/index.md
+      - "1. Create a Spotify app": getting-started/spotify-app.md
+      - "2. Install with Docker": getting-started/docker.md
+      - "3. Log in to Spotify": getting-started/first-run.md
+      - "4. Import your first playlist": getting-started/first-import.md
+      - Install with the script: getting-started/install-script.md
+      - Manual Docker install: getting-started/manual-docker.md
+      - Build from source: getting-started/from-source.md
+      - Run without Docker: getting-started/no-docker.md
+  - User guide:
+      - guide/index.md
+      - The dashboard: guide/dashboard.md
+      - Playlists overview: guide/playlists.md
+      - Playlist detail: guide/playlist-detail.md
+      - Missing tracks: guide/missing-tracks.md
+      - Ignoring songs, albums and artists: guide/ignoring.md
+      - Rescan and reimport: guide/rescan.md
+      - Jobs and logs: guide/jobs-and-logs.md
+      - How matching works: guide/matching.md
+      - Data, cache and backups: guide/data-and-cache.md
+  - Configuration:
+      - configuration/index.md
+      - Environment variables: configuration/environment-variables.md
+      - Scheduler: configuration/scheduler.md
+      - Reverse proxy: configuration/reverse-proxy.md
+      - Login and security: configuration/security.md
+      - Upgrading: configuration/upgrading.md
+  - Integrations:
+      - integrations/index.md
+      - Navidrome: integrations/navidrome.md
+      - spotdl (automatic downloads): integrations/spotdl.md
+      - Lidarr: integrations/lidarr.md
+  - API:
+      - api/index.md
+      - REST API reference: api/endpoints.md
+  - Help:
+      - help/index.md
+      - Troubleshooting: help/troubleshooting.md
+      - FAQ: help/faq.md
+      - Get help: help/community.md
+  - Contributing: contributing.md
+  - Release history: release-history.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path:
+        - .
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/blastbeng/spotisub
+      name: GitHub repository
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/blastbeng/spotisub/tags
+      name: Docker Hub
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/jXQauuhy5w
+      name: Discord
+    - icon: fontawesome/brands/reddit
+      link: https://www.reddit.com/r/spotisub/
+      name: Reddit
+
+validation:
+  links:
+    absolute_links: ignore
+    unrecognized_links: ignore

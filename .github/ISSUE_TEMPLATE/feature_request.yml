@@ -7,7 +7,7 @@ body:
       value: |
         **NOTE:** Before you start, the following should be completed.
 
-        - Read [documentation](https://github.com/blastbeng/spotisub/wiki) to understand the current feature set.
+        - Read the [documentation](https://blastbeng.github.io/spotisub/) to understand the current feature set.
         - Make sure no [similar feature requests(including closed ones)](https://github.com/blastbeng/spotisub/issues?q=is%3Aissue+is%3Aopen+label%3Afeature) exists.
         - Make sure the request is based on the latest code in the `master` branch.
 
