@@ -8,6 +8,72 @@ Sections up to `0.3.6` were backfilled from the existing git tags and GitHub
 Releases when automated releases were introduced; they are not itemised
 commit-by-commit.
 
+## [0.3.8] - 2026-11-25
+
+### Added
+- A documentation site at <https://blastbeng.github.io/spotisub/>: a four-step
+  quickstart, per-page guides for the dashboard, playlists, missing tracks and
+  ignoring, the full environment-variable reference, scheduler semantics,
+  reverse-proxy recipes, Navidrome / spotdl / Lidarr integrations, the REST API and a
+  troubleshooting page built from the recurring issue reports. It replaces the GitHub
+  wiki, which is retired. The content is versioned with the code in `docs/` and is
+  published by the new `pages` workflow.
+- A `release` workflow is now the only release path: it preflights the branch, bumps
+  `VERSION`, appends to `VERSIONS`, writes the `CHANGELOG.md` section, merges `dev`
+  into `latest`, tags, builds the multi-arch image through `docker.yml`, verifies the
+  published platforms and digests, and creates the GitHub Release.
+- A `version-guard` workflow fails a push when `VERSION`, the `vX.Y.Z` tag and
+  `CHANGELOG.md` disagree.
+- `SUBSONIC_API_PORT` may be left empty; the port is inferred from the scheme of
+  `SUBSONIC_API_HOST` (443 for https, 80 for http) (#104).
+- A Logout button in the sidebar; stale cookies can no longer bounce a browser between
+  `/overview/` and `/login` (#104, #103).
+
+### Changed
+- The image is based on `python:3.10-slim-bookworm` instead of the end-of-life bullseye
+  base (#102).
+- Every container image is built by CI with an explicit tag list and a tag-to-`VERSION`
+  assertion, so a build cannot publish tags the git ref does not describe.
+- `VERSIONS` history repaired to the versions that were actually released (`0.3.4` was
+  the last entry although `0.3.5` and `0.3.6` had been published).
+- `.env.sample` rewritten from `constants.py`: the recommendation interval was
+  misspelled and therefore ignored, and the artist top-tracks, text-comparison,
+  playlist-prefix, spotdl and Lidarr keys were missing from it.
+
+### Removed
+- `create_tag.sh` and `docker-compose.tag.yml`, the local single-arch release scripts
+  that produced the `vv0.3.6` image and the untagged `v0.3.7` image on Docker Hub.
+
+### Fixed
+- Playlist import against `GET /v1/playlists/{id}/items`, where Spotify renamed the
+  `track` field to `item` and `fields=items.track.*` started returning nothing (#100,
+  #106).
+- One inaccessible playlist no longer aborts the whole reimport: a 403 on a single
+  playlist is logged and skipped (#106).
+- MusicBrainz ISRC lookups retry on transient network errors with a backoff instead of
+  marking the track permanently unmatched (#99, #108).
+- **Check Subsonic** reports the real error — wrong password, wrong path, TLS — instead
+  of a generic failure, because the check uses `getMusicFolders()` where `ping()`
+  swallowed every exception (#98, #104).
+- The `/api/v1/import/*` endpoints and `/api/v1/generate/artist_top_tracks` raised
+  `NameError` on every call because `routes.py` used the scheduler without importing
+  it.
+- The installer no longer writes a redirect URI for a port Spotisub does not publish,
+  health-checks `/api/v1/utils/healthcheck`, and leaves the container running after the
+  Spotify authorisation instead of stopping it.
+- The spotdl and Lidarr clients are created on first use, so a boot with
+  `SPOTDL_ENABLED=0` cannot fail while importing them.
+
+### Upgrade notes
+- The first automated release is `0.3.8`. The Docker Hub tags `v0.3.7` (no git tag, no
+  GitHub Release) and `vv0.3.6` (a typo from the retired script) are artefacts of the
+  old local release path. They are left in place but are **not** supported; do not use
+  them.
+- Sessions are signed with a key persisted in `cache/secret_key`. `SECRET_KEY` in the
+  environment takes precedence; clearing `cache/` logs users out once.
+- The two recommendation endpoints remain declared but their jobs are not registered:
+  Spotify removed `/v1/recommendations` in December 2024.
+
 ## [0.3.6] - 2025-12-15
 
 ### Added
@@ -84,6 +150,7 @@ commit-by-commit.
 ### Changed
 - REST endpoints drive the scheduler jobs instead of running work inline.
 
+[0.3.8]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.8
 [0.3.6]: https://github.com/blastbeng/spotisub/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/blastbeng/spotisub/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/blastbeng/spotisub/compare/v0.3.3...v0.3.4
