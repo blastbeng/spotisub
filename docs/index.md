@@ -138,3 +138,17 @@ folder next to the container.
     Everything that used to live in the GitHub wiki is here, rewritten and extended.
     The [release history](release-history.md) is generated from `CHANGELOG.md` in the
     repository.
+
+---
+
+## Buy me a coffee
+
+Spotisub is a spare-time project: no ads, no telemetry, no paid tier. If it earned a
+place in your setup, a one-off tip pays for the time behind the next fix.
+
+[![Donate with PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=W8JMMLVY3G62C)
+[![Sponsor on GitHub](https://img.shields.io/badge/GitHub-Sponsor-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/blastbeng)
+
+GitHub also shows its built-in **Sponsor** button on the repository, configured in
+[`.github/FUNDING.yml`](https://github.com/blastbeng/spotisub/blob/dev/.github/FUNDING.yml),
+with the same two options.

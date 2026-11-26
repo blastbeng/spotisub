@@ -139,6 +139,9 @@ extra:
     - icon: fontawesome/brands/reddit
       link: https://www.reddit.com/r/spotisub/
       name: Reddit
+    - icon: fontawesome/brands/paypal
+      link: https://www.paypal.com/donate/?hosted_button_id=W8JMMLVY3G62C
+      name: Buy me a coffee (PayPal)
 
 validation:
   links:

@@ -1,6 +1,7 @@
 """Subsonic helper"""
 import logging
 import os
+import re
 import time
 import pickle
 import threading
@@ -514,10 +515,61 @@ def get_subsonic_track_via_mbid(
     return matched_track
 
 
+def build_text_search_query(title):
+    """Turn a Spotify title into a Subsonic search query.
+
+    Spotify titles carry a suffix after the first "(", "-" or "feat" token
+    ("Silver Springs - 2004 Remaster"), which rarely appears in the local
+    tags, so only the part before that token is searched.
+    """
+    query = (title or '').lower()
+    for token in constants.SPLIT_TOKENS:
+        query = query.split(token, 1)[0]
+    return re.sub(r'[^\w\s]', ' ', query).strip()
+
+
+def search_subsonic_tracks_by_text(comparison_helper):
+    """Ask the Subsonic server for songs whose title matches the Spotify title.
+
+    The MBID cache only holds songs that carry a musicBrainzId tag, so a
+    library that was scanned without those tags (Navidrome only reads them
+    from the files) can never be matched from it. Searching the server
+    instead makes text comparison work on untagged libraries (issue #107).
+    """
+    query = build_text_search_query(comparison_helper.track["name"])
+    if query == '':
+        return []
+
+    try:
+        subsonic_search = check_pysonic_connection().search2(
+            query, songCount=100, artistCount=0, albumCount=0)
+    except SubsonicOfflineException:
+        raise
+    except Exception:  # pylint: disable=broad-except
+        utils.write_exception()
+        return []
+
+    if "searchResult2" not in subsonic_search or "song" not in subsonic_search["searchResult2"]:
+        return []
+
+    logging.info(
+        '(%s) Searching "%s" on the Subsonic server for %s - %s',
+        str(threading.current_thread().ident),
+        query,
+        comparison_helper.artist_spotify["name"],
+        comparison_helper.track["name"])
+
+    return [song for song in subsonic_search["searchResult2"]["song"]
+            if utils.compare_track_metadata(comparison_helper, song)]
+
+
 def get_subsonic_track_via_string_compare(
         comparison_helper, subsonic_tracks_dict: dict[str, dict]) -> dict | None:
     matched_tracks = [s_t for s_t in subsonic_tracks_dict.values(
     ) if utils.compare_track_metadata(comparison_helper, s_t)]
+
+    if len(matched_tracks) == 0:
+        matched_tracks = search_subsonic_tracks_by_text(comparison_helper)
 
     if len(matched_tracks) == 0:
         logging.debug(
@@ -530,9 +582,9 @@ def get_subsonic_track_via_string_compare(
 
     if (
         utils.compare_string_to_exclusion(
-            matched_track["title"],
+            matched_track.get("title", ''),
             utils.get_excluded_words_array()) or utils.compare_string_to_exclusion(
-            matched_track["album"],
+            matched_track.get("album", ''),
             utils.get_excluded_words_array())):
         comparison_helper.excluded = True
         # NOTE: do we need to handle removing the excluded song if it was
