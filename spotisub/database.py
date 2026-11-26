@@ -1,6 +1,7 @@
 """Spotisub database"""
 import uuid
 import string
+import re
 import logging
 import threading
 from config import Config
@@ -1301,10 +1302,38 @@ def select_spotify_song_artists_relation_by_song_uuid(
     return records
 
 
+ORDER_COLUMN_PATTERN = re.compile(r'^([a-z][a-z0-9_]*)\.([a-z][a-z0-9_]*)$')
+
+
+def resolve_order_column(order):
+    """Return order when it names a real column, otherwise None.
+
+    The sort column arrives from the URL and is interpolated into a raw SQL
+    fragment, so accepting an arbitrary value means accepting arbitrary SQL.
+    Only "table.column" pairs that exist in the schema are allowed through.
+    """
+    if not order:
+        return None
+    match = ORDER_COLUMN_PATTERN.match(order)
+    if match is None:
+        logging.warning(
+            '(%s) Ignoring invalid sort column: %r',
+            str(threading.current_thread().ident), order)
+        return None
+    table_name, column_name = match.groups()
+    table = dbms.metadata.tables.get(table_name)
+    if table is None or column_name not in table.columns:
+        logging.warning(
+            '(%s) Ignoring unknown sort column: %r',
+            str(threading.current_thread().ident), order)
+        return None
+    return order
+
+
 def limit_and_order_stmt(stmt, page=None, limit=None, order=None, asc=None):
     if page is not None and limit is not None:
         stmt = stmt.limit(limit).offset(page * limit)
-    order_by = []
+    order = resolve_order_column(order)
     if order is not None:
         order = "case when " + order + " is null then 1 else 0 end, " + order
         if asc:
