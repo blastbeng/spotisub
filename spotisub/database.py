@@ -23,7 +23,7 @@ from sqlalchemy import or_
 from sqlalchemy import distinct
 from sqlalchemy import collate
 
-VERSION = "0.3.12"
+VERSION = "0.3.13"
 VERSIONS = ["0.3.0-alpha-01",
             "0.3.1",
             "0.3.3",
@@ -34,7 +34,8 @@ VERSIONS = ["0.3.0-alpha-01",
             "0.3.9",
             "0.3.10",
             "0.3.11",
-            "0.3.12"]
+            "0.3.12",
+            "0.3.13"]
 
 SQLITE = 'sqlite'
 USER = 'user'

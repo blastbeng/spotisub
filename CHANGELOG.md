@@ -8,6 +8,12 @@ Sections up to `0.3.6` were backfilled from the existing git tags and GitHub
 Releases when automated releases were introduced; they are not itemised
 commit-by-commit.
 
+## [0.3.13] - 2026-11-26
+
+### Security
+- The list pages no longer run SQL taken from the URL. `/overview/`, `/playlist/`, `/playlists/`, `/song/`, `/album/` and `/artist/` read the sort column from a path segment and pasted it into a raw `ORDER BY`, so a crafted URL was a working blind SQL injection for anyone who could open the page. A column is now used only when it names a real `table.column` in the schema; anything else is logged and ignored.
+- A malformed or outdated sort link now shows the list unsorted instead of the error page. All the sort columns the toolbar offers keep working unchanged.
+
 ## [0.3.12] - 2026-11-26
 
 ### Changed
@@ -237,6 +243,7 @@ commit-by-commit.
 ### Changed
 - REST endpoints drive the scheduler jobs instead of running work inline.
 
+[0.3.13]: https://github.com/blastbeng/spotisub/compare/v0.3.12...v0.3.13
 [0.3.12]: https://github.com/blastbeng/spotisub/compare/v0.3.11...v0.3.12
 [0.3.11]: https://github.com/blastbeng/spotisub/compare/v0.3.10...v0.3.11
 [0.3.10]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.10
