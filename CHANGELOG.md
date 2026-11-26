@@ -8,6 +8,16 @@ Sections up to `0.3.6` were backfilled from the existing git tags and GitHub
 Releases when automated releases were introduced; they are not itemised
 commit-by-commit.
 
+## [0.3.12] - 2026-11-26
+
+### Changed
+- The **Check Subsonic** alert now tells an authentication failure apart from an unreachable server.
+
+### Fixed
+- Subsonic authentication failures report the server's own reason (`Wrong username or password`, error code 40), the URL and the user, instead of showing *Subsonic Server Offline* with an empty message. A rejected login is no longer retried, so Spotisub stops feeding the server's failed-login limiter (#98).
+- Servers older than Subsonic API 1.13 work again: when the server rejects the salted token authentication, Spotisub falls back once to password authentication and keeps that connection for the run (#98).
+- Troubleshooting docs explain the fallback and the `.env` password pitfalls (`#`, `$`, trailing spaces).
+
 ## [0.3.11] - 2026-11-26
 
 ### Added
@@ -227,6 +237,7 @@ commit-by-commit.
 ### Changed
 - REST endpoints drive the scheduler jobs instead of running work inline.
 
+[0.3.12]: https://github.com/blastbeng/spotisub/compare/v0.3.11...v0.3.12
 [0.3.11]: https://github.com/blastbeng/spotisub/compare/v0.3.10...v0.3.11
 [0.3.10]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.10
 [0.3.9]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.9
