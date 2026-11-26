@@ -75,8 +75,8 @@ def compare_track_metadata(comparison_helper, subsonic_track):
 
 def compare_string_to_exclusion(a, stringb):
     """compare string to exclusion"""
+    words_no_punctuation = []
     if a is not None and a.strip() != '':
-        words_no_punctuation = []
         for word in a.split():
             words_no_punctuation.append(
                 re.sub(r'[^\w\s]', '', word).strip().lower())
