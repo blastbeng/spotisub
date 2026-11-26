@@ -9,12 +9,13 @@ import libsonic
 import string
 from concurrent.futures import ThreadPoolExecutor
 from expiringdict import ExpiringDict
-from libsonic.errors import DataNotFoundError
+from libsonic.errors import CredentialError, DataNotFoundError
 from spotipy.exceptions import SpotifyException
 from spotisub import database
 from spotisub import constants
 from spotisub import utils
-from spotisub.exceptions import SubsonicDataException, SubsonicOfflineException
+from spotisub.exceptions import (SubsonicAuthException, SubsonicDataException,
+                                 SubsonicOfflineException)
 from spotisub.classes import ComparisonHelper, SubsonicCache
 from spotisub.helpers import musicbrainz_helper
 
@@ -50,22 +51,33 @@ if os.environ.get(constants.LIDARR_ENABLED,
         "if an artist won't be found inside the " +
         "lidarr database, the download process will be skipped.")
 
-pysonic = libsonic.Connection(
-    os.environ.get(
-        constants.SUBSONIC_API_HOST),
-    os.environ.get(
-        constants.SUBSONIC_API_USER),
-    os.environ.get(
-        constants.SUBSONIC_API_PASS),
-    appName="Spotisub",
-    serverPath=os.environ.get(
-        constants.SUBSONIC_API_BASE_URL,
-        constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) +
-    "/rest",
-    port=constants.get_subsonic_port(),
-    insecure=os.environ.get(
-        constants.SUBSONIC_API_VERIFY_SSL,
-        constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "0")
+def _build_pysonic(legacy_auth=False):
+    """Build the libsonic connection from the environment.
+
+    `legacy_auth` switches libsonic to the pre-1.13 password authentication
+    (`p` parameter) instead of the default salted token authentication.
+    """
+    return libsonic.Connection(
+        os.environ.get(
+            constants.SUBSONIC_API_HOST),
+        os.environ.get(
+            constants.SUBSONIC_API_USER),
+        os.environ.get(
+            constants.SUBSONIC_API_PASS),
+        appName="Spotisub",
+        serverPath=os.environ.get(
+            constants.SUBSONIC_API_BASE_URL,
+            constants.SUBSONIC_API_BASE_URL_DEFAULT_VALUE) +
+        "/rest",
+        port=constants.get_subsonic_port(),
+        insecure=os.environ.get(
+            constants.SUBSONIC_API_VERIFY_SSL,
+            constants.SUBSONIC_API_VERIFY_SSL_DEFAULT_VALUE) == "0",
+        legacyAuth=legacy_auth)
+
+
+pysonic = _build_pysonic()
+_auth_fallback_checked = False
 
 
 def download_track(url):
@@ -232,6 +244,57 @@ def check_and_get_subsonic_cache():
     return build_subsonic_cache()
 
 
+def _subsonic_auth_error_message(error):
+    """Return an actionable, password-free message for a rejected login."""
+    return (
+        'Subsonic authentication failed: %s (error code 40).\n'
+        'Target: %s, user: %s.\n'
+        'The server is reachable but rejected the credentials, with both '
+        'token and password authentication. Check SUBSONIC_API_USER and '
+        'SUBSONIC_API_PASS; a "#", "$" or trailing space in a .env password '
+        'is a common cause.' % (
+            str(error),
+            constants.get_subsonic_rest_url(),
+            os.environ.get(constants.SUBSONIC_API_USER, '')))
+
+
+def _retry_with_password_auth(error):
+    """Fall back to password authentication once, then give up.
+
+    Servers older than Subsonic API 1.13 reject the salted token
+    authentication that libsonic uses by default, while accepting the
+    password parameter (#98).  The fallback runs at most once per process so
+    a genuinely wrong password cannot hammer the server's failed-login
+    limiting with two requests per call; the newly built connection replaces
+    `pysonic` only when it actually authenticates.
+    """
+    global pysonic  # pylint: disable=global-statement
+    global _auth_fallback_checked  # pylint: disable=global-statement
+    if _auth_fallback_checked:
+        raise SubsonicAuthException(
+            _subsonic_auth_error_message(error)) from error
+    _auth_fallback_checked = True
+    legacy_pysonic = _build_pysonic(legacy_auth=True)
+    try:
+        legacy_pysonic.getMusicFolders()
+    except CredentialError as legacy_error:
+        raise SubsonicAuthException(
+            _subsonic_auth_error_message(legacy_error)) from legacy_error
+    except Exception as legacy_error:  # pylint: disable=broad-except
+        logging.error(
+            "Subsonic password authentication fallback failed: %s",
+            str(legacy_error))
+        raise SubsonicOfflineException(
+            'Cannot reach the Subsonic server at %s: %s' % (
+                constants.get_subsonic_rest_url(), str(legacy_error))
+        ) from legacy_error
+    pysonic = legacy_pysonic
+    logging.warning(
+        "The Subsonic server rejected token authentication and accepted "
+        "password authentication; using password authentication for this run.")
+    return pysonic
+
+
 def check_pysonic_connection():
     """Return pysonic or raise SubsonicOfflineException if server is unreachable.
 
@@ -239,20 +302,31 @@ def check_pysonic_connection():
     all exceptions and returns False, making it impossible to distinguish between
     a connection error and a server responding with an error status.
     getMusicFolders() raises real exceptions that can be logged and handled.
+
+    A rejected login is reported as `SubsonicAuthException` (with the
+    server's own reason) instead of "server offline", and is never retried
+    blindly: only transient connection errors get one retry.
     """
     try:
         pysonic.getMusicFolders()
         return pysonic
-    except Exception as e:
+    except CredentialError as error:
+        return _retry_with_password_auth(error)
+    except Exception as e:  # pylint: disable=broad-except
         logging.debug(
             "Subsonic connection error: %s. Attempting retry...", str(e))
         try:
             pysonic.getMusicFolders()
             return pysonic
-        except Exception as retry_error:
+        except CredentialError as error:
+            return _retry_with_password_auth(error)
+        except Exception as retry_error:  # pylint: disable=broad-except
             logging.error(
                 "Subsonic connection failed after retry: %s", str(retry_error))
-    raise SubsonicOfflineException()
+            raise SubsonicOfflineException(
+                'Cannot reach the Subsonic server at %s: %s' % (
+                    constants.get_subsonic_rest_url(), str(retry_error))
+            ) from retry_error
 
 
 def get_artists_array_names():

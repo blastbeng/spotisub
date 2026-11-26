@@ -182,7 +182,10 @@ function checkSubsonicStatus() {
                 'Successfully connected to Subsonic server!\n\n' + data.message
             );
         } else {
-            showCustomAlert('Subsonic Server Offline', data.message || 'Failed to connect to Subsonic server');
+            showCustomAlert(
+                data.title || 'Subsonic Server Offline',
+                data.message || 'Failed to connect to Subsonic server'
+            );
         }
     })
     .catch(error => {

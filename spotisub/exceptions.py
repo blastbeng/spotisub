@@ -13,6 +13,10 @@ class SubsonicOfflineException(Exception):
     "Can't reach Subsonic is your server Offline?"
 
 
+class SubsonicAuthException(SubsonicOfflineException):
+    """The Subsonic server was reached but rejected the credentials"""
+
+
 class SubsonicDataException(Exception):
     "Error retrieving data from Subsonic"
 

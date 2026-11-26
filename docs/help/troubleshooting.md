@@ -80,17 +80,34 @@ with many playlists, most of them may simply not have had their turn yet. Use
 
 ## Subsonic returns 401 / "40" / wrong credentials
 
-- Verify with the server directly, bypassing Spotisub:
+Click **Check Subsonic** in the sidebar first. An authentication problem now says
+*Subsonic Authentication Failed* and quotes the server's own reason (for example
+`Wrong username or password`, error code 40) plus the URL and user it used, so you do
+not have to guess whether the server is down or the password is wrong.
+
+Spotisub authenticates with the Subsonic salted token scheme first and, if the server
+rejects it, retries once with the plain password scheme. That fallback covers servers
+older than Subsonic API 1.13, which answer error 40 to the token scheme even when the
+password is correct.
+
+If the check still fails:
+
+- Verify with the server directly, bypassing Spotisub. Use `--data-urlencode` so a
+  password with `&`, `+`, `%` or `#` is sent intact:
 
   ```bash
-  curl -s "http://127.0.0.1:4533/rest/ping.view?u=USER&p=PASS&v=1.16.1&c=test"
+  curl -s --get "http://127.0.0.1:4533/rest/ping.view" \
+    --data-urlencode "u=USER" --data-urlencode "p=PASS" \
+    --data-urlencode "v=1.16.1" --data-urlencode "c=test"
   ```
 
   You must get `<subsonic-response status="ok"`. If this fails, the problem is the
   credentials or the port, not Spotisub.
-- Passwords containing characters that are special in URLs (`&`, `+`, `%`, `#`) are the
-  classic cause of a 401 that works in the web UI and fails from the API. Simplest fix:
-  choose a password without them, or test with the curl above using `--data-urlencode`.
+- Check what Spotisub actually receives. In an `.env` file an unquoted `#` starts a
+  comment and a `$` may be interpolated by Docker Compose, so the container can get a
+  truncated password that still works when you type it in a browser. Quote the value
+  (`SUBSONIC_API_PASS='pa#ss$word'`) or set it in the Compose `environment:` block.
+  Trailing spaces after the value have the same effect.
 - Behind a path-mounted server, `SUBSONIC_API_BASE_URL` must be the **path only**
   (`/music`), and the server must answer on `…/music/rest/ping.view`.
 - Self-signed HTTPS: `SUBSONIC_API_VERIFY_SSL=0`.
