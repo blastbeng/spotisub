@@ -154,9 +154,17 @@ jobs:
           done
 
           # The changelog section covers what changed since the last *release*,
-          # which is the newest reachable vX.Y.Z tag -- not necessarily the value
-          # in database.py (it can lag behind the tags, as it did for 0.3.5/0.3.6).
-          last_tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+          # which is the newest vX.Y.Z tag -- not necessarily the value in
+          # database.py (it can lag behind the tags) and not necessarily a tag
+          # reachable from dev: releases are tagged on the latest branch, whose
+          # merge commit dev does not contain, so `git describe` on dev answers
+          # with a much older tag and the compare link points at the wrong base.
+          if [ "${PRERELEASE}" = "true" ]; then
+            last_tag=$(git tag -l 'v[0-9]*' --sort=-v:refname | head -n 1)
+          else
+            # A stable release compares against the previous stable one.
+            last_tag=$(git tag -l 'v[0-9]*' --sort=-v:refname | grep -v -- '-' | head -n 1)
+          fi
           prev_release="${prev}"
           if [ -n "${last_tag}" ] && git rev-parse -q --verify "refs/tags/${last_tag}" >/dev/null; then
             prev_release="${last_tag#v}"
