@@ -44,6 +44,7 @@ from spotisub import generator
 from spotisub.generator import scheduler
 from spotisub.generator import subsonic_helper
 from spotisub.generator import spotipy_helper
+from spotisub.exceptions import SubsonicAuthException
 from spotisub.exceptions import SubsonicOfflineException
 from spotisub.exceptions import SpotifyApiException
 
@@ -887,10 +888,24 @@ def check_subsonic_status():
                 )
             }),
             200)
+    except SubsonicAuthException as e:
+        # The server answered, it just rejected the credentials: do not call
+        # it "offline", that sends operators looking in the wrong place (#98).
+        logging.error("Subsonic authentication check failed: %s", str(e))
+        return get_response_json(
+            json.dumps({
+                'status': 'error',
+                'title': 'Subsonic Authentication Failed',
+                'message': str(e)
+            }), 200)
     except Exception as e:
         logging.error("Subsonic connectivity check failed: %s", str(e))
         return get_response_json(
-            json.dumps({'status': 'error', 'message': str(e)}), 200)
+            json.dumps({
+                'status': 'error',
+                'title': 'Subsonic Server Offline',
+                'message': str(e) or 'Failed to connect to Subsonic server'
+            }), 200)
 
 
 nsutils = api.namespace('utils', 'Utils APIs')
