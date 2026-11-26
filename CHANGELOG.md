@@ -8,6 +8,36 @@ Sections up to `0.3.6` were backfilled from the existing git tags and GitHub
 Releases when automated releases were introduced; they are not itemised
 commit-by-commit.
 
+## [0.3.11] - 2026-11-26
+
+### Added
+
+- A **Buy me a coffee** section at the end of `README.md` and on the documentation
+  site: a PayPal donate button, a GitHub Sponsors button, and the same two options in
+  GitHub's built-in Sponsor entry (`.github/FUNDING.yml`). The documentation site also
+  carries a PayPal icon in its footer.
+
+### Fixed
+
+- **Text comparison now finds tracks on libraries without a `musicBrainzId` tag.**
+  The fallback only scanned the MBID cache, which by design holds just the songs that
+  carry a MusicBrainz tag; a library tagged by anything other than Picard/beets had no
+  candidates at all and reported every track as missing. It now searches the Subsonic
+  server by title before giving up, using the title up to the first `(`, `-` or `feat`
+  token, and keeps the existing metadata and excluded-word filtering (#107).
+- A matched song whose album tag is empty no longer raises `UnboundLocalError` while the
+  excluded-word filter runs.
+- The `[X.Y.Z]` compare link that the release workflow writes now points at the previous
+  release instead of `v0.3.6`. Releases are tagged on `latest`, whose merge commit `dev`
+  does not contain, so `git describe` on `dev` answered with a much older tag.
+
+### Upgrade notes
+
+- `TEXT_COMAPRE_MATCHING_ENABLED=1` now issues one `search2` request per track that
+  fails MBID matching. Leave it at the default `0` when your library is tagged with
+  MusicBrainz IDs; text comparison stays opt-in because a wrong match is worse than a
+  missing one.
+
 ## [0.3.10] - 2026-11-25
 
 ### Fixed
@@ -197,6 +227,7 @@ commit-by-commit.
 ### Changed
 - REST endpoints drive the scheduler jobs instead of running work inline.
 
+[0.3.11]: https://github.com/blastbeng/spotisub/compare/v0.3.10...v0.3.11
 [0.3.10]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.10
 [0.3.9]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.9
 [0.3.8]: https://github.com/blastbeng/spotisub/compare/v0.3.6...v0.3.8
