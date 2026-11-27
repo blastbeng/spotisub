@@ -14,6 +14,7 @@ from time import strftime
 from requests import ConnectionError
 from requests import ReadTimeout
 from urllib3.exceptions import MaxRetryError
+from werkzeug.exceptions import HTTPException
 from flask import Blueprint
 from flask import Response
 from flask import request
@@ -93,11 +94,43 @@ def after_request(response):
 
 @spotisub.errorhandler(Exception)
 def all_exception_handler(error):
-    """Exception handler"""
+    """Exception handler
+
+    HTTP errors (unknown URL, wrong method, aborted request) keep their own
+    status code: they are not application bugs, so they must not be reported
+    as a server error. REST clients get the usual {"status": "ko"} payload.
+
+    Anything else is a real bug: the traceback goes to the log through
+    utils.write_exception() and the client receives a 500 page. The exception
+    text is never rendered, it used to leak internal paths and database URIs
+    to every logged-in user.
+    """
+    is_api = request.path.startswith('/api/')
+    if isinstance(error, HTTPException):
+        # 404s from link scanners are expected noise, only real server-side
+        # HTTP errors are worth a warning in the log.
+        logging.log(
+            logging.WARNING if (error.code or 500) >= 500 else logging.DEBUG,
+            'HTTP %s on %s: %s',
+            error.code, request.path, error.description)
+        if is_api:
+            return get_response_json(
+                get_json_message(
+                    error.description or error.name, False),
+                error.code)
+        return error
     utils.write_exception()
-    return render_template('errors/404.html',
-                           title='Error!',
-                           errors=[repr(error)])
+    try:
+        configuration_db.session.rollback()
+    except Exception:  # pylint: disable=broad-except
+        logging.warning('Session rollback after an unhandled error failed',
+                        exc_info=True)
+    if is_api:
+        return get_response_json(
+            get_json_message('Internal server error', False), 500)
+    return render_template('errors/500.html',
+                           title='Unexpected Error',
+                           errors=[]), 500
 
 
 blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
