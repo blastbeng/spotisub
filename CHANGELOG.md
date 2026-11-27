@@ -8,6 +8,14 @@ Sections up to `0.3.6` were backfilled from the existing git tags and GitHub
 Releases when automated releases were introduced; they are not itemised
 commit-by-commit.
 
+## [0.3.14] - 2026-11-27
+
+### Fixed
+- An unhandled exception now answers HTTP 500 with the error page instead of HTTP 200, so browsers, proxies and the REST clients stop treating a failed request as a success.
+- The exception text is written to `cache/spotisub.log` instead of being rendered on the page, where it exposed internal paths and database URIs to logged-in users.
+- Wrong methods, unknown URLs and aborted requests keep their own status code (`404`, `405`, `400`, …) instead of being swallowed into a successful page.
+- Every `/api/v1` error, including an unknown endpoint, answers with the usual `{"status": "ko", "message": …}` JSON instead of an HTML page.
+
 ## [0.3.13] - 2026-11-26
 
 ### Security
@@ -243,6 +251,7 @@ commit-by-commit.
 ### Changed
 - REST endpoints drive the scheduler jobs instead of running work inline.
 
+[0.3.14]: https://github.com/blastbeng/spotisub/compare/v0.3.13...v0.3.14
 [0.3.13]: https://github.com/blastbeng/spotisub/compare/v0.3.12...v0.3.13
 [0.3.12]: https://github.com/blastbeng/spotisub/compare/v0.3.11...v0.3.12
 [0.3.11]: https://github.com/blastbeng/spotisub/compare/v0.3.10...v0.3.11
